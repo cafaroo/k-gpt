@@ -117,27 +117,29 @@ async function runQwen(
   extraction: import("../types").VideoExtraction
 ): Promise<QwenAnalysis> {
   const sampled =
-    extraction.frames.length <= 24
+    extraction.frames.length <= 16
       ? extraction.frames
       : Array.from(
-          { length: 24 },
+          { length: 16 },
           (_, i) =>
-            extraction.frames[Math.floor((i * extraction.frames.length) / 24)]
+            extraction.frames[Math.floor((i * extraction.frames.length) / 16)]
         );
+
+  const { summarizeExtraction } = await import("../extraction-summary");
+  const { audioText, motionText } = summarizeExtraction({
+    audioSegments: extraction.audioSegments,
+    motionSegments: extraction.motionSegments,
+    sceneChanges: extraction.sceneChanges,
+    duration: extraction.metadata.duration,
+  });
 
   const res = await fetch("/analyze/api/analyze", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      extraction: {
-        ...extraction,
-        frames: extraction.frames.map((f) => ({
-          timestamp: f.timestamp,
-          brightness: f.brightness,
-          dominantColor: f.dominantColor,
-          dataUrl: "",
-        })),
-      },
+      metadata: extraction.metadata,
+      audioText,
+      motionText,
       frameDataUrls: sampled.map((f) => f.dataUrl),
     }),
   });

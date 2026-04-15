@@ -5,16 +5,19 @@ import {
   QWEN_SYSTEM_PROMPT,
 } from "@/lib/video/qwen-prompt";
 import { QwenAnalysisSchema } from "@/lib/video/qwen-schema";
-import type { VideoExtraction } from "@/lib/video/types";
+import type { VideoExtraction, VideoMetadata } from "@/lib/video/types";
 
 export const maxDuration = 120;
 
 type RequestBody = {
-  extraction: VideoExtraction;
-  /** URL to a JSON blob {version:1, frames:[{timestamp, dataUrl}]} */
+  /** Full extraction (legacy path, subject to body-size limits) */
+  extraction?: VideoExtraction;
+  /** Slim path: just metadata + pre-computed text summaries */
+  metadata?: VideoMetadata;
+  audioText?: string;
+  motionText?: string;
+  frameDataUrls: string[];
   framesUrl?: string;
-  /** Legacy fallback: inline base64 frames (subject to 4.5 MB limit) */
-  frameDataUrls?: string[];
   modelId?: string;
 };
 
@@ -25,14 +28,11 @@ type FramesBundle = {
 
 export async function POST(req: Request) {
   try {
-    const { extraction, framesUrl, frameDataUrls, modelId } =
-      (await req.json()) as RequestBody;
+    const body = (await req.json()) as RequestBody;
+    const { extraction, metadata, audioText, motionText, framesUrl, modelId } =
+      body;
+    let { frameDataUrls } = body;
 
-    if (!extraction) {
-      return Response.json({ error: "extraction required" }, { status: 400 });
-    }
-
-    let dataUrls: string[];
     if (framesUrl) {
       const bundleRes = await fetch(framesUrl);
       if (!bundleRes.ok) {
@@ -44,30 +44,55 @@ export async function POST(req: Request) {
         );
       }
       const bundle = (await bundleRes.json()) as FramesBundle;
-      dataUrls = bundle.frames.map((f) => f.dataUrl);
-    } else if (frameDataUrls && frameDataUrls.length > 0) {
-      dataUrls = frameDataUrls;
-    } else {
+      frameDataUrls = bundle.frames.map((f) => f.dataUrl);
+    }
+
+    if (!frameDataUrls || frameDataUrls.length === 0) {
       return Response.json(
-        { error: "framesUrl or frameDataUrls required" },
+        { error: "frameDataUrls required" },
         { status: 400 }
       );
     }
 
-    const { metadataText, audioText, motionText } =
-      buildQwenUserMessage(extraction);
+    // Build the text block. Prefer explicit slim-mode (pre-summarized) over
+    // full extraction payload (legacy).
+    let metadataText: string;
+    let aText: string;
+    let mText: string;
+    if (metadata && audioText && motionText) {
+      metadataText = [
+        "Video metadata:",
+        `- filename: ${metadata.filename}`,
+        `- duration: ${metadata.duration.toFixed(1)}s`,
+        `- dimensions: ${metadata.width}×${metadata.height} (${metadata.aspectRatio})`,
+        `- filesize: ${(metadata.fileSize / 1024 / 1024).toFixed(1)} MB`,
+        `- bitrate: ${Math.round(metadata.bitrate / 1000)} kbps`,
+      ].join("\n");
+      aText = audioText;
+      mText = motionText;
+    } else if (extraction) {
+      const parts = buildQwenUserMessage(extraction);
+      metadataText = parts.metadataText;
+      aText = parts.audioText;
+      mText = parts.motionText;
+    } else {
+      return Response.json(
+        { error: "metadata+audioText+motionText or extraction required" },
+        { status: 400 }
+      );
+    }
 
     const textBlock = [
       metadataText,
       "",
-      audioText,
+      aText,
       "",
-      motionText,
+      mText,
       "",
-      "Keyframes (chronological, 1 per second) attached below.",
+      "Keyframes (chronological) attached below.",
     ].join("\n");
 
-    const imageParts = dataUrls.map((url) => ({
+    const imageParts = frameDataUrls.map((url) => ({
       type: "image" as const,
       image: url,
     }));

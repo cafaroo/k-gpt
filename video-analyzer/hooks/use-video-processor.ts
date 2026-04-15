@@ -45,8 +45,8 @@ export function useVideoProcessor() {
       setStep("Running AI analysis");
       setProgress(0.5);
 
-      // Cap frames to 24 so POST body stays well under the 4.5 MB Vercel limit
-      // (24 × ~80 KB JPEG ≈ 1.9 MB inline).
+      // Cap frames to 16 and pre-summarize extraction client-side so POST body
+      // stays well under Vercel's 4.5 MB limit even for 3+ minute videos.
       const pickFrames = <T>(arr: T[], max: number): T[] => {
         if (arr.length <= max) {
           return arr;
@@ -54,24 +54,35 @@ export function useVideoProcessor() {
         const step = arr.length / max;
         return Array.from({ length: max }, (_, i) => arr[Math.floor(i * step)]);
       };
-      const sampledFrames = pickFrames(result.frames, 24);
+      const sampledFrames = pickFrames(result.frames, 16);
+
+      const { summarizeExtraction } = await import(
+        "@/lib/video/extraction-summary"
+      );
+      const { audioText, motionText } = summarizeExtraction({
+        audioSegments: result.audioSegments,
+        motionSegments: result.motionSegments,
+        sceneChanges: result.sceneChanges,
+        duration: result.metadata.duration,
+      });
 
       const qwenPromise = (async () => {
+        const payload = {
+          metadata: result.metadata,
+          audioText,
+          motionText,
+          frameDataUrls: sampledFrames.map((f) => f.dataUrl),
+        };
+        const body = JSON.stringify(payload);
+        console.log(
+          "[useVideoProcessor] Qwen POST body size:",
+          (body.length / 1024 / 1024).toFixed(2),
+          "MB"
+        );
         const res = await fetch("/analyze/api/analyze", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            extraction: {
-              ...result,
-              frames: result.frames.map((f) => ({
-                timestamp: f.timestamp,
-                brightness: f.brightness,
-                dominantColor: f.dominantColor,
-                dataUrl: "",
-              })),
-            },
-            frameDataUrls: sampledFrames.map((f) => f.dataUrl),
-          }),
+          body,
         });
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
