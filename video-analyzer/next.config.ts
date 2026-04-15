@@ -21,6 +21,7 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_BASE_PATH: basePath,
   },
+  allowedDevOrigins: ["10.44.1.68", "*.local"],
   cacheComponents: true,
   devIndicators: false,
   poweredByHeader: false,

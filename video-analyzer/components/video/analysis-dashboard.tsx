@@ -1,7 +1,7 @@
 "use client";
 
 import { MessageSquare } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -39,8 +39,12 @@ export function AnalysisDashboard({ file, extraction, onReset }: Props) {
   const [currentTime, setCurrentTime] = useState(0);
   const [performance, setPerformance] = useState<PerformanceData>({});
 
-  const src = useMemo(() => URL.createObjectURL(file), [file]);
-  useEffect(() => () => URL.revokeObjectURL(src), [src]);
+  const [src, setSrc] = useState<string>("");
+  useEffect(() => {
+    const url = URL.createObjectURL(file);
+    setSrc(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
 
   const chartRefs: ExportChartRefs = {
     audio: audioChartRef.current,

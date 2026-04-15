@@ -45,18 +45,26 @@ export function VideoUpload({ onFile }: Props) {
   );
 
   const loadSample = useCallback(async () => {
+    console.log("[video-upload] loadSample clicked");
     try {
       setError(null);
       const res = await fetch(SAMPLE_URL);
+      console.log(
+        "[video-upload] fetch:",
+        res.status,
+        res.headers.get("content-type")
+      );
       if (!res.ok) {
-        throw new Error("Sample video not found");
+        throw new Error(`Sample not found (HTTP ${res.status})`);
       }
       const blob = await res.blob();
+      console.log("[video-upload] blob:", blob.size, blob.type);
       const file = new File([blob], "ugc-sample.mp4", {
         type: blob.type || "video/mp4",
       });
       onFile(file);
     } catch (err) {
+      console.error("[video-upload] loadSample failed:", err);
       setError(
         err instanceof Error ? err.message : "Could not load sample video"
       );
