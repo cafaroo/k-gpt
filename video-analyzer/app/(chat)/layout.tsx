@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import Script from "next/script";
 import { Suspense } from "react";
+import { SessionProvider } from "next-auth/react";
 import { Toaster } from "sonner";
 import { AppSidebar } from "@/components/chat/app-sidebar";
 import { DataStreamProvider } from "@/components/chat/data-stream-provider";
@@ -11,7 +12,9 @@ import { auth } from "../(auth)/auth";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <>
+    <SessionProvider
+      basePath={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/auth`}
+    >
       <Script
         src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"
         strategy="lazyOnload"
@@ -21,7 +24,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <SidebarShell>{children}</SidebarShell>
         </Suspense>
       </DataStreamProvider>
-    </>
+    </SessionProvider>
   );
 }
 
