@@ -8,26 +8,33 @@ import { AudioAnalysisSchema } from "@/lib/video/audio-schema";
 
 export const maxDuration = 120;
 
-type RequestBody = {
-  audioUrl: string;
-};
-
 export async function POST(req: Request) {
   try {
-    const { audioUrl } = (await req.json()) as RequestBody;
-    if (!audioUrl) {
-      return Response.json({ error: "audioUrl required" }, { status: 400 });
-    }
+    const contentType = req.headers.get("content-type") || "";
 
-    const fetched = await fetch(audioUrl);
-    if (!fetched.ok) {
-      return Response.json(
-        { error: `failed to fetch audio (HTTP ${fetched.status})` },
-        { status: 400 }
-      );
+    let buffer: Buffer;
+    let mediaType: string;
+
+    if (contentType.includes("application/json")) {
+      // Blob-URL path (Phase 2 persistence).
+      const { audioUrl } = (await req.json()) as { audioUrl: string };
+      if (!audioUrl) {
+        return Response.json({ error: "audioUrl required" }, { status: 400 });
+      }
+      const fetched = await fetch(audioUrl);
+      if (!fetched.ok) {
+        return Response.json(
+          { error: `failed to fetch audio (HTTP ${fetched.status})` },
+          { status: 400 }
+        );
+      }
+      buffer = Buffer.from(await fetched.arrayBuffer());
+      mediaType = fetched.headers.get("content-type") || "audio/wav";
+    } else {
+      // Inline binary body path.
+      buffer = Buffer.from(await req.arrayBuffer());
+      mediaType = contentType || "audio/wav";
     }
-    const buffer = Buffer.from(await fetched.arrayBuffer());
-    const mediaType = fetched.headers.get("content-type") || "audio/wav";
 
     if (buffer.byteLength === 0) {
       return Response.json({ error: "empty audio" }, { status: 400 });

@@ -45,13 +45,17 @@ export function useVideoProcessor() {
       setStep("Running AI analysis");
       setProgress(0.5);
 
-      // Fire visual (Qwen) and audio (Gemini) analyses in parallel.
-      const { uploadAudioWav, uploadFramesBundle } = await import(
-        "@/lib/video/blob-upload"
-      );
+      // Cap frames to 48 to keep Qwen payload under Fluid Compute body limits.
+      const pickFrames = <T>(arr: T[], max: number): T[] => {
+        if (arr.length <= max) {
+          return arr;
+        }
+        const step = arr.length / max;
+        return Array.from({ length: max }, (_, i) => arr[Math.floor(i * step)]);
+      };
+      const sampledFrames = pickFrames(result.frames, 48);
 
       const qwenPromise = (async () => {
-        const framesUrl = await uploadFramesBundle(result.frames);
         const res = await fetch("/analyze/api/analyze", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -65,7 +69,7 @@ export function useVideoProcessor() {
                 dataUrl: "",
               })),
             },
-            framesUrl,
+            frameDataUrls: sampledFrames.map((f) => f.dataUrl),
           }),
         });
         if (!res.ok) {
@@ -83,11 +87,10 @@ export function useVideoProcessor() {
           "@/lib/video/audio-extract"
         );
         const wav = await encodeVideoAudioToWav(file);
-        const audioUrl = await uploadAudioWav(wav);
         const res = await fetch("/analyze/api/audio", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ audioUrl }),
+          headers: { "Content-Type": wav.type || "audio/wav" },
+          body: wav,
         });
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
