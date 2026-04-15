@@ -25,10 +25,24 @@ export type ChatModel = {
 
 export const chatModels: ChatModel[] = [
   {
+    id: "alibaba/qwen3-vl-thinking",
+    name: "Qwen3 VL Thinking",
+    provider: "alibaba",
+    description: "Vision reasoning model — deep video analysis",
+    gatewayOrder: ["alibaba"],
+  },
+  {
+    id: "alibaba/qwen3-vl-instruct",
+    name: "Qwen3 VL Instruct",
+    provider: "alibaba",
+    description: "Fast vision model — lower-latency fallback",
+    gatewayOrder: ["alibaba"],
+  },
+  {
     id: "anthropic/claude-sonnet-4-5",
     name: "Claude Sonnet 4.5",
     provider: "anthropic",
-    description: "Vision-capable model for video content analysis",
+    description: "Vision-capable model for conversational chat",
     gatewayOrder: ["anthropic"],
   },
   {

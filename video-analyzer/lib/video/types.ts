@@ -69,6 +69,7 @@ export type ProcessingState =
   | "idle"
   | "loading"
   | "extracting"
+  | "analyzing"
   | "done"
   | "error";
 

@@ -1,6 +1,7 @@
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { buildVideoAnalysisPrompt } from "@/lib/video/prompts";
+import type { QwenAnalysis } from "@/lib/video/qwen-schema";
 import type { PerformanceData, VideoExtraction } from "@/lib/video/types";
 
 export const maxDuration = 60;
@@ -10,23 +11,45 @@ type RequestBody = {
   videoContext: {
     extraction: VideoExtraction;
     performance?: PerformanceData;
+    qwenAnalysis?: QwenAnalysis | null;
   };
+  selectedModel?: string;
 };
 
+const ALLOWED_MODELS = new Set([
+  "anthropic/claude-sonnet-4-5",
+  "alibaba/qwen3-vl-thinking",
+  "alibaba/qwen3-vl-instruct",
+]);
+
 export async function POST(req: Request) {
-  const { messages, videoContext } = (await req.json()) as RequestBody;
+  const { messages, videoContext, selectedModel } =
+    (await req.json()) as RequestBody;
 
   if (!videoContext?.extraction) {
     return new Response("videoContext.extraction is required", { status: 400 });
   }
 
-  const system = buildVideoAnalysisPrompt(
+  const modelId =
+    selectedModel && ALLOWED_MODELS.has(selectedModel)
+      ? selectedModel
+      : "anthropic/claude-sonnet-4-5";
+
+  const baseSystem = buildVideoAnalysisPrompt(
     videoContext.extraction,
     videoContext.performance
   );
 
+  const system = videoContext.qwenAnalysis
+    ? `${baseSystem}\n\n## Prior deep analysis by Qwen3 VL Thinking\n\nThe following structured analysis has already been produced. Use it as ground truth and refer to it when answering follow-up questions. Don't re-analyze — discuss and extend.\n\n\`\`\`json\n${JSON.stringify(
+        videoContext.qwenAnalysis,
+        null,
+        2
+      )}\n\`\`\``
+    : baseSystem;
+
   const result = streamText({
-    model: getLanguageModel("anthropic/claude-sonnet-4-5"),
+    model: getLanguageModel(modelId),
     system,
     messages: await convertToModelMessages(messages),
   });

@@ -7,16 +7,19 @@ import { type FormEvent, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
+import type { QwenAnalysis } from "@/lib/video/qwen-schema";
 import type {
   ExtractedFrame,
   PerformanceData,
   VideoExtraction,
 } from "@/lib/video/types";
+import { ModelSelector } from "./model-selector";
 import { SuggestedQuestions } from "./suggested-questions";
 
 type Props = {
   extraction: VideoExtraction;
   performance: PerformanceData;
+  qwenAnalysis: QwenAnalysis | null;
 };
 
 function pickKeyframes(frames: ExtractedFrame[], count = 8): ExtractedFrame[] {
@@ -43,14 +46,18 @@ function stripExtraction(extraction: VideoExtraction): VideoExtraction {
   };
 }
 
-export function AnalysisChat({ extraction, performance }: Props) {
+export function AnalysisChat({ extraction, performance, qwenAnalysis }: Props) {
+  const [modelId, setModelId] = useState("anthropic/claude-sonnet-4-5");
+
   const contextRef = useRef({
     extraction: stripExtraction(extraction),
     performance,
+    qwenAnalysis,
   });
   contextRef.current = {
     extraction: stripExtraction(extraction),
     performance,
+    qwenAnalysis,
   };
 
   const keyframes = useMemo(
@@ -68,6 +75,7 @@ export function AnalysisChat({ extraction, performance }: Props) {
           body: {
             messages: msgs,
             videoContext: contextRef.current,
+            selectedModel: modelId,
           },
         };
       },
@@ -103,12 +111,17 @@ export function AnalysisChat({ extraction, performance }: Props) {
 
   return (
     <div className="flex h-full flex-col">
+      <div className="flex items-center justify-between border-b px-4 py-2">
+        <span className="text-muted-foreground text-xs">Chat with</span>
+        <ModelSelector onChange={setModelId} value={modelId} />
+      </div>
+
       <ScrollArea className="flex-1 px-4 py-3">
         {messages.length === 0 ? (
           <div className="flex flex-col gap-4 py-6">
             <p className="text-muted-foreground text-sm">
-              Ask Claude Sonnet 4.5 about this video. Keyframes are sent with
-              your first message.
+              Ask about this video. Keyframes + extraction + Qwen analysis are
+              sent as context.
             </p>
             <SuggestedQuestions onPick={submit} />
           </div>
@@ -152,7 +165,7 @@ export function AnalysisChat({ extraction, performance }: Props) {
             {isStreaming && (
               <div className="text-muted-foreground flex items-center gap-2 text-xs">
                 <Loader2 className="h-3 w-3 animate-spin" />
-                Claude is analyzing…
+                Thinking…
               </div>
             )}
           </div>

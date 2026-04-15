@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { AnalysisDashboard } from "@/components/video/analysis-dashboard";
 import { ExtractionProgress } from "@/components/video/extraction-progress";
+import { QwenDashboard } from "@/components/video/qwen-dashboard";
 import { VideoUpload } from "@/components/video/video-upload";
 import { useVideoProcessor } from "@/hooks/use-video-processor";
 
@@ -22,7 +22,9 @@ export default function AnalyzePage() {
 
   if (processor.state === "done" && processor.extraction && file) {
     return (
-      <AnalysisDashboard
+      <QwenDashboard
+        analysis={processor.analysis}
+        analysisError={processor.error}
         extraction={processor.extraction}
         file={file}
         onReset={handleReset}
@@ -37,8 +39,8 @@ export default function AnalyzePage() {
           Analyze a short-form video
         </h1>
         <p className="text-muted-foreground mt-3 text-sm">
-          Upload a TikTok-style video (30s–2min) and chat with Claude about why
-          it works. Everything runs in your browser.
+          Upload a TikTok-style video and get a deep AI analysis of hook,
+          pacing, CTA, and more — powered by Qwen3 VL Thinking.
         </p>
       </div>
 
@@ -46,6 +48,7 @@ export default function AnalyzePage() {
 
       {(processor.state === "loading" ||
         processor.state === "extracting" ||
+        processor.state === "analyzing" ||
         processor.state === "error") && (
         <ExtractionProgress
           currentStep={processor.step}

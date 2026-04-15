@@ -1,6 +1,7 @@
 import ExcelJS from "exceljs";
 import { toPng } from "html-to-image";
 import JSZip from "jszip";
+import type { QwenAnalysis } from "./qwen-schema";
 import type {
   ExportChartRefs,
   PerformanceData,
@@ -10,6 +11,7 @@ import type {
 type Analysis = {
   extraction: VideoExtraction;
   performance?: PerformanceData;
+  qwenAnalysis?: QwenAnalysis | null;
 };
 
 export async function exportAnalysis(
@@ -17,7 +19,12 @@ export async function exportAnalysis(
   chartRefs: ExportChartRefs = {}
 ): Promise<void> {
   const zip = new JSZip();
-  const { extraction, performance } = analysis;
+  const { extraction, performance, qwenAnalysis } = analysis;
+
+  // 0. Qwen analysis JSON (structured AI output)
+  if (qwenAnalysis) {
+    zip.file("qwen-analysis.json", JSON.stringify(qwenAnalysis, null, 2));
+  }
 
   // 1. extraction.json (without huge gray32 arrays and dataUrls)
   const slim = {
@@ -104,6 +111,78 @@ export async function exportAnalysis(
   ];
   for (const s of extraction.sceneChanges) {
     scenesSheet.addRow({ t: +s.timestamp.toFixed(3), sc: +s.score.toFixed(3) });
+  }
+
+  // Qwen scenes + recommendations (if present)
+  if (qwenAnalysis) {
+    const scenesSheetQ = wb.addWorksheet("Qwen Scenes");
+    scenesSheetQ.columns = [
+      { header: "Start (s)", key: "s", width: 10 },
+      { header: "End (s)", key: "e", width: 10 },
+      { header: "Function", key: "f", width: 14 },
+      { header: "Label", key: "l", width: 30 },
+      { header: "Description", key: "d", width: 60 },
+      { header: "Text on screen", key: "t", width: 30 },
+    ];
+    for (const sc of qwenAnalysis.scenes) {
+      scenesSheetQ.addRow({
+        s: +sc.start.toFixed(2),
+        e: +sc.end.toFixed(2),
+        f: sc.function,
+        l: sc.label,
+        d: sc.description,
+        t: sc.textOnScreen ?? "",
+      });
+    }
+
+    const recSheet = wb.addWorksheet("Recommendations");
+    recSheet.columns = [
+      { header: "Priority", key: "p", width: 10 },
+      { header: "Area", key: "a", width: 12 },
+      { header: "Issue", key: "i", width: 50 },
+      { header: "Suggestion", key: "s", width: 60 },
+      { header: "Expected impact", key: "x", width: 40 },
+    ];
+    for (const r of qwenAnalysis.recommendations) {
+      recSheet.addRow({
+        p: r.priority,
+        a: r.area,
+        i: r.issue,
+        s: r.suggestion,
+        x: r.expectedImpact,
+      });
+    }
+
+    const scoresSheet = wb.addWorksheet("Scores");
+    scoresSheet.columns = [
+      { header: "Metric", key: "m", width: 24 },
+      { header: "Value", key: "v", width: 40 },
+    ];
+    scoresSheet.addRow({ m: "Overall score", v: qwenAnalysis.overall.score });
+    scoresSheet.addRow({ m: "Tagline", v: qwenAnalysis.overall.tagline });
+    scoresSheet.addRow({ m: "Summary", v: qwenAnalysis.overall.summary });
+    scoresSheet.addRow({ m: "Hook score", v: qwenAnalysis.hook.score });
+    scoresSheet.addRow({
+      m: "Hook duration (s)",
+      v: qwenAnalysis.hook.duration,
+    });
+    scoresSheet.addRow({ m: "Pacing score", v: qwenAnalysis.pacing.score });
+    scoresSheet.addRow({ m: "Pacing rhythm", v: qwenAnalysis.pacing.rhythm });
+    scoresSheet.addRow({
+      m: "Cuts/min",
+      v: qwenAnalysis.pacing.cutsPerMinute,
+    });
+    scoresSheet.addRow({ m: "CTA exists", v: qwenAnalysis.cta.exists });
+    scoresSheet.addRow({ m: "CTA clarity", v: qwenAnalysis.cta.clarity });
+    scoresSheet.addRow({ m: "Visual variety", v: qwenAnalysis.visual.variety });
+    scoresSheet.addRow({
+      m: "Predicted completion",
+      v: qwenAnalysis.predictedMetrics.completionRate,
+    });
+    scoresSheet.addRow({
+      m: "Predicted engagement",
+      v: qwenAnalysis.predictedMetrics.engagementRate,
+    });
   }
 
   const xlsxBuffer = await wb.xlsx.writeBuffer();

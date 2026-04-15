@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -73,7 +74,11 @@ export default function RootLayout({
           disableTransitionOnChange
           enableSystem
         >
-          <TooltipProvider>{children}</TooltipProvider>
+          <SessionProvider
+            basePath={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/auth`}
+          >
+            <TooltipProvider>{children}</TooltipProvider>
+          </SessionProvider>
         </ThemeProvider>
       </body>
     </html>

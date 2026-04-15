@@ -19,9 +19,13 @@ export async function extractAll(
     onProgress?.("Metadata extracted", 0.15);
 
     console.log("[extract] extracting frames via canvas");
-    const frames = await extractFramesFromVideo(videoEl, metadata.duration, (p) => {
-      onProgress?.("Extracting frames", 0.15 + p * 0.45);
-    });
+    const frames = await extractFramesFromVideo(
+      videoEl,
+      metadata.duration,
+      (p) => {
+        onProgress?.("Extracting frames", 0.15 + p * 0.45);
+      }
+    );
 
     console.log("[extract] analyzing", frames.length, "frames");
     for (const frame of frames) {
@@ -112,7 +116,11 @@ async function extractFramesFromVideo(
     await seekVideo(video, t);
     ctx.drawImage(video, 0, 0, targetWidth, targetHeight);
     const dataUrl = canvas.toDataURL("image/jpeg", 0.72);
-    const { brightness, dominantColor } = sampleColorFromContext(ctx, targetWidth, targetHeight);
+    const { brightness, dominantColor } = sampleColorFromContext(
+      ctx,
+      targetWidth,
+      targetHeight
+    );
     frames.push({
       timestamp: t,
       dataUrl,

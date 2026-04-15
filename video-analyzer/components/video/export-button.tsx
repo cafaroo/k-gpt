@@ -5,6 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { exportAnalysis } from "@/lib/video/exporter";
+import type { QwenAnalysis } from "@/lib/video/qwen-schema";
 import type {
   ExportChartRefs,
   PerformanceData,
@@ -15,6 +16,7 @@ type Props = {
   analysis: {
     extraction: VideoExtraction;
     performance?: PerformanceData;
+    qwenAnalysis?: QwenAnalysis | null;
   };
   chartRefs: ExportChartRefs;
 };
