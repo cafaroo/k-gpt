@@ -25,8 +25,12 @@ export const AudioChart = forwardRef<HTMLDivElement, Props>(function AudioChart(
   }));
 
   return (
-    <div className="bg-background h-48 w-full rounded-lg border p-2" ref={ref}>
-      <ResponsiveContainer height="100%" width="100%">
+    <div
+      className="bg-background w-full rounded-lg border p-2"
+      ref={ref}
+      style={{ height: 192 }}
+    >
+      <ResponsiveContainer height={176} width="100%">
         <AreaChart data={data}>
           <defs>
             <linearGradient id="rmsGrad" x1="0" x2="0" y1="0" y2="1">
