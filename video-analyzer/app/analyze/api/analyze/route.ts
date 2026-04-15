@@ -98,7 +98,7 @@ export async function POST(req: Request) {
     }));
 
     const { object } = await generateObject({
-      model: getLanguageModel(modelId ?? "alibaba/qwen3-vl-thinking"),
+      model: getLanguageModel(modelId ?? "alibaba/qwen3-vl-instruct"),
       schema: QwenAnalysisSchema,
       system: QWEN_SYSTEM_PROMPT,
       messages: [

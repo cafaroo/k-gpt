@@ -79,19 +79,43 @@ export function useVideoProcessor() {
           (body.length / 1024 / 1024).toFixed(2),
           "MB"
         );
-        const res = await fetch("/analyze/api/analyze", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body,
-        });
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          throw new Error(body.error || `Visual analysis HTTP ${res.status}`);
+
+        const maxAttempts = 3;
+        let lastErr: unknown;
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+          try {
+            const res = await fetch("/analyze/api/analyze", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body,
+            });
+            if (!res.ok) {
+              const errBody = await res.json().catch(() => ({}));
+              throw new Error(
+                errBody.error || `Visual analysis HTTP ${res.status}`
+              );
+            }
+            const { analysis: qwen } = (await res.json()) as {
+              analysis: QwenAnalysis;
+            };
+            return qwen;
+          } catch (err) {
+            lastErr = err;
+            const msg = err instanceof Error ? err.message : String(err);
+            const isNetwork =
+              msg.includes("Failed to fetch") ||
+              msg.includes("NetworkError") ||
+              msg.includes("network");
+            if (!isNetwork || attempt === maxAttempts) {
+              throw err;
+            }
+            console.warn(
+              `[useVideoProcessor] Qwen attempt ${attempt} failed (${msg}), retrying…`
+            );
+            await new Promise((r) => setTimeout(r, 1500 * attempt));
+          }
         }
-        const { analysis: qwen } = (await res.json()) as {
-          analysis: QwenAnalysis;
-        };
-        return qwen;
+        throw lastErr;
       })();
 
       const audioPromise = (async () => {
@@ -99,19 +123,48 @@ export function useVideoProcessor() {
           "@/lib/video/audio-extract"
         );
         const wav = await encodeVideoAudioToWav(file);
-        const res = await fetch("/analyze/api/audio", {
-          method: "POST",
-          headers: { "Content-Type": wav.type || "audio/wav" },
-          body: wav,
-        });
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          throw new Error(body.error || `Audio analysis HTTP ${res.status}`);
+        console.log(
+          "[useVideoProcessor] Audio POST size:",
+          (wav.size / 1024 / 1024).toFixed(2),
+          "MB"
+        );
+
+        const maxAttempts = 3;
+        let lastErr: unknown;
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+          try {
+            const res = await fetch("/analyze/api/audio", {
+              method: "POST",
+              headers: { "Content-Type": wav.type || "audio/wav" },
+              body: wav,
+            });
+            if (!res.ok) {
+              const errBody = await res.json().catch(() => ({}));
+              throw new Error(
+                errBody.error || `Audio analysis HTTP ${res.status}`
+              );
+            }
+            const { analysis: audio } = (await res.json()) as {
+              analysis: AudioAnalysis;
+            };
+            return audio;
+          } catch (err) {
+            lastErr = err;
+            const msg = err instanceof Error ? err.message : String(err);
+            const isNetwork =
+              msg.includes("Failed to fetch") ||
+              msg.includes("NetworkError") ||
+              msg.includes("network");
+            if (!isNetwork || attempt === maxAttempts) {
+              throw err;
+            }
+            console.warn(
+              `[useVideoProcessor] Audio attempt ${attempt} failed (${msg}), retrying…`
+            );
+            await new Promise((r) => setTimeout(r, 1500 * attempt));
+          }
         }
-        const { analysis: audio } = (await res.json()) as {
-          analysis: AudioAnalysis;
-        };
-        return audio;
+        throw lastErr;
       })();
 
       const [qwenResult, audioResult] = await Promise.allSettled([
