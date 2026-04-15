@@ -66,7 +66,7 @@ export function useVideoProcessor() {
         duration: result.metadata.duration,
       });
 
-      const qwenPromise = (async () => {
+      const runQwen = async (): Promise<QwenAnalysis> => {
         const payload = {
           metadata: result.metadata,
           audioText,
@@ -116,9 +116,9 @@ export function useVideoProcessor() {
           }
         }
         throw lastErr;
-      })();
+      };
 
-      const audioPromise = (async () => {
+      const runAudio = async (): Promise<AudioAnalysis> => {
         const { encodeVideoAudioToWav } = await import(
           "@/lib/video/audio-extract"
         );
@@ -165,12 +165,17 @@ export function useVideoProcessor() {
           }
         }
         throw lastErr;
-      })();
+      };
 
-      const [qwenResult, audioResult] = await Promise.allSettled([
-        qwenPromise,
-        audioPromise,
-      ]);
+      // Run sequentially — parallel long-lived HTTP connections are more
+      // likely to be dropped mid-flight by Chrome's network-change detection
+      // on flaky Wi-Fi. Total wall time grows by ~10s but reliability jumps.
+      const qwenResult = await runQwen()
+        .then((v) => ({ status: "fulfilled" as const, value: v }))
+        .catch((e: unknown) => ({ status: "rejected" as const, reason: e }));
+      const audioResult = await runAudio()
+        .then((v) => ({ status: "fulfilled" as const, value: v }))
+        .catch((e: unknown) => ({ status: "rejected" as const, reason: e }));
 
       if (qwenResult.status === "fulfilled") {
         setAnalysis(qwenResult.value);
