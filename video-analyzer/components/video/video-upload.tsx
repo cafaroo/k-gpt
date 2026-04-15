@@ -37,7 +37,9 @@ export function VideoUpload({ onFile }: Props) {
       e.preventDefault();
       setDragging(false);
       const file = e.dataTransfer.files?.[0];
-      if (file) accept(file);
+      if (file) {
+        accept(file);
+      }
     },
     [accept]
   );
@@ -46,7 +48,9 @@ export function VideoUpload({ onFile }: Props) {
     try {
       setError(null);
       const res = await fetch(SAMPLE_URL);
-      if (!res.ok) throw new Error("Sample video not found");
+      if (!res.ok) {
+        throw new Error("Sample video not found");
+      }
       const blob = await res.blob();
       const file = new File([blob], "ugc-sample.mp4", {
         type: blob.type || "video/mp4",
@@ -90,7 +94,9 @@ export function VideoUpload({ onFile }: Props) {
           className="hidden"
           onChange={(e) => {
             const file = e.target.files?.[0];
-            if (file) accept(file);
+            if (file) {
+              accept(file);
+            }
           }}
           ref={inputRef}
           type="file"

@@ -111,7 +111,9 @@ export async function exportAnalysis(
 
   // 3. charts PNGs
   for (const [name, el] of Object.entries(chartRefs)) {
-    if (!el) continue;
+    if (!el) {
+      continue;
+    }
     try {
       const dataUrl = await toPng(el, {
         cacheBust: true,
@@ -131,7 +133,9 @@ export async function exportAnalysis(
   if (framesDir) {
     extraction.frames.forEach((f, i) => {
       const b64 = f.dataUrl.split(",")[1];
-      if (!b64) return;
+      if (!b64) {
+        return;
+      }
       const idx = String(i).padStart(4, "0");
       framesDir.file(`frame_${idx}_${f.timestamp.toFixed(0)}s.jpg`, b64, {
         base64: true,

@@ -6,11 +6,15 @@ let loading: Promise<FFmpeg> | null = null;
 
 const CORE_BASE = "https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd";
 
-export async function initFFmpeg(
+export function initFFmpeg(
   onProgress?: (message: string, progress: number) => void
 ): Promise<FFmpeg> {
-  if (ffmpeg) return ffmpeg;
-  if (loading) return loading;
+  if (ffmpeg) {
+    return Promise.resolve(ffmpeg);
+  }
+  if (loading) {
+    return loading;
+  }
 
   loading = (async () => {
     const instance = new FFmpeg();
@@ -47,7 +51,8 @@ export async function initFFmpeg(
 }
 
 export function getFFmpeg(): FFmpeg {
-  if (!ffmpeg)
+  if (!ffmpeg) {
     throw new Error("FFmpeg not initialized — call initFFmpeg first");
+  }
   return ffmpeg;
 }

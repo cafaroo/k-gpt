@@ -52,13 +52,13 @@ export function Timeline({
       style={{ height: 84 }}
     >
       <div className="absolute inset-x-0 top-0 flex h-10 items-end">
-        {audioSegments.map((seg, i) => {
+        {audioSegments.map((seg) => {
           const range = Math.max(1, maxRms.top - maxRms.bottom);
           const h = Math.max(2, ((seg.rmsLevel - maxRms.bottom) / range) * 40);
           return (
             <div
               className="bg-primary/25"
-              key={i}
+              key={`${seg.startTime}-audio`}
               style={{
                 height: `${h}px`,
                 width: `${(1 / audioSegments.length) * 100}%`,
@@ -69,11 +69,11 @@ export function Timeline({
       </div>
 
       <div className="absolute inset-x-0 flex h-3" style={{ top: 44 }}>
-        {motionSegments.map((seg, i) => {
+        {motionSegments.map((seg) => {
           const intensity = seg.motionScore / 100;
           return (
             <div
-              key={i}
+              key={`${seg.startTime}-motion`}
               style={{
                 width: `${((seg.endTime - seg.startTime) / duration) * 100}%`,
                 backgroundColor: `rgba(239, 68, 68, ${0.15 + intensity * 0.7})`,

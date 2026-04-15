@@ -12,7 +12,9 @@ export async function decodeToGray32(
   canvas.width = GRAY_SIZE;
   canvas.height = GRAY_SIZE;
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  if (!ctx) throw new Error("no 2d context");
+  if (!ctx) {
+    throw new Error("no 2d context");
+  }
   ctx.drawImage(img, 0, 0, GRAY_SIZE, GRAY_SIZE);
   const { data } = ctx.getImageData(0, 0, GRAY_SIZE, GRAY_SIZE);
   const gray = new Uint8ClampedArray(GRAY_SIZE * GRAY_SIZE);

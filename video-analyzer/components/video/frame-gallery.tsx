@@ -9,7 +9,9 @@ type Props = {
 };
 
 export function FrameGallery({ frames, currentTime, onSeek }: Props) {
-  if (frames.length === 0) return null;
+  if (frames.length === 0) {
+    return null;
+  }
   return (
     <div className="flex w-full gap-1 overflow-x-auto pb-2">
       {frames.map((f) => {
@@ -24,6 +26,7 @@ export function FrameGallery({ frames, currentTime, onSeek }: Props) {
             style={{ width: 80 }}
             type="button"
           >
+            {/* biome-ignore lint/performance/noImgElement: data URL from client-side ffmpeg */}
             <img
               alt={`frame at ${f.timestamp}s`}
               className="h-14 w-20 object-cover"

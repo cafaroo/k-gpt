@@ -20,7 +20,9 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(
 
     useImperativeHandle(ref, () => ({
       seek: (seconds: number) => {
-        if (videoRef.current) videoRef.current.currentTime = seconds;
+        if (videoRef.current) {
+          videoRef.current.currentTime = seconds;
+        }
       },
       play: () => videoRef.current?.play(),
       pause: () => videoRef.current?.pause(),
@@ -28,7 +30,9 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(
 
     useEffect(() => {
       const v = videoRef.current;
-      if (!v) return;
+      if (!v) {
+        return;
+      }
       const time = () => onTimeUpdate?.(v.currentTime);
       const dur = () => onDuration?.(v.duration);
       v.addEventListener("timeupdate", time);

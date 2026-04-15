@@ -35,7 +35,9 @@ export async function extractAll(
 
   try {
     await ffmpeg.deleteFile("input.mp4");
-  } catch {}
+  } catch {
+    // ignore cleanup failures
+  }
 
   onProgress?.("Ready", 1);
 
@@ -49,7 +51,7 @@ export async function extractAll(
   };
 }
 
-async function extractMetadata(file: File): Promise<VideoMetadata> {
+function extractMetadata(file: File): Promise<VideoMetadata> {
   return new Promise((resolve, reject) => {
     const video = document.createElement("video");
     video.preload = "metadata";
@@ -144,7 +146,9 @@ async function extractAudioRMS(): Promise<AudioSegment[]> {
         const v = float32[j];
         sumSq += v * v;
         const abs = Math.abs(v);
-        if (abs > peak) peak = abs;
+        if (abs > peak) {
+          peak = abs;
+        }
       }
       const rms = Math.sqrt(sumSq / (end - i));
       const rmsDb = 20 * Math.log10(Math.max(rms, 1e-10));
@@ -159,7 +163,9 @@ async function extractAudioRMS(): Promise<AudioSegment[]> {
     }
     try {
       await ffmpeg.deleteFile("audio.raw");
-    } catch {}
+    } catch {
+      // ignore cleanup failures
+    }
     return segments;
   } catch {
     return [];
@@ -191,7 +197,9 @@ async function analyzeFrameColor(
   canvas.width = 100;
   canvas.height = 100;
   const ctx = canvas.getContext("2d");
-  if (!ctx) return { brightness: 0, dominantColor: "#000000" };
+  if (!ctx) {
+    return { brightness: 0, dominantColor: "#000000" };
+  }
   ctx.drawImage(img, 0, 0, 100, 100);
   const { data } = ctx.getImageData(0, 0, 100, 100);
   let r = 0;

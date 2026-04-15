@@ -16,10 +16,7 @@ export function ExtractionProgress({
   progress,
   error,
 }: Props) {
-  const currentIndex = Math.max(
-    0,
-    steps.findIndex((s) => s === currentStep)
-  );
+  const currentIndex = Math.max(0, steps.indexOf(currentStep));
 
   return (
     <div className="flex w-full max-w-xl flex-col gap-6">

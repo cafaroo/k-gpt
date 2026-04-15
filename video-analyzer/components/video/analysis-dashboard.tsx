@@ -157,10 +157,10 @@ export function AnalysisDashboard({ file, extraction, onReset }: Props) {
               </CardHeader>
               <CardContent className="max-h-[28rem] overflow-y-auto">
                 <ul className="text-sm">
-                  {motionSegments.map((m, i) => (
+                  {motionSegments.map((m) => (
                     <li
                       className="flex items-center justify-between border-b py-1 last:border-0"
-                      key={i}
+                      key={`${m.startTime}-${m.endTime}`}
                     >
                       <span>
                         {m.startTime.toFixed(1)}–{m.endTime.toFixed(1)}s

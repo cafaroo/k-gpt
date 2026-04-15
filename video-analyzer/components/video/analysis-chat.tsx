@@ -20,7 +20,9 @@ type Props = {
 };
 
 function pickKeyframes(frames: ExtractedFrame[], count = 8): ExtractedFrame[] {
-  if (frames.length <= count) return frames;
+  if (frames.length <= count) {
+    return frames;
+  }
   const step = frames.length / count;
   const out: ExtractedFrame[] = [];
   for (let i = 0; i < count; i++) {
@@ -76,7 +78,9 @@ export function AnalysisChat({ extraction, performance }: Props) {
 
   const submit = (text: string) => {
     const trimmed = text.trim();
-    if (!trimmed || isStreaming) return;
+    if (!trimmed || isStreaming) {
+      return;
+    }
     const parts: UIMessage["parts"] = [{ type: "text", text: trimmed }];
     if (firstSendRef.current) {
       firstSendRef.current = false;
@@ -120,11 +124,12 @@ export function AnalysisChat({ extraction, performance }: Props) {
                 key={m.id}
               >
                 {m.parts.map((p, i) => {
+                  const partKey = `${m.id}-${i}`;
                   if (p.type === "text") {
                     return (
                       <p
                         className="whitespace-pre-wrap leading-relaxed"
-                        key={i}
+                        key={partKey}
                       >
                         {p.text}
                       </p>
@@ -134,7 +139,7 @@ export function AnalysisChat({ extraction, performance }: Props) {
                     return (
                       <span
                         className="text-muted-foreground block text-[10px]"
-                        key={i}
+                        key={partKey}
                       >
                         [image attached]
                       </span>
