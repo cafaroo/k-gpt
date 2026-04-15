@@ -46,9 +46,12 @@ export function useVideoProcessor() {
       setProgress(0.5);
 
       // Fire visual (Qwen) and audio (Gemini) analyses in parallel.
-      const frameDataUrls = result.frames.map((f) => f.dataUrl);
+      const { uploadAudioWav, uploadFramesBundle } = await import(
+        "@/lib/video/blob-upload"
+      );
 
       const qwenPromise = (async () => {
+        const framesUrl = await uploadFramesBundle(result.frames);
         const res = await fetch("/analyze/api/analyze", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -62,7 +65,7 @@ export function useVideoProcessor() {
                 dataUrl: "",
               })),
             },
-            frameDataUrls,
+            framesUrl,
           }),
         });
         if (!res.ok) {
@@ -80,10 +83,11 @@ export function useVideoProcessor() {
           "@/lib/video/audio-extract"
         );
         const wav = await encodeVideoAudioToWav(file);
+        const audioUrl = await uploadAudioWav(wav);
         const res = await fetch("/analyze/api/audio", {
           method: "POST",
-          headers: { "Content-Type": wav.type || "audio/wav" },
-          body: wav,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ audioUrl }),
         });
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));

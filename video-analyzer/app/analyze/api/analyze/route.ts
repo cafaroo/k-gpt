@@ -11,40 +11,67 @@ export const maxDuration = 120;
 
 type RequestBody = {
   extraction: VideoExtraction;
-  frameDataUrls: string[];
+  /** URL to a JSON blob {version:1, frames:[{timestamp, dataUrl}]} */
+  framesUrl?: string;
+  /** Legacy fallback: inline base64 frames (subject to 4.5 MB limit) */
+  frameDataUrls?: string[];
   modelId?: string;
 };
 
+type FramesBundle = {
+  version: 1;
+  frames: { timestamp: number; dataUrl: string }[];
+};
+
 export async function POST(req: Request) {
-  const { extraction, frameDataUrls, modelId } =
-    (await req.json()) as RequestBody;
-
-  if (!extraction || !frameDataUrls || frameDataUrls.length === 0) {
-    return Response.json(
-      { error: "extraction and frameDataUrls required" },
-      { status: 400 }
-    );
-  }
-
-  const { metadataText, audioText, motionText } =
-    buildQwenUserMessage(extraction);
-
-  const textBlock = [
-    metadataText,
-    "",
-    audioText,
-    "",
-    motionText,
-    "",
-    "Keyframes (chronological, 1 per second) attached below.",
-  ].join("\n");
-
-  const imageParts = frameDataUrls.map((url) => ({
-    type: "image" as const,
-    image: url,
-  }));
-
   try {
+    const { extraction, framesUrl, frameDataUrls, modelId } =
+      (await req.json()) as RequestBody;
+
+    if (!extraction) {
+      return Response.json({ error: "extraction required" }, { status: 400 });
+    }
+
+    let dataUrls: string[];
+    if (framesUrl) {
+      const bundleRes = await fetch(framesUrl);
+      if (!bundleRes.ok) {
+        return Response.json(
+          {
+            error: `failed to fetch frames bundle (HTTP ${bundleRes.status})`,
+          },
+          { status: 400 }
+        );
+      }
+      const bundle = (await bundleRes.json()) as FramesBundle;
+      dataUrls = bundle.frames.map((f) => f.dataUrl);
+    } else if (frameDataUrls && frameDataUrls.length > 0) {
+      dataUrls = frameDataUrls;
+    } else {
+      return Response.json(
+        { error: "framesUrl or frameDataUrls required" },
+        { status: 400 }
+      );
+    }
+
+    const { metadataText, audioText, motionText } =
+      buildQwenUserMessage(extraction);
+
+    const textBlock = [
+      metadataText,
+      "",
+      audioText,
+      "",
+      motionText,
+      "",
+      "Keyframes (chronological, 1 per second) attached below.",
+    ].join("\n");
+
+    const imageParts = dataUrls.map((url) => ({
+      type: "image" as const,
+      image: url,
+    }));
+
     const { object } = await generateObject({
       model: getLanguageModel(modelId ?? "alibaba/qwen3-vl-thinking"),
       schema: QwenAnalysisSchema,
@@ -60,7 +87,9 @@ export async function POST(req: Request) {
     return Response.json({ analysis: object });
   } catch (err) {
     console.error("[/analyze/api/analyze] failed:", err);
-    const message = err instanceof Error ? err.message : "Analysis failed";
-    return Response.json({ error: message }, { status: 500 });
+    return Response.json(
+      { error: err instanceof Error ? err.message : "Analysis failed" },
+      { status: 500 }
+    );
   }
 }

@@ -8,23 +8,29 @@ import { AudioAnalysisSchema } from "@/lib/video/audio-schema";
 
 export const maxDuration = 120;
 
-// Keep the request body modest. Video files can be up to ~100 MB; we POST
-// the raw audio here (typically much smaller than the full video).
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: "60mb",
-    },
-  },
+type RequestBody = {
+  audioUrl: string;
 };
 
 export async function POST(req: Request) {
   try {
-    const buffer = Buffer.from(await req.arrayBuffer());
-    const mediaType = req.headers.get("content-type") || "audio/mp4";
+    const { audioUrl } = (await req.json()) as RequestBody;
+    if (!audioUrl) {
+      return Response.json({ error: "audioUrl required" }, { status: 400 });
+    }
+
+    const fetched = await fetch(audioUrl);
+    if (!fetched.ok) {
+      return Response.json(
+        { error: `failed to fetch audio (HTTP ${fetched.status})` },
+        { status: 400 }
+      );
+    }
+    const buffer = Buffer.from(await fetched.arrayBuffer());
+    const mediaType = fetched.headers.get("content-type") || "audio/wav";
 
     if (buffer.byteLength === 0) {
-      return Response.json({ error: "empty body" }, { status: 400 });
+      return Response.json({ error: "empty audio" }, { status: 400 });
     }
 
     const { object } = await generateObject({
@@ -36,11 +42,7 @@ export async function POST(req: Request) {
           role: "user",
           content: [
             { type: "text", text: AUDIO_USER_PROMPT },
-            {
-              type: "file",
-              data: buffer,
-              mediaType,
-            },
+            { type: "file", data: buffer, mediaType },
           ],
         },
       ],
@@ -49,8 +51,9 @@ export async function POST(req: Request) {
     return Response.json({ analysis: object });
   } catch (err) {
     console.error("[/analyze/api/audio] failed:", err);
-    const message =
-      err instanceof Error ? err.message : "Audio analysis failed";
-    return Response.json({ error: message }, { status: 500 });
+    return Response.json(
+      { error: err instanceof Error ? err.message : "Audio analysis failed" },
+      { status: 500 }
+    );
   }
 }

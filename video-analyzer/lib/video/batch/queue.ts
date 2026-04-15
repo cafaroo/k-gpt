@@ -58,9 +58,7 @@ async function processOne(job: VideoJob, updateJob: UpdateJob): Promise<void> {
       thumbnailDataUrl,
     });
 
-    const frameDataUrls = extraction.frames.map((f) => f.dataUrl);
-
-    const qwenPromise = runQwen(extraction, frameDataUrls);
+    const qwenPromise = runQwen(extraction);
     const audioPromise = runAudio(job.file);
 
     const [qwenResult, audioResult] = await Promise.allSettled([
@@ -116,9 +114,10 @@ async function processOne(job: VideoJob, updateJob: UpdateJob): Promise<void> {
 }
 
 async function runQwen(
-  extraction: import("../types").VideoExtraction,
-  frameDataUrls: string[]
+  extraction: import("../types").VideoExtraction
 ): Promise<QwenAnalysis> {
+  const { uploadFramesBundle } = await import("../blob-upload");
+  const framesUrl = await uploadFramesBundle(extraction.frames);
   const res = await fetch("/analyze/api/analyze", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -132,7 +131,7 @@ async function runQwen(
           dataUrl: "",
         })),
       },
-      frameDataUrls,
+      framesUrl,
     }),
   });
 
@@ -146,11 +145,13 @@ async function runQwen(
 
 async function runAudio(file: File): Promise<AudioAnalysis> {
   const { encodeVideoAudioToWav } = await import("../audio-extract");
+  const { uploadAudioWav } = await import("../blob-upload");
   const wav = await encodeVideoAudioToWav(file);
+  const audioUrl = await uploadAudioWav(wav);
   const res = await fetch("/analyze/api/audio", {
     method: "POST",
-    headers: { "Content-Type": wav.type || "audio/wav" },
-    body: wav,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ audioUrl }),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
