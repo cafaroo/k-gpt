@@ -1,19 +1,70 @@
+import { NICHE_PLAYBOOKS, UNIVERSAL_RULES } from "./framework/rules";
+import {
+  BEAT_TYPES,
+  CTA_TYPES,
+  FORMATS,
+  HOOK_STYLES,
+  NICHES,
+} from "./framework/taxonomy";
 import type { AudioSegment, VideoExtraction } from "./types";
 
-export const QWEN_SYSTEM_PROMPT = `You are a senior short-form video creative strategist analyzing ad performance for TikTok, Instagram Reels, YouTube Shorts, and Facebook Reels.
+const rulesBlock = UNIVERSAL_RULES.map(
+  (r) =>
+    `- [${r.id}] ${r.title}\n    ${r.detail}\n    CHECK: ${r.checkInstruction}`,
+).join("\n");
 
-Given keyframes sampled at 1-second intervals plus numerical audio RMS data plus video metadata, produce a structured analysis that helps the creator understand:
-- What works and what doesn't (hook, pacing, CTA)
-- Scene-by-scene narrative function
-- Predicted audience engagement
-- Concrete, prioritized improvements
+const nicheBlock = NICHE_PLAYBOOKS.map(
+  (p) =>
+    `- ${p.niche}:\n${p.checks
+      .map((c) => `    • [${c.id}] ${c.label} — ${c.instruction}`)
+      .join("\n")}`,
+).join("\n");
 
-Observations:
-- You CANNOT hear audio, but you CAN see when people are talking (mouth movement) and you CAN see numerical RMS data showing loudness over time. Use visual + RMS together to infer voiceover presence and audio pacing.
-- Loud sustained RMS = music or voiceover. Rapid RMS variations = speech. Sustained low RMS = silence or ambient.
-- Frames are in chronological order. Each frame's index corresponds to its timestamp in seconds (0-indexed).
+export const QWEN_SYSTEM_PROMPT = `You are a senior short-form video creative strategist specializing in TikTok, Instagram Reels, YouTube Shorts, and Facebook Reels ad performance.
 
-Be specific, cite timestamps, and never generic. Every recommendation must be actionable within the next video revision.`;
+Your job: take keyframes (1 per second), audio RMS statistics, and motion/scene heuristics for one video and produce a strict-JSON analysis against the schema provided.
+
+═══════════════════════════════════════════════════════════════════════════
+WHAT YOU CAN AND CAN'T SEE
+═══════════════════════════════════════════════════════════════════════════
+- You RECEIVE: ordered keyframes (1 per second, chronological), plus numerical audio RMS statistics and scene/motion heuristics as text.
+- You CANNOT hear audio directly. You CAN see mouths moving, and you receive RMS stats (mean, std-dev, silent stretches, peak moments). Infer voiceover presence from RMS std-dev (high variation ⇒ likely speech) plus visible mouth movement.
+- Each frame's index corresponds to its timestamp in seconds (0-indexed).
+
+═══════════════════════════════════════════════════════════════════════════
+SCORING FRAMEWORK — UNIVERSAL RULES (score each one)
+═══════════════════════════════════════════════════════════════════════════
+These are patterns that correlated with better engagement across 10k+ TikTok/Reels/Shorts videos. Score EACH rule in the ruleCompliance array with a concrete timestamp as evidence.
+
+${rulesBlock}
+
+═══════════════════════════════════════════════════════════════════════════
+NICHE PLAYBOOKS — check the detected niche's checklist too
+═══════════════════════════════════════════════════════════════════════════
+${nicheBlock}
+
+═══════════════════════════════════════════════════════════════════════════
+TAXONOMIES — use the exact enum values
+═══════════════════════════════════════════════════════════════════════════
+Hook styles: ${HOOK_STYLES.join(" | ")}
+Beat types: ${BEAT_TYPES.join(" | ")}
+CTA types: ${CTA_TYPES.join(" | ")}
+Formats: ${FORMATS.join(" | ")}
+Niches: ${NICHES.join(" | ")}
+
+═══════════════════════════════════════════════════════════════════════════
+OUTPUT DISCIPLINE
+═══════════════════════════════════════════════════════════════════════════
+- Be specific. Cite timestamps (e.g. "0:02", "0:14").
+- Never output generic platitudes like "good hook, strong CTA" — explain WHY with observable evidence.
+- Every recommendation must include a 'testVariant' field: a concrete, ready-to-shoot alternative hook line or structure idea the creator can ship in their next version.
+- Fill the testPlan with 3 DIFFERENT hook styles as ready-to-shoot drafts, and 2 structure variants (e.g. early-result vs delayed-result). These are what the creator will A/B test next week.
+- intensityCurve: sample roughly once per second so the dashboard can plot it.
+- onScreenText.events: list every distinct text event you see with its time range, style, and position.
+- beatMap: at least hook + micro-proof (or equivalent) + body + CTA (or absence noted).
+- If you genuinely can't determine a field, still provide your best inferred answer — never refuse.
+
+Remember: the creator will ship A/B variants based on your testPlan. Make them distinct, specific, and non-generic.`;
 
 export function buildQwenUserMessage(extraction: VideoExtraction): {
   metadataText: string;
@@ -45,7 +96,7 @@ export function buildQwenUserMessage(extraction: VideoExtraction): {
       motionSegments.length > 0
         ? Math.round(
             motionSegments.reduce((s, m) => s + m.motionScore, 0) /
-              motionSegments.length
+              motionSegments.length,
           )
         : 0
     }/100`,
@@ -72,7 +123,6 @@ function summarizeAudio(segments: AudioSegment[]): string {
   const max = Math.max(...rmsValues);
   const min = Math.min(...rmsValues);
 
-  // Find top 5 loudest moments
   const sortedByLoudness = [...segments]
     .sort((a, b) => b.rmsLevel - a.rmsLevel)
     .slice(0, 5);
@@ -80,7 +130,6 @@ function summarizeAudio(segments: AudioSegment[]): string {
     .map((s) => `${s.startTime.toFixed(1)}s (${s.rmsLevel.toFixed(1)} dB)`)
     .join(", ");
 
-  // Find silent stretches (≥1s of contiguous silence)
   const silentStretches: { start: number; end: number }[] = [];
   let stretchStart: number | null = null;
   for (const seg of segments) {
@@ -100,15 +149,14 @@ function summarizeAudio(segments: AudioSegment[]): string {
     }
   }
 
-  // Estimate voiceover likelihood from RMS variance
   const variance =
     rmsValues.reduce((sum, v) => sum + (v - mean) ** 2, 0) / rmsValues.length;
   const stdDev = Math.sqrt(variance);
 
   return [
-    `Audio RMS analysis (${segments.length} × 0.1s buckets at 48 kHz):`,
+    `Audio RMS analysis (${segments.length} × 0.1s buckets):`,
     `- Mean loudness: ${mean.toFixed(1)} dB (range ${min.toFixed(1)} to ${max.toFixed(1)})`,
-    `- RMS std dev: ${stdDev.toFixed(1)} dB (${stdDev > 8 ? "high variation — likely speech" : "low variation — likely steady music or silence"})`,
+    `- RMS std dev: ${stdDev.toFixed(1)} dB (${stdDev > 8 ? "high variation — likely speech/VO" : "low variation — likely steady music or silence"})`,
     `- Silent buckets (< -40 dB): ${silentCount}/${segments.length} (${silentPct}%)`,
     `- Notable silent stretches (≥1s): ${
       silentStretches.length > 0

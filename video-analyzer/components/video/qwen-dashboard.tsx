@@ -20,13 +20,20 @@ import type {
 } from "@/lib/video/types";
 import { AnalysisChat } from "./analysis-chat";
 import { AudioChart } from "./audio-chart";
+import { BeatMapStrip } from "./beat-map-strip";
 import { ExportButton } from "./export-button";
 import { FrameGallery } from "./frame-gallery";
 import { HeroScorecards, OverallSummary } from "./hero-scorecards";
 import { MetricsInput } from "./metrics-input";
 import { PacingCurve } from "./pacing-curve";
 import { Recommendations } from "./recommendations";
+import {
+  NichePlaybookCard,
+  PerformancePredictionCard,
+  RuleComplianceCard,
+} from "./rule-compliance";
 import { SceneNarrative } from "./scene-narrative";
+import { TestPlanCard } from "./test-plan-card";
 import { Timeline } from "./timeline";
 import { VideoPlayer, type VideoPlayerHandle } from "./video-player";
 
@@ -156,6 +163,11 @@ export function QwenDashboard({
                 frames={frames}
                 onSeek={seek}
               />
+              <BeatMapStrip
+                analysis={analysis}
+                duration={metadata.duration}
+                onSeek={seek}
+              />
               <SceneNarrative
                 analysis={analysis}
                 duration={metadata.duration}
@@ -163,10 +175,14 @@ export function QwenDashboard({
               />
             </div>
 
-            {/* Right: pacing + recommendations + details */}
+            {/* Right: pacing + predictions + rules + recommendations + test plan */}
             <div className="space-y-4">
+              <PerformancePredictionCard analysis={analysis} />
               <PacingCurve analysis={analysis} ref={pacingCurveRef} />
+              <TestPlanCard analysis={analysis} />
               <Recommendations analysis={analysis} />
+              <RuleComplianceCard analysis={analysis} />
+              <NichePlaybookCard analysis={analysis} />
               <DetailCards analysis={analysis} />
             </div>
           </div>
