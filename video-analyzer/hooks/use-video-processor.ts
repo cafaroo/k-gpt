@@ -4,10 +4,10 @@ import { useCallback, useState } from "react";
 import type { ProcessingState, VideoExtraction } from "@/lib/video/types";
 
 const STEPS = [
-  "Loading ffmpeg",
+  "Loading video",
   "Extracting frames",
   "Motion & scenes analyzed",
-  "Extracting audio",
+  "Audio analyzed",
   "Ready",
 ] as const;
 
@@ -22,19 +22,14 @@ export function useVideoProcessor() {
     try {
       setError(null);
       setState("loading");
-      setStep("Loading ffmpeg");
+      setStep("Loading video");
       setProgress(0);
-
-      const { initFFmpeg } = await import("@/lib/video/ffmpeg-worker");
-      await initFFmpeg((_msg, p) => {
-        setProgress(p * 0.1);
-      });
 
       setState("extracting");
       const { extractAll } = await import("@/lib/video/extractors");
       const result = await extractAll(file, (stepName, p) => {
         setStep(stepName);
-        setProgress(0.1 + p * 0.9);
+        setProgress(p);
       });
 
       setExtraction(result);
