@@ -45,7 +45,8 @@ export function useVideoProcessor() {
       setStep("Running AI analysis");
       setProgress(0.5);
 
-      // Cap frames to 48 to keep Qwen payload under Fluid Compute body limits.
+      // Cap frames to 24 so POST body stays well under the 4.5 MB Vercel limit
+      // (24 × ~80 KB JPEG ≈ 1.9 MB inline).
       const pickFrames = <T>(arr: T[], max: number): T[] => {
         if (arr.length <= max) {
           return arr;
@@ -53,7 +54,7 @@ export function useVideoProcessor() {
         const step = arr.length / max;
         return Array.from({ length: max }, (_, i) => arr[Math.floor(i * step)]);
       };
-      const sampledFrames = pickFrames(result.frames, 48);
+      const sampledFrames = pickFrames(result.frames, 24);
 
       const qwenPromise = (async () => {
         const res = await fetch("/analyze/api/analyze", {

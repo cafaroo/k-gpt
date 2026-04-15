@@ -117,12 +117,12 @@ async function runQwen(
   extraction: import("../types").VideoExtraction
 ): Promise<QwenAnalysis> {
   const sampled =
-    extraction.frames.length <= 48
+    extraction.frames.length <= 24
       ? extraction.frames
       : Array.from(
-          { length: 48 },
+          { length: 24 },
           (_, i) =>
-            extraction.frames[Math.floor((i * extraction.frames.length) / 48)]
+            extraction.frames[Math.floor((i * extraction.frames.length) / 24)]
         );
 
   const res = await fetch("/analyze/api/analyze", {

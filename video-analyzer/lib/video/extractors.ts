@@ -115,7 +115,7 @@ async function extractFramesFromVideo(
     const t = Math.min(i, duration - 0.01);
     await seekVideo(video, t);
     ctx.drawImage(video, 0, 0, targetWidth, targetHeight);
-    const dataUrl = canvas.toDataURL("image/jpeg", 0.72);
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.62);
     const { brightness, dominantColor } = sampleColorFromContext(
       ctx,
       targetWidth,
