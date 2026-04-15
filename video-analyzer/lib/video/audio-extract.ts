@@ -28,9 +28,19 @@ export async function encodeVideoAudioToWav(file: File): Promise<Blob> {
     decodeCtx.close();
   }
 
-  const targetRate = 16_000; // 16 kHz is plenty for speech/music classification
+  // Adaptive sample rate — keep WAV under ~3.5 MB (safely within Vercel body limit).
+  // At 16-bit mono: 16 kHz = 32 KB/s, 12 kHz = 24 KB/s, 8 kHz = 16 KB/s.
+  const duration = audioBuffer.duration;
+  let targetRate: number;
+  if (duration <= 90) {
+    targetRate = 16_000;
+  } else if (duration <= 150) {
+    targetRate = 12_000;
+  } else {
+    targetRate = 8_000;
+  }
   const targetChannels = 1; // mono cuts the payload in half
-  const length = Math.ceil(audioBuffer.duration * targetRate);
+  const length = Math.ceil(duration * targetRate);
 
   const offline = new OfflineAudioContext(targetChannels, length, targetRate);
   const src = offline.createBufferSource();
