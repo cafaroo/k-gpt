@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import type { AudioAnalysis } from "@/lib/video/audio-schema";
 import type { QwenAnalysis } from "@/lib/video/qwen-schema";
 import type { ProcessingState, VideoExtraction } from "@/lib/video/types";
 
@@ -19,6 +20,9 @@ export function useVideoProcessor() {
   const [step, setStep] = useState<string>("");
   const [extraction, setExtraction] = useState<VideoExtraction | null>(null);
   const [analysis, setAnalysis] = useState<QwenAnalysis | null>(null);
+  const [audioAnalysis, setAudioAnalysis] = useState<AudioAnalysis | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
 
   const processVideo = useCallback(async (file: File) => {
@@ -32,27 +36,25 @@ export function useVideoProcessor() {
       const { extractAll } = await import("@/lib/video/extractors");
       const result = await extractAll(file, (stepName, p) => {
         setStep(stepName);
-        // Extraction occupies 0..0.5 of overall progress
-        setProgress(p * 0.5);
+        setProgress(p * 0.45);
       });
 
       setExtraction(result);
 
-      // Kick off Qwen analysis
       setState("analyzing");
       setStep("Running AI analysis");
-      setProgress(0.55);
+      setProgress(0.5);
 
-      try {
-        const frameDataUrls = result.frames.map((f) => f.dataUrl);
+      // Fire visual (Qwen) and audio (Gemini) analyses in parallel.
+      const frameDataUrls = result.frames.map((f) => f.dataUrl);
+
+      const qwenPromise = (async () => {
         const res = await fetch("/analyze/api/analyze", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             extraction: {
               ...result,
-              // Strip dataUrl/gray32 from inline extraction to reduce payload size;
-              // frames are sent separately via frameDataUrls.
               frames: result.frames.map((f) => ({
                 timestamp: f.timestamp,
                 brightness: f.brightness,
@@ -63,29 +65,68 @@ export function useVideoProcessor() {
             frameDataUrls,
           }),
         });
-
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
-          throw new Error(body.error || `Analysis failed (HTTP ${res.status})`);
+          throw new Error(body.error || `Visual analysis HTTP ${res.status}`);
         }
-
-        const { analysis: qwenAnalysis } = (await res.json()) as {
+        const { analysis: qwen } = (await res.json()) as {
           analysis: QwenAnalysis;
         };
-        setAnalysis(qwenAnalysis);
-        setProgress(1);
-      } catch (analysisErr) {
-        // Don't fail the whole run if Qwen crashes; user still gets dashboard
-        // with extraction data only.
-        console.warn("[useVideoProcessor] Qwen analysis failed:", analysisErr);
-        setError(
-          analysisErr instanceof Error
-            ? `Analysis failed: ${analysisErr.message}`
-            : "Analysis failed"
+        return qwen;
+      })();
+
+      const audioPromise = (async () => {
+        const { encodeVideoAudioToWav } = await import(
+          "@/lib/video/audio-extract"
         );
-        setProgress(1);
+        const wav = await encodeVideoAudioToWav(file);
+        const res = await fetch("/analyze/api/audio", {
+          method: "POST",
+          headers: { "Content-Type": wav.type || "audio/wav" },
+          body: wav,
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error || `Audio analysis HTTP ${res.status}`);
+        }
+        const { analysis: audio } = (await res.json()) as {
+          analysis: AudioAnalysis;
+        };
+        return audio;
+      })();
+
+      const [qwenResult, audioResult] = await Promise.allSettled([
+        qwenPromise,
+        audioPromise,
+      ]);
+
+      if (qwenResult.status === "fulfilled") {
+        setAnalysis(qwenResult.value);
+      } else {
+        console.warn("[useVideoProcessor] Qwen failed:", qwenResult.reason);
+      }
+      if (audioResult.status === "fulfilled") {
+        setAudioAnalysis(audioResult.value);
+      } else {
+        console.warn("[useVideoProcessor] audio failed:", audioResult.reason);
       }
 
+      const errors: string[] = [];
+      if (qwenResult.status === "rejected") {
+        errors.push(
+          `Visual: ${qwenResult.reason instanceof Error ? qwenResult.reason.message : String(qwenResult.reason)}`,
+        );
+      }
+      if (audioResult.status === "rejected") {
+        errors.push(
+          `Audio: ${audioResult.reason instanceof Error ? audioResult.reason.message : String(audioResult.reason)}`,
+        );
+      }
+      if (errors.length > 0) {
+        setError(errors.join(" · "));
+      }
+
+      setProgress(1);
       setState("done");
       setStep("Ready");
     } catch (err) {
@@ -101,6 +142,7 @@ export function useVideoProcessor() {
     setStep("");
     setExtraction(null);
     setAnalysis(null);
+    setAudioAnalysis(null);
     setError(null);
   }, []);
 
@@ -110,6 +152,7 @@ export function useVideoProcessor() {
     step,
     extraction,
     analysis,
+    audioAnalysis,
     error,
     processVideo,
     reset,

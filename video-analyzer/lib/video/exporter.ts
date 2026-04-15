@@ -1,6 +1,7 @@
 import ExcelJS from "exceljs";
 import { toPng } from "html-to-image";
 import JSZip from "jszip";
+import type { AudioAnalysis } from "./audio-schema";
 import type { QwenAnalysis } from "./qwen-schema";
 import type {
   ExportChartRefs,
@@ -12,6 +13,7 @@ type Analysis = {
   extraction: VideoExtraction;
   performance?: PerformanceData;
   qwenAnalysis?: QwenAnalysis | null;
+  audioAnalysis?: AudioAnalysis | null;
 };
 
 export async function exportAnalysis(
@@ -19,11 +21,17 @@ export async function exportAnalysis(
   chartRefs: ExportChartRefs = {}
 ): Promise<void> {
   const zip = new JSZip();
-  const { extraction, performance, qwenAnalysis } = analysis;
+  const { extraction, performance, qwenAnalysis, audioAnalysis } = analysis;
 
-  // 0. Qwen analysis JSON (structured AI output)
+  // 0. AI analysis JSONs
   if (qwenAnalysis) {
     zip.file("qwen-analysis.json", JSON.stringify(qwenAnalysis, null, 2));
+  }
+  if (audioAnalysis) {
+    zip.file("audio-analysis.json", JSON.stringify(audioAnalysis, null, 2));
+    if (audioAnalysis.voiceover.transcript) {
+      zip.file("transcript.txt", audioAnalysis.voiceover.transcript);
+    }
   }
 
   // 1. extraction.json (without huge gray32 arrays and dataUrls)

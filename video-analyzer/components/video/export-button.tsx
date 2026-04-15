@@ -4,6 +4,7 @@ import { Download, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import type { AudioAnalysis } from "@/lib/video/audio-schema";
 import { exportAnalysis } from "@/lib/video/exporter";
 import type { QwenAnalysis } from "@/lib/video/qwen-schema";
 import type {
@@ -17,6 +18,7 @@ type Props = {
     extraction: VideoExtraction;
     performance?: PerformanceData;
     qwenAnalysis?: QwenAnalysis | null;
+    audioAnalysis?: AudioAnalysis | null;
   };
   chartRefs: ExportChartRefs;
 };

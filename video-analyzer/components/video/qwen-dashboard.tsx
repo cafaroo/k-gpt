@@ -12,6 +12,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { AudioAnalysis } from "@/lib/video/audio-schema";
 import type { QwenAnalysis } from "@/lib/video/qwen-schema";
 import type {
   ExportChartRefs,
@@ -20,6 +21,7 @@ import type {
 } from "@/lib/video/types";
 import { AnalysisChat } from "./analysis-chat";
 import { AudioChart } from "./audio-chart";
+import { AudioInsights } from "./audio-insights";
 import { BeatMapStrip } from "./beat-map-strip";
 import { ExportButton } from "./export-button";
 import { FrameGallery } from "./frame-gallery";
@@ -41,6 +43,7 @@ type Props = {
   file: File;
   extraction: VideoExtraction;
   analysis: QwenAnalysis | null;
+  audioAnalysis: AudioAnalysis | null;
   analysisError?: string | null;
   onReset: () => void;
 };
@@ -49,6 +52,7 @@ export function QwenDashboard({
   file,
   extraction,
   analysis,
+  audioAnalysis,
   analysisError,
   onReset,
 }: Props) {
@@ -91,7 +95,12 @@ export function QwenDashboard({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <ExportButton
-            analysis={{ extraction, performance, qwenAnalysis: analysis }}
+            analysis={{
+              extraction,
+              performance,
+              qwenAnalysis: analysis,
+              audioAnalysis,
+            }}
             chartRefs={chartRefs}
           />
           <Button onClick={onReset} size="sm" variant="outline">
@@ -113,6 +122,7 @@ export function QwenDashboard({
               </SheetHeader>
               <div className="min-h-0 flex-1">
                 <AnalysisChat
+                  audioAnalysis={audioAnalysis}
                   extraction={extraction}
                   performance={performance}
                   qwenAnalysis={analysis}
@@ -173,6 +183,9 @@ export function QwenDashboard({
                 duration={metadata.duration}
                 onSeek={seek}
               />
+              {audioAnalysis && (
+                <AudioInsights audio={audioAnalysis} onSeek={seek} />
+              )}
             </div>
 
             {/* Right: pacing + predictions + rules + recommendations + test plan */}

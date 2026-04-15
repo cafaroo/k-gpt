@@ -45,15 +45,21 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(
 
     return (
       <div className="bg-muted w-full overflow-hidden rounded-xl">
-        <video
-          className="h-auto w-full"
-          controls
-          playsInline
-          ref={videoRef}
-          src={src}
-        >
-          <track kind="captions" />
-        </video>
+        {src ? (
+          <video
+            className="h-auto w-full"
+            controls
+            playsInline
+            ref={videoRef}
+            src={src}
+          >
+            <track kind="captions" />
+          </video>
+        ) : (
+          <div className="flex aspect-[9/16] w-full items-center justify-center text-muted-foreground text-sm">
+            Loading…
+          </div>
+        )}
       </div>
     );
   }

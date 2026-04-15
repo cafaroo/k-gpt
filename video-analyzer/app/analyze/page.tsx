@@ -25,6 +25,7 @@ export default function AnalyzePage() {
       <QwenDashboard
         analysis={processor.analysis}
         analysisError={processor.error}
+        audioAnalysis={processor.audioAnalysis}
         extraction={processor.extraction}
         file={file}
         onReset={handleReset}
