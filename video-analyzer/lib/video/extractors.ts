@@ -14,22 +14,38 @@ export async function extractAll(
 ): Promise<VideoExtraction> {
   const ffmpeg = getFFmpeg();
 
+  console.log("[extract] writing file", file.name, file.size);
   await ffmpeg.writeFile("input.mp4", await fetchFile(file));
   onProgress?.("File loaded", 0.1);
 
+  console.log("[extract] reading metadata");
   const metadata = await extractMetadata(file);
   onProgress?.("Metadata extracted", 0.2);
 
-  const frames = await extractFrames();
+  let frames: ExtractedFrame[] = [];
+  try {
+    console.log("[extract] extracting frames");
+    frames = await extractFrames();
+  } catch (err) {
+    console.error("[extract] frame extraction failed:", err);
+    throw new Error(
+      `Frame extraction failed: ${err instanceof Error ? err.message : String(err)}`
+    );
+  }
   onProgress?.("Frames extracted", 0.55);
 
-  // gray32 per frame for motion/scenes
+  console.log("[extract] analyzing", frames.length, "frames");
   for (const frame of frames) {
-    frame.gray32 = await decodeToGray32(frame.dataUrl);
+    try {
+      frame.gray32 = await decodeToGray32(frame.dataUrl);
+    } catch (err) {
+      console.warn("[extract] gray32 failed for frame", frame.timestamp, err);
+    }
   }
   const { motion, scenes } = computeMotionAndScenes(frames);
   onProgress?.("Motion & scenes analyzed", 0.8);
 
+  console.log("[extract] extracting audio");
   const audioSegments = await extractAudioRMS();
   onProgress?.("Audio analyzed", 0.95);
 
@@ -78,13 +94,15 @@ function extractMetadata(file: File): Promise<VideoMetadata> {
 
 async function extractFrames(): Promise<ExtractedFrame[]> {
   const ffmpeg = getFFmpeg();
+  // Output at ~240px wide to keep wasm heap usage low.
   await ffmpeg.exec([
     "-i",
     "input.mp4",
     "-vf",
-    "fps=1,scale=480:-2",
+    "fps=1,scale=240:-2:flags=fast_bilinear",
     "-q:v",
-    "5",
+    "7",
+    "-an",
     "frame_%04d.jpg",
   ]);
 
@@ -94,7 +112,11 @@ async function extractFrames(): Promise<ExtractedFrame[]> {
     const filename = `frame_${String(i).padStart(4, "0")}.jpg`;
     try {
       const data = await ffmpeg.readFile(filename);
-      const blob = new Blob([data as Uint8Array], { type: "image/jpeg" });
+      const bytes = data as Uint8Array;
+      if (!bytes || bytes.length === 0) {
+        break;
+      }
+      const blob = new Blob([bytes], { type: "image/jpeg" });
       const dataUrl = await blobToDataURL(blob);
       const { brightness, dominantColor } = await analyzeFrameColor(dataUrl);
       frames.push({
@@ -103,7 +125,11 @@ async function extractFrames(): Promise<ExtractedFrame[]> {
         brightness,
         dominantColor,
       });
-      await ffmpeg.deleteFile(filename);
+      try {
+        await ffmpeg.deleteFile(filename);
+      } catch {
+        // ignore
+      }
       i++;
     } catch {
       break;
@@ -114,43 +140,51 @@ async function extractFrames(): Promise<ExtractedFrame[]> {
 
 async function extractAudioRMS(): Promise<AudioSegment[]> {
   const ffmpeg = getFFmpeg();
+  const sampleRate = 16_000; // lower rate → smaller wasm buffer
   try {
     await ffmpeg.exec([
       "-i",
       "input.mp4",
+      "-vn",
       "-ac",
       "1",
       "-ar",
-      "22050",
+      String(sampleRate),
       "-f",
-      "f32le",
+      "s16le", // 16-bit PCM is half the size of f32le
+      "-acodec",
+      "pcm_s16le",
       "audio.raw",
     ]);
     const audioData = await ffmpeg.readFile("audio.raw");
-    const float32 = new Float32Array(
-      (audioData as Uint8Array).buffer.slice(
-        (audioData as Uint8Array).byteOffset,
-        (audioData as Uint8Array).byteOffset +
-          (audioData as Uint8Array).byteLength
+    const bytes = audioData as Uint8Array;
+    if (!bytes || bytes.length < 2) {
+      return [];
+    }
+
+    // Int16 LE → normalized Float32 (-1..1)
+    const int16 = new Int16Array(
+      bytes.buffer.slice(
+        bytes.byteOffset,
+        bytes.byteOffset + (bytes.byteLength & ~1)
       )
     );
 
-    const sampleRate = 22_050;
     const bucketSize = Math.floor(sampleRate * 0.1);
     const segments: AudioSegment[] = [];
-    for (let i = 0; i < float32.length; i += bucketSize) {
-      const end = Math.min(i + bucketSize, float32.length);
+    for (let i = 0; i < int16.length; i += bucketSize) {
+      const end = Math.min(i + bucketSize, int16.length);
       let sumSq = 0;
       let peak = 0;
       for (let j = i; j < end; j++) {
-        const v = float32[j];
+        const v = int16[j] / 32_768;
         sumSq += v * v;
         const abs = Math.abs(v);
         if (abs > peak) {
           peak = abs;
         }
       }
-      const rms = Math.sqrt(sumSq / (end - i));
+      const rms = Math.sqrt(sumSq / Math.max(1, end - i));
       const rmsDb = 20 * Math.log10(Math.max(rms, 1e-10));
       const peakDb = 20 * Math.log10(Math.max(peak, 1e-10));
       segments.push({
@@ -164,10 +198,11 @@ async function extractAudioRMS(): Promise<AudioSegment[]> {
     try {
       await ffmpeg.deleteFile("audio.raw");
     } catch {
-      // ignore cleanup failures
+      // ignore
     }
     return segments;
-  } catch {
+  } catch (err) {
+    console.warn("[extract] audio extraction failed:", err);
     return [];
   }
 }
@@ -194,14 +229,14 @@ async function analyzeFrameColor(
   img.src = dataUrl;
   await img.decode();
   const canvas = document.createElement("canvas");
-  canvas.width = 100;
-  canvas.height = 100;
+  canvas.width = 64;
+  canvas.height = 64;
   const ctx = canvas.getContext("2d");
   if (!ctx) {
     return { brightness: 0, dominantColor: "#000000" };
   }
-  ctx.drawImage(img, 0, 0, 100, 100);
-  const { data } = ctx.getImageData(0, 0, 100, 100);
+  ctx.drawImage(img, 0, 0, 64, 64);
+  const { data } = ctx.getImageData(0, 0, 64, 64);
   let r = 0;
   let g = 0;
   let b = 0;
