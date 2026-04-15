@@ -1,0 +1,12 @@
+node_modules/
+.next/
+.env
+.env*.local
+.DS_Store
+tea_debug.log
+*.log
+.vercel
+.turbo
+dist/
+build/
+coverage/
