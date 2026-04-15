@@ -1,6 +1,9 @@
 import { generateObject } from "ai";
 import { getLanguageModel } from "@/lib/ai/providers";
-import { AUDIO_SYSTEM_PROMPT, AUDIO_USER_PROMPT } from "@/lib/video/audio-prompt";
+import {
+  AUDIO_SYSTEM_PROMPT,
+  AUDIO_USER_PROMPT,
+} from "@/lib/video/audio-prompt";
 import { AudioAnalysisSchema } from "@/lib/video/audio-schema";
 
 export const maxDuration = 120;
@@ -46,7 +49,8 @@ export async function POST(req: Request) {
     return Response.json({ analysis: object });
   } catch (err) {
     console.error("[/analyze/api/audio] failed:", err);
-    const message = err instanceof Error ? err.message : "Audio analysis failed";
+    const message =
+      err instanceof Error ? err.message : "Audio analysis failed";
     return Response.json({ error: message }, { status: 500 });
   }
 }

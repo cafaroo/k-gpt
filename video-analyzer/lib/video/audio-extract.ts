@@ -12,9 +12,10 @@
 
 export async function encodeVideoAudioToWav(file: File): Promise<Blob> {
   const arrayBuffer = await file.arrayBuffer();
-  // biome-ignore lint/suspicious/noExplicitAny: webkit fallback
   const AudioCtx: typeof AudioContext =
-    window.AudioContext || (window as any).webkitAudioContext;
+    window.AudioContext ||
+    (window as unknown as { webkitAudioContext: typeof AudioContext })
+      .webkitAudioContext;
   if (!AudioCtx) {
     throw new Error("Web Audio API unavailable");
   }

@@ -184,9 +184,10 @@ function sampleColorFromContext(
 async function extractAudioViaWebAudio(file: File): Promise<AudioSegment[]> {
   try {
     const arrayBuffer = await file.arrayBuffer();
-    // biome-ignore lint/suspicious/noExplicitAny: webkit fallback
     const AudioCtx: typeof AudioContext =
-      window.AudioContext || (window as any).webkitAudioContext;
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext })
+        .webkitAudioContext;
     if (!AudioCtx) {
       return [];
     }

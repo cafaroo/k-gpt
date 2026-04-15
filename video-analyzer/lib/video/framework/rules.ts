@@ -57,7 +57,7 @@ export const UNIVERSAL_RULES: Rule[] = [
     category: "text",
     title: "Clarity beats clever",
     detail:
-      "Straightforward claims (\"I spent $24 on this and…\") outperform vague teases (\"you won't believe…\").",
+      'Straightforward claims ("I spent $24 on this and…") outperform vague teases ("you won\'t believe…").',
     checkInstruction:
       "Rate claim clarity 0-10. Met if ≥ 7 and first hook text is a concrete claim, not a vague tease.",
   },
@@ -75,7 +75,7 @@ export const UNIVERSAL_RULES: Rule[] = [
     category: "cta",
     title: "Native CTAs win",
     detail:
-      "\"save this\", \"comment 'recipe' for the link\", \"DM me 'hook'\" outperform hard sells.",
+      '"save this", "comment \'recipe\' for the link", "DM me \'hook\'" outperform hard sells.',
     checkInstruction:
       "Classify CTA type. Met if CTA is native (save/comment/dm/follow/watch-again) OR bio-link with soft phrasing.",
   },
@@ -83,8 +83,7 @@ export const UNIVERSAL_RULES: Rule[] = [
     id: "beat-map-canonical",
     category: "structure",
     title: "Canonical beat map",
-    detail:
-      "hook → micro-proof → how-to/steps → soft-CTA in last 2s.",
+    detail: "hook → micro-proof → how-to/steps → soft-CTA in last 2s.",
     checkInstruction:
       "Check if detected beats roughly follow: hook (0-2s), micro-proof (2-4s), steps (4s to near end), cta (last 2s). Met if at least 3 of the 4 beats land in their canonical windows.",
   },
@@ -92,8 +91,7 @@ export const UNIVERSAL_RULES: Rule[] = [
     id: "audio-clean",
     category: "audio",
     title: "Prioritize clean audio over trendy tracks",
-    detail:
-      "Clarity of VO drives performance more than music choice.",
+    detail: "Clarity of VO drives performance more than music choice.",
     checkInstruction:
       "Judge audio clarity from RMS data. Met if voiceover likely present and audio looks clean (stable, not overpowered by music).",
   },
@@ -102,7 +100,7 @@ export const UNIVERSAL_RULES: Rule[] = [
     category: "cta",
     title: "Early micro-CTA aids retention",
     detail:
-      "\"Watch the end for the side-by-side\" early in the video boosts completion.",
+      '"Watch the end for the side-by-side" early in the video boosts completion.',
     checkInstruction:
       "Check if any retention hook exists in first half (text/visual cue promising a later reveal). Met if yes.",
   },

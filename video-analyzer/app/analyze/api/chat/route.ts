@@ -1,7 +1,7 @@
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
 import { getLanguageModel } from "@/lib/ai/providers";
-import { buildVideoAnalysisPrompt } from "@/lib/video/prompts";
 import type { AudioAnalysis } from "@/lib/video/audio-schema";
+import { buildVideoAnalysisPrompt } from "@/lib/video/prompts";
 import type { QwenAnalysis } from "@/lib/video/qwen-schema";
 import type { PerformanceData, VideoExtraction } from "@/lib/video/types";
 

@@ -36,7 +36,11 @@ export function RuleComplianceCard({ analysis }: Props) {
             <span
               className={`mt-0.5 shrink-0 ${r.met ? "text-emerald-500" : "text-red-500"}`}
             >
-              {r.met ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+              {r.met ? (
+                <Check className="h-4 w-4" />
+              ) : (
+                <X className="h-4 w-4" />
+              )}
             </span>
             <div className="min-w-0 flex-1">
               <div className="flex items-baseline justify-between gap-2">
@@ -70,7 +74,8 @@ export function NichePlaybookCard({ analysis }: Props) {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-sm">
-          Niche playbook · <span className="text-primary">{niche.detected}</span>
+          Niche playbook ·{" "}
+          <span className="text-primary">{niche.detected}</span>
         </CardTitle>
         <span className="text-muted-foreground text-xs">
           {metCount}/{niche.playbookCompliance.length} met
@@ -78,14 +83,15 @@ export function NichePlaybookCard({ analysis }: Props) {
       </CardHeader>
       <CardContent className="space-y-1.5">
         {niche.playbookCompliance.map((c) => (
-          <div
-            className="flex items-start gap-2 text-xs"
-            key={c.ruleId}
-          >
+          <div className="flex items-start gap-2 text-xs" key={c.ruleId}>
             <span
               className={`mt-0.5 shrink-0 ${c.met ? "text-emerald-500" : "text-red-500"}`}
             >
-              {c.met ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+              {c.met ? (
+                <Check className="h-4 w-4" />
+              ) : (
+                <X className="h-4 w-4" />
+              )}
             </span>
             <div>
               <span className="font-medium">{c.label}</span>

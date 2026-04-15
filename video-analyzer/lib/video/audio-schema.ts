@@ -127,12 +127,12 @@ export const AudioAnalysisSchema = z.object({
     trendingSoundLikely: z
       .boolean()
       .describe(
-        "Sounds like a recognizable trending TikTok/Reels audio (trust your best guess)",
+        "Sounds like a recognizable trending TikTok/Reels audio (trust your best guess)"
       ),
     descriptors: z
       .array(z.string())
       .describe(
-        "Free-form descriptors like 'punchy 808 bass', 'lofi piano', 'epic trailer hits'",
+        "Free-form descriptors like 'punchy 808 bass', 'lofi piano', 'epic trailer hits'"
       ),
     notes: z.string(),
   }),
@@ -156,14 +156,17 @@ export const AudioAnalysisSchema = z.object({
       .min(0)
       .max(10)
       .describe("Diction quality of the speaker(s)"),
-    accent: z.string().optional().describe("e.g. 'neutral American', 'British'"),
+    accent: z
+      .string()
+      .optional()
+      .describe("e.g. 'neutral American', 'British'"),
     emotionArc: z
       .array(
         z.object({
           start: z.number(),
           end: z.number(),
           emotion: z.string(),
-        }),
+        })
       )
       .describe("How the VO emotion changes over time"),
     transcript: z
@@ -177,7 +180,7 @@ export const AudioAnalysisSchema = z.object({
           why: z
             .string()
             .describe("Why this quote matters (hook, claim, cta, etc.)"),
-        }),
+        })
       )
       .describe("Standout lines with timestamps"),
   }),
@@ -190,7 +193,7 @@ export const AudioAnalysisSchema = z.object({
           time: z.number(),
           sentiment: z.enum(SENTIMENTS),
           note: z.string(),
-        }),
+        })
       )
       .describe("Sentiment sampled every 2-3 seconds for plotting"),
     tensionPoints: z
@@ -198,7 +201,7 @@ export const AudioAnalysisSchema = z.object({
         z.object({
           time: z.number(),
           description: z.string(),
-        }),
+        })
       )
       .describe("Moments of peak emotional intensity"),
   }),
@@ -209,7 +212,7 @@ export const AudioAnalysisSchema = z.object({
         time: z.number(),
         type: z.enum(AUDIO_EVENT_TYPES),
         description: z.string(),
-      }),
+      })
     )
     .describe("Notable audio events (sfx, laughs, drops, silences, etc.)"),
 
@@ -218,9 +221,7 @@ export const AudioAnalysisSchema = z.object({
     usesTransitionSfx: z
       .boolean()
       .describe("Whooshes/clicks between cuts to aid pacing"),
-    usesEmphasisSfx: z
-      .boolean()
-      .describe("Boom/hit/ding to punctuate beats"),
+    usesEmphasisSfx: z.boolean().describe("Boom/hit/ding to punctuate beats"),
     silenceUsedIntentionally: z
       .boolean()
       .describe("Deliberate silence for emphasis"),

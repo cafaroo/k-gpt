@@ -110,10 +110,7 @@ export function AudioInsights({ audio, onSeek }: Props) {
                 )}
                 <Stat label="Tone" value={audio.voiceover.tone} />
                 <Stat label="Pace" value={audio.voiceover.pace} />
-                <Stat
-                  label="Clarity"
-                  value={`${audio.voiceover.clarity}/10`}
-                />
+                <Stat label="Clarity" value={`${audio.voiceover.clarity}/10`} />
                 <Stat
                   label="Articulation"
                   value={`${audio.voiceover.articulation}/10`}

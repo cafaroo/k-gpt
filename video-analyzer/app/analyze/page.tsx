@@ -35,6 +35,14 @@ export default function AnalyzePage() {
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col items-center gap-8 px-4 py-16">
+      <div className="flex w-full justify-end">
+        <a
+          className="text-muted-foreground hover:text-foreground text-xs"
+          href="/analyze/batch"
+        >
+          Analyze a batch →
+        </a>
+      </div>
       <div className="text-center">
         <h1 className="text-3xl font-bold tracking-tight">
           Analyze a short-form video

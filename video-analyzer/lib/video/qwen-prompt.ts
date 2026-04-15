@@ -10,14 +10,14 @@ import type { AudioSegment, VideoExtraction } from "./types";
 
 const rulesBlock = UNIVERSAL_RULES.map(
   (r) =>
-    `- [${r.id}] ${r.title}\n    ${r.detail}\n    CHECK: ${r.checkInstruction}`,
+    `- [${r.id}] ${r.title}\n    ${r.detail}\n    CHECK: ${r.checkInstruction}`
 ).join("\n");
 
 const nicheBlock = NICHE_PLAYBOOKS.map(
   (p) =>
     `- ${p.niche}:\n${p.checks
       .map((c) => `    • [${c.id}] ${c.label} — ${c.instruction}`)
-      .join("\n")}`,
+      .join("\n")}`
 ).join("\n");
 
 export const QWEN_SYSTEM_PROMPT = `You are a senior short-form video creative strategist specializing in TikTok, Instagram Reels, YouTube Shorts, and Facebook Reels ad performance.
@@ -96,7 +96,7 @@ export function buildQwenUserMessage(extraction: VideoExtraction): {
       motionSegments.length > 0
         ? Math.round(
             motionSegments.reduce((s, m) => s + m.motionScore, 0) /
-              motionSegments.length,
+              motionSegments.length
           )
         : 0
     }/100`,

@@ -58,4 +58,5 @@ OUTPUT DISCIPLINE
 - Transcript must be verbatim. If there's no VO, empty string.
 - Return only the JSON matching the schema.`;
 
-export const AUDIO_USER_PROMPT = `Analyze this audio track for a short-form video ad. Fill every field in the schema with timestamped evidence.`;
+export const AUDIO_USER_PROMPT =
+  "Analyze this audio track for a short-form video ad. Fill every field in the schema with timestamped evidence.";

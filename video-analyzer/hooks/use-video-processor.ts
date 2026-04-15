@@ -21,7 +21,7 @@ export function useVideoProcessor() {
   const [extraction, setExtraction] = useState<VideoExtraction | null>(null);
   const [analysis, setAnalysis] = useState<QwenAnalysis | null>(null);
   const [audioAnalysis, setAudioAnalysis] = useState<AudioAnalysis | null>(
-    null,
+    null
   );
   const [error, setError] = useState<string | null>(null);
 
@@ -114,12 +114,12 @@ export function useVideoProcessor() {
       const errors: string[] = [];
       if (qwenResult.status === "rejected") {
         errors.push(
-          `Visual: ${qwenResult.reason instanceof Error ? qwenResult.reason.message : String(qwenResult.reason)}`,
+          `Visual: ${qwenResult.reason instanceof Error ? qwenResult.reason.message : String(qwenResult.reason)}`
         );
       }
       if (audioResult.status === "rejected") {
         errors.push(
-          `Audio: ${audioResult.reason instanceof Error ? audioResult.reason.message : String(audioResult.reason)}`,
+          `Audio: ${audioResult.reason instanceof Error ? audioResult.reason.message : String(audioResult.reason)}`
         );
       }
       if (errors.length > 0) {

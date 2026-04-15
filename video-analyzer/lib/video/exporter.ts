@@ -2,6 +2,8 @@ import ExcelJS from "exceljs";
 import { toPng } from "html-to-image";
 import JSZip from "jszip";
 import type { AudioAnalysis } from "./audio-schema";
+import { computeBatchInsights } from "./batch/insights";
+import type { Batch } from "./batch/types";
 import type { QwenAnalysis } from "./qwen-schema";
 import type {
   ExportChartRefs,
@@ -236,6 +238,136 @@ export async function exportAnalysis(
   a.href = url;
   const baseName = extraction.metadata.filename.replace(/\.[^.]+$/, "");
   a.download = `${baseName || "video"}-analysis.zip`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ─── Batch export ────────────────────────────────────────────────────────
+
+export async function exportBatch(batch: Batch): Promise<void> {
+  const zip = new JSZip();
+
+  const insights = computeBatchInsights(batch.videos);
+  zip.file(
+    "batch-insights.json",
+    JSON.stringify(
+      {
+        batchId: batch.id,
+        createdAt: new Date(batch.createdAt).toISOString(),
+        videoCount: batch.videos.length,
+        performanceSource: batch.performanceSource,
+        insights,
+      },
+      null,
+      2
+    )
+  );
+
+  // Leaderboard xlsx
+  const wb = new ExcelJS.Workbook();
+  wb.creator = "Video Content Analyzer";
+  const sheet = wb.addWorksheet("Leaderboard");
+  sheet.columns = [
+    { header: "Filename", key: "f", width: 40 },
+    { header: "Status", key: "s", width: 12 },
+    { header: "Overall", key: "ov", width: 10 },
+    { header: "Tagline", key: "tg", width: 40 },
+    { header: "Hook style", key: "hk", width: 18 },
+    { header: "Hook score", key: "hs", width: 12 },
+    { header: "Pacing rhythm", key: "pr", width: 14 },
+    { header: "Pacing score", key: "ps", width: 12 },
+    { header: "CTA type", key: "ct", width: 18 },
+    { header: "CTA clarity", key: "cc", width: 12 },
+    { header: "Format", key: "fm", width: 16 },
+    { header: "Niche", key: "nc", width: 14 },
+    { header: "Rules met", key: "rm", width: 12 },
+    { header: "Views", key: "vw", width: 12 },
+    { header: "CTR", key: "ctr", width: 10 },
+    { header: "Saves", key: "sv", width: 10 },
+    { header: "Completion", key: "cr", width: 12 },
+  ];
+  for (const v of batch.videos) {
+    const q = v.qwen;
+    const row = {
+      f: v.filename,
+      s: v.status,
+      ov: q?.overall.score ?? "",
+      tg: q?.overall.tagline ?? "",
+      hk: q?.hook.primaryStyle ?? "",
+      hs: q?.hook.score ?? "",
+      pr: q?.pacing.rhythm ?? "",
+      ps: q?.pacing.score ?? "",
+      ct: q?.cta.exists ? q.cta.type : "none",
+      cc: q?.cta.exists ? q.cta.clarity : "",
+      fm: q?.format.primary ?? "",
+      nc: q?.niche.detected ?? "",
+      rm: q
+        ? `${q.ruleCompliance.filter((r) => r.met).length}/${q.ruleCompliance.length}`
+        : "",
+      vw: v.performance?.views ?? "",
+      ctr:
+        v.performance?.clickThroughRate === undefined
+          ? ""
+          : v.performance.clickThroughRate,
+      sv: v.performance?.likes ?? "",
+      cr:
+        v.performance?.completionRate === undefined
+          ? ""
+          : v.performance.completionRate,
+    };
+    sheet.addRow(row);
+  }
+  zip.file("leaderboard.xlsx", await wb.xlsx.writeBuffer());
+
+  // Per-video folders
+  const perVideoDir = zip.folder("per-video");
+  if (perVideoDir) {
+    for (const v of batch.videos) {
+      const slug = v.filename
+        .replace(/\.[^.]+$/, "")
+        .replace(/[^a-zA-Z0-9_-]+/g, "_");
+      const dir = perVideoDir.folder(slug);
+      if (!dir) {
+        continue;
+      }
+      if (v.qwen) {
+        dir.file("qwen-analysis.json", JSON.stringify(v.qwen, null, 2));
+      }
+      if (v.audio) {
+        dir.file("audio-analysis.json", JSON.stringify(v.audio, null, 2));
+        if (v.audio.voiceover.transcript) {
+          dir.file("transcript.txt", v.audio.voiceover.transcript);
+        }
+      }
+      if (v.extraction) {
+        const slim = {
+          ...v.extraction,
+          frames: v.extraction.frames.map((f) => ({
+            timestamp: f.timestamp,
+            brightness: f.brightness,
+            dominantColor: f.dominantColor,
+          })),
+        };
+        dir.file(
+          "extraction.json",
+          JSON.stringify(
+            { extraction: slim, performance: v.performance },
+            null,
+            2
+          )
+        );
+      }
+      if (v.error) {
+        dir.file("error.txt", v.error);
+      }
+    }
+  }
+
+  const blob = await zip.generateAsync({ type: "blob" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `batch-${batch.id}.zip`;
   a.click();
   URL.revokeObjectURL(url);
 }

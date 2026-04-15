@@ -31,16 +31,14 @@ export const QwenAnalysisSchema = z.object({
   hook: z.object({
     score: z.number().min(0).max(10),
     duration: z.number().describe("Seconds the hook lasts before main content"),
-    primaryStyle: z
-      .enum(HOOK_STYLES)
-      .describe("Dominant hook style"),
+    primaryStyle: z.enum(HOOK_STYLES).describe("Dominant hook style"),
     secondaryStyles: z
       .array(z.enum(HOOK_STYLES))
       .describe("Additional hook styles present, if any"),
     timeToFirstVisualChange: z
       .number()
       .describe(
-        "Seconds until first cut / zoom / B-roll swap / camera move. Lower = stronger hook.",
+        "Seconds until first cut / zoom / B-roll swap / camera move. Lower = stronger hook."
       ),
     textInFirstFrame: z.object({
       present: z.boolean(),
@@ -48,7 +46,7 @@ export const QwenAnalysisSchema = z.object({
       keywordFirst: z
         .boolean()
         .describe(
-          "True if first on-screen text leads with a keyword/benefit (not a vague tease)",
+          "True if first on-screen text leads with a keyword/benefit (not a vague tease)"
         ),
     }),
     elements: z.array(z.string()),
@@ -65,10 +63,10 @@ export const QwenAnalysisSchema = z.object({
         end: z.number(),
         description: z.string(),
         strength: z.number().min(0).max(10),
-      }),
+      })
     )
     .describe(
-      "Sequence of story beats. Canonical pattern: hook → micro-proof → how-to → soft-cta",
+      "Sequence of story beats. Canonical pattern: hook → micro-proof → how-to → soft-cta"
     ),
 
   payoffTiming: z.object({
@@ -92,7 +90,7 @@ export const QwenAnalysisSchema = z.object({
         start: z.number(),
         end: z.number(),
         reason: z.string(),
-      }),
+      })
     ),
     intensityCurve: z
       .array(
@@ -100,7 +98,7 @@ export const QwenAnalysisSchema = z.object({
           time: z.number(),
           intensity: z.number().min(0).max(10),
           note: z.string(),
-        }),
+        })
       )
       .describe("Engagement over time, one sample per 1-2 seconds"),
   }),
@@ -125,7 +123,7 @@ export const QwenAnalysisSchema = z.object({
       description: z.string(),
       visualStyle: z.string(),
       textOnScreen: z.string().optional(),
-    }),
+    })
   ),
 
   // ─── On-screen text (full event list + coverage stats) ──────────────────
@@ -137,7 +135,7 @@ export const QwenAnalysisSchema = z.object({
         text: z.string(),
         style: z.enum(TEXT_STYLES),
         position: z.enum(TEXT_POSITIONS),
-      }),
+      })
     ),
     coverageRatio: z
       .number()
@@ -157,7 +155,7 @@ export const QwenAnalysisSchema = z.object({
       .max(10)
       .describe("0 = vague tease, 10 = concrete claim"),
     pricesShown: z.array(
-      z.object({ value: z.string(), timestamp: z.number() }),
+      z.object({ value: z.string(), timestamp: z.number() })
     ),
   }),
 
@@ -230,7 +228,7 @@ export const QwenAnalysisSchema = z.object({
         label: z.string(),
         met: z.boolean(),
         note: z.string(),
-      }),
+      })
     ),
   }),
 
@@ -251,10 +249,8 @@ export const QwenAnalysisSchema = z.object({
         title: z.string(),
         met: z.boolean(),
         score: z.number().min(0).max(10).optional(),
-        evidence: z
-          .string()
-          .describe("Concrete evidence citing a timestamp"),
-      }),
+        evidence: z.string().describe("Concrete evidence citing a timestamp"),
+      })
     )
     .describe("Score this video against each universal rule"),
 
@@ -277,7 +273,15 @@ export const QwenAnalysisSchema = z.object({
   recommendations: z.array(
     z.object({
       priority: z.enum(["high", "medium", "low"]),
-      area: z.enum(["hook", "pacing", "visual", "audio", "cta", "copy", "editing"]),
+      area: z.enum([
+        "hook",
+        "pacing",
+        "visual",
+        "audio",
+        "cta",
+        "copy",
+        "editing",
+      ]),
       issue: z.string(),
       suggestion: z.string(),
       expectedImpact: z.string(),
@@ -285,9 +289,9 @@ export const QwenAnalysisSchema = z.object({
         .string()
         .optional()
         .describe(
-          "Concrete A/B variant to ship, e.g. 'Try contrarian hook: Stop double-cleansing — do this instead'",
+          "Concrete A/B variant to ship, e.g. 'Try contrarian hook: Stop double-cleansing — do this instead'"
         ),
-    }),
+    })
   ),
 
   // ─── Repeatable test plan (user's next-week plan) ───────────────────────
@@ -297,7 +301,7 @@ export const QwenAnalysisSchema = z.object({
         z.object({
           style: z.enum(HOOK_STYLES),
           draft: z.string().describe("Ready-to-shoot hook line"),
-        }),
+        })
       )
       .describe("3 hook drafts in different styles"),
     structureVariants: z
@@ -305,13 +309,13 @@ export const QwenAnalysisSchema = z.object({
         z.object({
           name: z.string(),
           description: z.string(),
-        }),
+        })
       )
       .describe(
-        "2 structure variants to test (e.g. early-result vs delayed-result)",
+        "2 structure variants to test (e.g. early-result vs delayed-result)"
       ),
     measurablePriority: z.array(
-      z.enum(["hold-to-3s", "saves", "comments", "shares", "completion"]),
+      z.enum(["hold-to-3s", "saves", "comments", "shares", "completion"])
     ),
     notes: z.string(),
   }),
