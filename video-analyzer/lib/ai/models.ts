@@ -25,6 +25,13 @@ export type ChatModel = {
 
 export const chatModels: ChatModel[] = [
   {
+    id: "anthropic/claude-sonnet-4-5",
+    name: "Claude Sonnet 4.5",
+    provider: "anthropic",
+    description: "Vision-capable model for video content analysis",
+    gatewayOrder: ["anthropic"],
+  },
+  {
     id: "deepseek/deepseek-v3.2",
     name: "DeepSeek V3.2",
     provider: "deepseek",
