@@ -87,9 +87,17 @@ export async function POST(req: Request) {
     return Response.json({ analysis: object });
   } catch (err) {
     console.error("[/analyze/api/analyze] failed:", err);
+    const message = err instanceof Error ? err.message : "Analysis failed";
+    const isCreditError =
+      /free credits|no_providers_available|restricted access/i.test(message);
     return Response.json(
-      { error: err instanceof Error ? err.message : "Analysis failed" },
-      { status: 500 }
+      {
+        error: message,
+        hint: isCreditError
+          ? "Vercel AI Gateway free credits are temporarily restricted — top up at vercel.com/ai."
+          : undefined,
+      },
+      { status: isCreditError ? 402 : 500 }
     );
   }
 }

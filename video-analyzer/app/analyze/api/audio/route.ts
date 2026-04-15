@@ -58,9 +58,20 @@ export async function POST(req: Request) {
     return Response.json({ analysis: object });
   } catch (err) {
     console.error("[/analyze/api/audio] failed:", err);
+    const message =
+      err instanceof Error ? err.message : "Audio analysis failed";
+    // Surface Gateway credit-related failures as 402 (Payment Required) so
+    // the UI can show a specific hint instead of a generic 500.
+    const isCreditError =
+      /free credits|no_providers_available|restricted access/i.test(message);
     return Response.json(
-      { error: err instanceof Error ? err.message : "Audio analysis failed" },
-      { status: 500 }
+      {
+        error: message,
+        hint: isCreditError
+          ? "Vercel AI Gateway free credits are temporarily restricted — top up at vercel.com/ai or the operator must add paid credits."
+          : undefined,
+      },
+      { status: isCreditError ? 402 : 500 }
     );
   }
 }
