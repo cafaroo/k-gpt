@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { runAnalyzeJob } from "@/lib/video/analyze-client";
 import type { QwenAnalysis } from "@/lib/video/qwen-schema";
 import type {
   ProcessingState,
@@ -38,9 +39,6 @@ export function useVideoProcessor() {
       const meta = await readMetadata(file);
       setMetadata(meta);
 
-      // Kick off client-side extraction in parallel — frames/audio/scenes for
-      // UX (FrameGallery, AudioChart, BeatMap thumbnails, export zip). Not on
-      // the critical path: if it fails we still have Gemini's analysis.
       const extractPromise = import("@/lib/video/extractors")
         .then(({ extractAll }) => extractAll(file))
         .then((ex) => {
@@ -63,55 +61,16 @@ export function useVideoProcessor() {
 
       setState("analyzing");
       setStep("Running AI analysis");
-      setProgress(0.5);
+      setProgress(0.4);
 
-      const payload = { metadata: meta, videoUrl: url };
-      const body = JSON.stringify(payload);
-
-      const maxAttempts = 3;
-      let lastErr: unknown;
-      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        try {
-          const res = await fetch("/analyze/api/analyze", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body,
-          });
-          if (!res.ok) {
-            const errBody = await res.json().catch(() => ({}));
-            throw new Error(
-              errBody.error || `Visual analysis HTTP ${res.status}`
-            );
-          }
-          const { analysis: result } = (await res.json()) as {
-            analysis: QwenAnalysis;
-          };
-          setAnalysis(result);
-          lastErr = null;
-          break;
-        } catch (err) {
-          lastErr = err;
-          const msg = err instanceof Error ? err.message : String(err);
-          const isNetwork =
-            msg.includes("Failed to fetch") ||
-            msg.includes("NetworkError") ||
-            msg.includes("network");
-          if (!isNetwork || attempt === maxAttempts) {
-            throw err;
-          }
-          console.warn(
-            `[useVideoProcessor] analyze attempt ${attempt} failed (${msg}), retrying…`
-          );
-          await new Promise((r) => setTimeout(r, 1500 * attempt));
+      const result = await runAnalyzeJob(
+        { metadata: meta, videoUrl: url },
+        {
+          onProgress: (frac) => setProgress(0.4 + frac * 0.5),
         }
-      }
-      if (lastErr) {
-        throw lastErr;
-      }
+      );
+      setAnalysis(result);
 
-      // Wait for extraction before declaring done so the dashboard has
-      // frames/audio to render on first paint. Extraction usually finishes
-      // well before Gemini so this typically resolves immediately.
       await extractPromise;
 
       setProgress(1);

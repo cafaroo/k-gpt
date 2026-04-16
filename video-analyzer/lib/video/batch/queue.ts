@@ -90,47 +90,8 @@ async function runQwen(
   extraction: import("../types").VideoExtraction,
   file: File
 ): Promise<QwenAnalysis> {
-  const sampled =
-    extraction.frames.length <= 16
-      ? extraction.frames
-      : Array.from(
-          { length: 16 },
-          (_, i) =>
-            extraction.frames[Math.floor((i * extraction.frames.length) / 16)]
-        );
-
-  const { summarizeExtraction } = await import("../extraction-summary");
-  const { audioText, motionText } = summarizeExtraction({
-    audioSegments: extraction.audioSegments,
-    motionSegments: extraction.motionSegments,
-    sceneChanges: extraction.sceneChanges,
-    duration: extraction.metadata.duration,
-  });
-
-  let videoUrl: string | null = null;
-  try {
-    const { uploadVideo } = await import("../blob-upload");
-    videoUrl = await uploadVideo(file);
-  } catch (err) {
-    console.warn(`[batch ${file.name}] video upload failed`, err);
-  }
-
-  const res = await fetch("/analyze/api/analyze", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      metadata: extraction.metadata,
-      audioText,
-      motionText,
-      frameDataUrls: sampled.map((f) => f.dataUrl),
-      ...(videoUrl ? { videoUrl } : {}),
-    }),
-  });
-
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.error || `visual HTTP ${res.status}`);
-  }
-  const { analysis } = (await res.json()) as { analysis: QwenAnalysis };
-  return analysis;
+  const { uploadVideo } = await import("../blob-upload");
+  const videoUrl = await uploadVideo(file);
+  const { runAnalyzeJob } = await import("../analyze-client");
+  return runAnalyzeJob({ metadata: extraction.metadata, videoUrl });
 }
