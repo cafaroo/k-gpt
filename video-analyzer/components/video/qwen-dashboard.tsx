@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertCircle, Loader2, MessageSquare } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -73,16 +73,19 @@ export function QwenDashboard({
   const [currentTime, setCurrentTime] = useState(0);
   const [performance, setPerformance] = useState<PerformanceData>({});
 
-  // Create the blob URL once per file. Using useMemo + an unmount-only
-  // revoke avoids React Strict Mode running the cleanup between mount and
-  // paint (which caused ERR_FILE_NOT_FOUND when <video src=...> tried to
-  // load a URL that had already been revoked).
-  const src = useMemo(() => URL.createObjectURL(file), [file]);
-  useEffect(() => {
-    return () => {
-      URL.revokeObjectURL(src);
-    };
-  }, [src]);
+  // Blob URL created once via a ref that survives Strict Mode's double-mount
+  // and HMR re-runs. Previous attempt used useMemo + useEffect cleanup, but
+  // Strict Mode fires cleanup on the test-unmount which revokes the URL
+  // before the video element can load it → ERR_FILE_NOT_FOUND. We accept the
+  // blob leak for the session — the browser reclaims it on unload.
+  const srcRef = useRef<{ file: File; url: string } | null>(null);
+  if (!srcRef.current || srcRef.current.file !== file) {
+    if (srcRef.current) {
+      URL.revokeObjectURL(srcRef.current.url);
+    }
+    srcRef.current = { file, url: URL.createObjectURL(file) };
+  }
+  const src = srcRef.current.url;
 
   const chartRefs: ExportChartRefs = {
     audio: audioChartRef.current,

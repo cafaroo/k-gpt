@@ -134,9 +134,10 @@ export function AudioInsightsV2({ audioExtended, onSeek }: Props) {
 
         {ambientSounds.length > 0 && (
           <Section title="Ambient">
-            {ambientSounds.map((a) => (
+            {ambientSounds.map((a, i) => (
               <Row
-                key={`amb-${a.start}-${a.description.slice(0, 16)}`}
+                // biome-ignore lint/suspicious/noArrayIndexKey: Gemini may emit near-identical ambient rows; index disambiguates
+                key={`amb-${i}-${a.start}-${a.end}`}
                 onClick={() => onSeek?.(a.start)}
                 range={`${a.start.toFixed(1)}–${a.end.toFixed(1)}s`}
                 tag={a.role}
@@ -148,9 +149,10 @@ export function AudioInsightsV2({ audioExtended, onSeek }: Props) {
 
         {soundEffects.length > 0 && (
           <Section title="SFX">
-            {soundEffects.map((s) => (
+            {soundEffects.map((s, i) => (
               <Row
-                key={`sfx-${s.timestamp}-${s.sfx}`}
+                // biome-ignore lint/suspicious/noArrayIndexKey: SFX may repeat at same timestamp; index disambiguates
+                key={`sfx-${i}-${s.timestamp}`}
                 onClick={() => onSeek?.(s.timestamp)}
                 range={`${s.timestamp.toFixed(1)}s`}
                 tag={s.sfx}
@@ -162,9 +164,10 @@ export function AudioInsightsV2({ audioExtended, onSeek }: Props) {
 
         {silenceMoments.length > 0 && (
           <Section title="Silence">
-            {silenceMoments.map((s) => (
+            {silenceMoments.map((s, i) => (
               <Row
-                key={`sil-${s.start}-${s.end}`}
+                // biome-ignore lint/suspicious/noArrayIndexKey: Gemini may emit duplicate 0–0 silences; index disambiguates
+                key={`sil-${i}-${s.start}-${s.end}`}
                 onClick={() => onSeek?.(s.start)}
                 range={`${s.start.toFixed(1)}–${s.end.toFixed(1)}s`}
                 text={s.impact}
