@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { generateText } from "ai";
+import { jsonrepair } from "jsonrepair";
 import type { z } from "zod";
 import { getAnalysisModel } from "@/lib/ai/providers";
 import { EXTENDED_SYSTEM_PROMPT } from "@/lib/video/analysis-extended-prompt";
@@ -126,13 +127,26 @@ async function generateJson<T>(opts: {
 
   let parsed: unknown;
   let parseError: string | null = null;
+  let repaired = false;
   try {
     parsed = JSON.parse(stripped);
   } catch (err) {
-    parseError = err instanceof Error ? err.message : String(err);
-    console.error(
-      `[analyze] ${opts.label} JSON.parse failed. First 500 chars:\n${stripped.slice(0, 500)}`
-    );
+    // Gemini sometimes emits raw newlines inside strings or drops a comma.
+    // jsonrepair handles the common LLM-JSON quirks — fall back to it before
+    // giving up so a single malformed field doesn't sink the whole pass.
+    try {
+      const fixed = jsonrepair(stripped);
+      parsed = JSON.parse(fixed);
+      repaired = true;
+      console.warn(
+        `[analyze] ${opts.label} JSON.parse failed, jsonrepair recovered`
+      );
+    } catch {
+      parseError = err instanceof Error ? err.message : String(err);
+      console.error(
+        `[analyze] ${opts.label} JSON.parse failed. First 500 chars:\n${stripped.slice(0, 500)}`
+      );
+    }
   }
 
   const result = parsed
@@ -165,6 +179,7 @@ async function generateJson<T>(opts: {
     label: opts.label,
     latencyMs,
     parseError,
+    repaired,
     zodIssueCount: zodIssues.length,
     zodIssues: zodIssues.slice(0, 50),
     rawText: text,
