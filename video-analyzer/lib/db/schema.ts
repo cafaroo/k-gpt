@@ -2,7 +2,10 @@ import type { InferSelectModel } from "drizzle-orm";
 import {
   boolean,
   foreignKey,
+  integer,
   json,
+  jsonb,
+  numeric,
   pgTable,
   primaryKey,
   text,
@@ -134,3 +137,97 @@ export const stream = pgTable(
 );
 
 export type Stream = InferSelectModel<typeof stream>;
+
+// ─── /analyze/v2 POC ────────────────────────────────────────────────────
+
+export const batch = pgTable("Batch", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  name: text("name").notNull(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+export type Batch = InferSelectModel<typeof batch>;
+
+export const video = pgTable("Video", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  batchId: uuid("batchId").references(() => batch.id),
+  blobUrl: text("blobUrl").notNull(),
+  filename: text("filename").notNull(),
+  fileSizeBytes: integer("fileSizeBytes").notNull(),
+  durationSec: numeric("durationSec", { precision: 10, scale: 2 }).notNull(),
+  width: integer("width").notNull(),
+  height: integer("height").notNull(),
+  aspectRatio: text("aspectRatio").notNull(),
+  userTags: json("userTags").$type<string[]>().notNull().default([]),
+  thumbnailUrl: text("thumbnailUrl"),
+  uploadedAt: timestamp("uploadedAt").notNull().defaultNow(),
+});
+export type Video = InferSelectModel<typeof video>;
+
+export const analysis = pgTable("Analysis", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  videoId: uuid("videoId")
+    .notNull()
+    .references(() => video.id),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  schemaVersion: text("schemaVersion").notNull().default("2026.04-v2"),
+  status: varchar("status", {
+    enum: ["pending", "done", "error"],
+  }).notNull(),
+  analysisBlobUrl: text("analysisBlobUrl"),
+  rawBaseBlobUrl: text("rawBaseBlobUrl"),
+  rawExtendedBlobUrl: text("rawExtendedBlobUrl"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  completedAt: timestamp("completedAt"),
+  latencyMs: integer("latencyMs"),
+  completenessScore: numeric("completenessScore", { precision: 4, scale: 3 }),
+  zodIssueCount: integer("zodIssueCount"),
+  errorMessage: text("errorMessage"),
+
+  // Hot fields
+  overallScore: integer("overallScore"),
+  hookScore: numeric("hookScore", { precision: 4, scale: 2 }),
+  hookDuration: numeric("hookDuration", { precision: 5, scale: 2 }),
+  stopPower: numeric("stopPower", { precision: 4, scale: 2 }),
+  hookColloquiality: numeric("hookColloquiality", { precision: 4, scale: 2 }),
+  pacingScore: numeric("pacingScore", { precision: 4, scale: 2 }),
+  cutsPerMinute: numeric("cutsPerMinute", { precision: 6, scale: 2 }),
+  complexityAdjustedRhythm: numeric("complexityAdjustedRhythm", {
+    precision: 6,
+    scale: 2,
+  }),
+  voiceoverCadence: numeric("voiceoverCadence", { precision: 5, scale: 2 }),
+  emotionalTransitionScore: numeric("emotionalTransitionScore", {
+    precision: 4,
+    scale: 2,
+  }),
+  colloquialityScore: numeric("colloquialityScore", { precision: 4, scale: 2 }),
+  authenticityBand: varchar("authenticityBand", {
+    enum: ["low", "moderate", "high"],
+  }),
+  brandHeritageSalience: varchar("brandHeritageSalience", {
+    enum: ["absent", "moderate", "high"],
+  }),
+  ecr: numeric("ecr", { precision: 4, scale: 3 }),
+  nawp: numeric("nawp", { precision: 4, scale: 3 }),
+  ctaClarity: numeric("ctaClarity", { precision: 4, scale: 2 }),
+  payoffIsEarly: boolean("payoffIsEarly"),
+  niche: text("niche"),
+  formatPrimary: text("formatPrimary"),
+  platformBestFit: text("platformBestFit"),
+
+  // Detail jsonb
+  insights: jsonb("insights"),
+  beatMap: jsonb("beatMap"),
+  scenes: jsonb("scenes"),
+  ruleCompliance: jsonb("ruleCompliance"),
+  researchMeta: jsonb("researchMeta"),
+});
+export type Analysis = InferSelectModel<typeof analysis>;
