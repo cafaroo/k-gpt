@@ -18,7 +18,18 @@ import {
 // generateObject returns.
 export const score10 = z.number();
 
+// Bump when the shape (not just the prompt) changes. Downstream aggregation
+// tools filter by this so incompatible older runs don't pollute analyses.
+export const ANALYSIS_SCHEMA_VERSION = "2026.04-a";
+
 export const QwenAnalysisSchema = z.object({
+  schemaVersion: z
+    .string()
+    .default(ANALYSIS_SCHEMA_VERSION)
+    .describe(
+      "Analysis schema version, set by server. Do not include in Gemini output."
+    ),
+
   // ─── Overall ────────────────────────────────────────────────────────────
   overall: z.object({
     score: z.number().describe("Overall ad quality score 0-100"),
@@ -499,6 +510,7 @@ function hydrateInsight(r: unknown): QwenAnalysis["insights"][number] {
 export function ensureBaseShape(raw: unknown): QwenAnalysis {
   const r = (raw ?? {}) as Partial<QwenAnalysis> & Record<string, unknown>;
   return {
+    schemaVersion: ANALYSIS_SCHEMA_VERSION,
     overall: {
       score: asNum((r.overall as Record<string, unknown>)?.score),
       tagline: asStr(

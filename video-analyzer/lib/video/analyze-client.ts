@@ -4,7 +4,10 @@ import type { QwenAnalysis } from "./qwen-schema";
 import type { VideoMetadata } from "./types";
 
 const POLL_INTERVAL_MS = 3000;
-const POLL_TIMEOUT_MS = 180_000;
+// Server's maxDuration is 300s plus ~15s of blob writes. Give polling a
+// 360s ceiling so slow but successful analyses don't prematurely fail
+// the client.
+const POLL_TIMEOUT_MS = 360_000;
 
 export type AnalyzeRequest = {
   metadata: VideoMetadata;

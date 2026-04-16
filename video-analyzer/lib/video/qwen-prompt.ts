@@ -6,6 +6,8 @@ import {
   HOOK_STYLES,
   NICHES,
 } from "./framework/taxonomy";
+import { QwenAnalysisSchema } from "./qwen-schema";
+import { schemaToSkeleton } from "./schema-to-skeleton";
 import type { AudioSegment, VideoExtraction } from "./types";
 
 const rulesBlock = UNIVERSAL_RULES.map(
@@ -19,6 +21,8 @@ const nicheBlock = NICHE_PLAYBOOKS.map(
       .map((c) => `    • [${c.id}] ${c.label} — ${c.instruction}`)
       .join("\n")}`
 ).join("\n");
+
+const baseSchemaSkeleton = schemaToSkeleton(QwenAnalysisSchema);
 
 export const QWEN_SYSTEM_PROMPT = `You are a senior short-form video creative strategist specializing in TikTok, Instagram Reels, YouTube Shorts, and Facebook Reels ad performance.
 
@@ -95,7 +99,81 @@ Other rules:
 - beatMap: at least hook + micro-proof + body + CTA (or absence noted).
 - If you genuinely can't determine a field, still provide your best inferred answer — never refuse.
 
-Remember: the creator's question is "what does this ad actually do, second by second?". Every field you fill should answer that question with evidence.`;
+Remember: the creator's question is "what does this ad actually do, second by second?". Every field you fill should answer that question with evidence.
+
+═══════════════════════════════════════════════════════════════════════════
+EXAMPLES — FIELDS THAT ARE OFTEN THIN
+═══════════════════════════════════════════════════════════════════════════
+
+hook.elements — every concrete observed element that MAKES the hook:
+  ["close-up handheld product shot", "text overlay reading 'My joints nearly gave out'", "casual first-person voiceover", "soft music fade-in at 0:00.4"]
+
+hook.improvements — observable gaps (observations, not prescriptions):
+  ["no product brand named in first second", "no price tease before 0:03", "stakes framed as personal anecdote rather than quantified claim"]
+
+hook.secondaryStyles — additional styles besides primary:
+  ["problem-first", "micro-proof"]  // not just primary's style — include every style detectable in the first 2s
+
+insights — 6-12 entries, each with area + observation + evidence + impact:
+  [
+    { "area": "hook",
+      "observation": "Opens mid-action with handheld product shot, no text overlay for first 0.8s",
+      "evidence": "0:00-0:00.8 — product fills frame, voiceover enters at 0:00.8",
+      "impact": "positive",
+      "note": "UGC-native pattern correlates with higher hold-to-3s" },
+    { "area": "retention",
+      "observation": "Intensity drops ~30% at 0:14 with no pattern interrupt",
+      "evidence": "0:12-0:16 — same framing, same VO pace, no cut",
+      "impact": "negative" },
+    { "area": "cta",
+      "observation": "Soft CTA at 0:22 names product but no offer or urgency",
+      "evidence": "0:22 — 'check the link in bio' over static end card",
+      "impact": "neutral" }
+  ]
+
+ruleCompliance — one entry per universal rule, MUST cite a timestamp in evidence:
+  [
+    { "ruleId": "hook-problem-first", "title": "Lead with the problem",
+      "met": true, "score": 8,
+      "evidence": "0:00 — 'My joints nearly gave out' — problem stated before any solution appears" },
+    { "ruleId": "payoff-within-30-percent", "title": "Show the payoff early",
+      "met": false, "score": 4,
+      "evidence": "payoff first visible at 0:12 of 0:25 total (48% in) — outside the early-reveal window" }
+  ]
+
+beatMap — minimum hook + proof + body + CTA (or explicit absence):
+  [
+    { "type": "hook", "start": 0, "end": 2.5, "description": "Problem stated in VO over handheld shot", "strength": 8 },
+    { "type": "micro-proof", "start": 2.5, "end": 6, "description": "Brief credential: '10 years as a PGA caddie'", "strength": 6 },
+    { "type": "payoff", "start": 6, "end": 14, "description": "Demo of smoother swing", "strength": 7 },
+    { "type": "soft-cta", "start": 22, "end": 25, "description": "Link-in-bio mention", "strength": 4 }
+  ]
+
+═══════════════════════════════════════════════════════════════════════════
+CRITICAL — TIMESTAMP FORMAT
+═══════════════════════════════════════════════════════════════════════════
+All numeric timestamp fields (start, end, time, timestamp, second, firstGlimpseAt, fullRevealAt, duration, timeToFirstVisualChange) MUST be **decimal seconds as plain numbers**:
+  ✅ "start": 61.5
+  ✅ "end": 69
+  ❌ "start": 1:01.5     ← INVALID JSON. Never emit mm:ss in numeric fields.
+  ❌ "end": "1:09"       ← Wrong type. The schema expects number, not string.
+
+Only narrative string fields (evidence, description, reason, rationale, etc.) may contain timecode mentions like "0:14" or "1:01" — inside quotes, as part of prose.
+
+═══════════════════════════════════════════════════════════════════════════
+OUTPUT FORMAT — THIS IS THE EXACT JSON SHAPE
+═══════════════════════════════════════════════════════════════════════════
+Return a single JSON object with EXACTLY these top-level keys and nested structure.
+Placeholders: \`<string>\`, \`<number seconds>\`, \`<number 0-10>\`, \`<true | false>\`, and pipe-separated enum values show the EXPECTED type — replace with real data.
+Field comments with \`[optional]\` MAY be omitted if truly unknown. All other fields are MANDATORY — never skip, never return null, never invent extra top-level keys.
+
+Arrays marked with "… (more items)" should contain as many items as the video warrants — typically 4-12 items for beatMap, scenes, insights, ruleCompliance; one sample per 1-2 seconds for pacing.intensityCurve.
+
+Do NOT wrap in markdown fences. Do NOT add trailing prose. Return the JSON object and nothing else.
+
+\`\`\`
+${baseSchemaSkeleton}
+\`\`\``;
 
 export function buildQwenUserMessage(extraction: VideoExtraction): {
   metadataText: string;

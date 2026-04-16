@@ -3,7 +3,9 @@ import { after } from "next/server";
 import { runAnalysis } from "@/lib/video/analyze-worker";
 import type { VideoMetadata } from "@/lib/video/types";
 
-export const maxDuration = 120;
+// 300s is Vercel's current default ceiling. Gemini runs comfortably under it
+// but the 2-pass analysis with expanded prompts can push 150-200s per pass.
+export const maxDuration = 300;
 
 type RequestBody = {
   metadata: VideoMetadata;

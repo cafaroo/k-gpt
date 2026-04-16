@@ -89,6 +89,66 @@ export function parseRange(v: unknown): { start: number; end: number } {
   return { start, end };
 }
 
+/**
+ * Normalize a value to one of `allowed`. Handles Gemini's common shape drift:
+ *   - "Product_Intro" → "product-intro"
+ *   - ["tight", "loose"] → first match "tight"
+ *   - "very_positive" → "very-positive"
+ *   - case-insensitive match, case-preserving output.
+ * Falls back to `defaultValue` if nothing matches.
+ */
+function coerceEnum<T extends string>(
+  value: unknown,
+  allowed: readonly T[],
+  defaultValue: T
+): T {
+  const match = matchEnum(value, allowed);
+  return match ?? defaultValue;
+}
+
+function coerceOptionalEnum<T extends string>(
+  value: unknown,
+  allowed: readonly T[]
+): T | undefined {
+  return matchEnum(value, allowed);
+}
+
+function matchEnum<T extends string>(
+  value: unknown,
+  allowed: readonly T[]
+): T | undefined {
+  if (
+    value == null ||
+    value === "" ||
+    (Array.isArray(value) && value.length === 0)
+  ) {
+    return;
+  }
+  const candidates: string[] = Array.isArray(value)
+    ? value.filter((x): x is string => typeof x === "string")
+    : typeof value === "string"
+      ? [value]
+      : [];
+  const lowered = allowed.map((a) => a.toLowerCase());
+  for (const raw of candidates) {
+    const normalized = raw
+      .trim()
+      .toLowerCase()
+      .replace(/[\s_]+/g, "-");
+    const idx = lowered.indexOf(normalized);
+    if (idx >= 0) {
+      return allowed[idx];
+    }
+    const substrIdx = lowered.findIndex(
+      (a) => a.includes(normalized) || normalized.includes(a)
+    );
+    if (substrIdx >= 0) {
+      return allowed[substrIdx];
+    }
+  }
+  return;
+}
+
 function splitTags(v: unknown): string[] {
   if (Array.isArray(v)) {
     return v.filter((x): x is string => typeof x === "string");
@@ -649,7 +709,12 @@ export function adaptExtended(raw: unknown): Record<string, Any> {
   const music = asObj(ar.music);
   const audioExtended = {
     voiceoverTone: splitTags(ar.voiceoverTone),
-    voiceoverPace: asStr(ar.voiceoverPace) || undefined,
+    voiceoverPace: coerceOptionalEnum(ar.voiceoverPace, [
+      "slow",
+      "natural",
+      "rapid",
+      "variable",
+    ] as const),
     music: {
       present: Boolean(music.present ?? music.genre),
       genre: asStr(music.genre) || undefined,
@@ -671,7 +736,12 @@ export function adaptExtended(raw: unknown): Record<string, Any> {
         }
         return raw;
       })(),
-      beatSync: asStr(music.beatSync) || undefined,
+      beatSync: coerceOptionalEnum(music.beatSync, [
+        "tight",
+        "loose",
+        "none",
+        "intentional-off",
+      ] as const),
       drops: asArr(music.drops).map((d) => {
         const o = asObj(d);
         return {
@@ -687,7 +757,16 @@ export function adaptExtended(raw: unknown): Record<string, Any> {
         start: asNum(o.start, range.start),
         end: asNum(o.end, range.end),
         description: asStr(o.description ?? o.note),
-        role: asStr(o.role, "atmosphere"),
+        role: coerceEnum(
+          o.role,
+          [
+            "atmosphere",
+            "realism-cue",
+            "distraction",
+            "narrative-element",
+          ] as const,
+          "atmosphere"
+        ),
       };
     }),
     soundEffects: asArr(ar.soundEffects).map((s) => {
@@ -707,7 +786,11 @@ export function adaptExtended(raw: unknown): Record<string, Any> {
         impact: asStr(o.impact ?? o.note),
       };
     }),
-    audioDensity: asStr(ar.audioDensity, "moderate"),
+    audioDensity: coerceEnum(
+      ar.audioDensity,
+      ["sparse", "moderate", "dense", "overwhelming"] as const,
+      "moderate"
+    ),
   };
 
   // hookDissection: Gemini returns { "0": {...}, "1": {...}, … } where each
@@ -809,8 +892,9 @@ export function adaptExtended(raw: unknown): Record<string, Any> {
       timestamp: parseTimestamp(o.timestamp ?? o.time),
       kind: asStr(o.kind ?? o.type, "proof-beat"),
       description: asStr(o.description ?? o.note),
-      impactOnRetention: asStr(
+      impactOnRetention: coerceEnum(
         o.impactOnRetention ?? o.retentionImpact,
+        ["very-positive", "positive", "neutral", "negative"] as const,
         "neutral"
       ),
     };
@@ -852,7 +936,11 @@ export function adaptExtended(raw: unknown): Record<string, Any> {
       score: platformScore("youtubeShorts", "YouTube Shorts", "youtube_shorts"),
       reasoning: platformReason("youtubeShorts", "YouTube Shorts"),
     },
-    bestFit: asStr(pf.bestFit, "tiktok").toLowerCase().replace(/\s+/g, "-"),
+    bestFit: coerceEnum(
+      pf.bestFit,
+      ["tiktok", "reels", "youtube-shorts", "all-equal"] as const,
+      "tiktok"
+    ),
     notes: asStr(pf.notes),
   };
 

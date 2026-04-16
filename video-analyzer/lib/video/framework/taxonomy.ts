@@ -130,6 +130,8 @@ export const SHOT_TYPES = [
   "pov",
   "b-roll",
   "face-on-camera",
+  "animation",
+  "motion-graphics",
   "other",
 ] as const;
 export type ShotType = (typeof SHOT_TYPES)[number];
