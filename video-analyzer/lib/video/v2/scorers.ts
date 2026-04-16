@@ -35,3 +35,39 @@ export function computeEcr(i: EcrInputs): ScorerResult {
     )}, colloq=${i.hookColloquiality.toFixed(1)}`;
   return { value, rationale };
 }
+
+export type NawpInputs = {
+  durationSec: number;
+  pacingScore: number;
+  payoffIsEarly: boolean;
+  emotionalFlowMatchScore: number;
+};
+
+function durationBucketBaseline(seconds: number): number {
+  if (seconds < 15) return 0.72;
+  if (seconds < 30) return 0.58;
+  if (seconds < 60) return 0.45;
+  return 0.32;
+}
+
+export function computeNawp(i: NawpInputs): ScorerResult {
+  const baseline = durationBucketBaseline(i.durationSec);
+  const adj =
+    0.08 * (i.pacingScore - 5) / 5 +
+    (i.payoffIsEarly ? 0.06 : -0.06) +
+    0.04 * (i.emotionalFlowMatchScore - 5) / 5;
+  const value = Number(clamp01(baseline + adj).toFixed(3));
+  const bucket =
+    i.durationSec < 15
+      ? "<15s"
+      : i.durationSec < 30
+        ? "15-30s"
+        : i.durationSec < 60
+          ? "30-60s"
+          : "60s+";
+  const rationale =
+    `bucket=${bucket} base=${baseline}, ` +
+    `pacing=${i.pacingScore.toFixed(1)}, payoffEarly=${i.payoffIsEarly}, ` +
+    `flow=${i.emotionalFlowMatchScore.toFixed(1)}`;
+  return { value, rationale };
+}

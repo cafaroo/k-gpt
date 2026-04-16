@@ -56,3 +56,43 @@ describe("computeEcr", () => {
     expect(r2.value).toBeGreaterThanOrEqual(0);
   });
 });
+
+import { computeNawp } from "../scorers";
+
+describe("computeNawp", () => {
+  it("short video with early payoff → NAWP > 0.6", () => {
+    const { value } = computeNawp({
+      durationSec: 12,
+      pacingScore: 8,
+      payoffIsEarly: true,
+      emotionalFlowMatchScore: 8,
+    });
+    expect(value).toBeGreaterThan(0.6);
+  });
+
+  it("long video with late payoff → NAWP < 0.5", () => {
+    const { value } = computeNawp({
+      durationSec: 55,
+      pacingScore: 5,
+      payoffIsEarly: false,
+      emotionalFlowMatchScore: 4,
+    });
+    expect(value).toBeLessThan(0.5);
+  });
+
+  it("duration-bucketed baselines distinct", () => {
+    const short = computeNawp({
+      durationSec: 10,
+      pacingScore: 6,
+      payoffIsEarly: true,
+      emotionalFlowMatchScore: 6,
+    });
+    const long = computeNawp({
+      durationSec: 50,
+      pacingScore: 6,
+      payoffIsEarly: true,
+      emotionalFlowMatchScore: 6,
+    });
+    expect(short.value).not.toBe(long.value);
+  });
+});
