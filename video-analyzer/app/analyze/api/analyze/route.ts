@@ -56,6 +56,47 @@ async function persistRun(
   }
 }
 
+/**
+ * Scan for the first balanced top-level `{...}` object in `s`. Respects
+ * JSON string escaping so braces inside strings don't throw off the depth
+ * counter. Returns null if no balanced object is found.
+ */
+function extractJsonObject(s: string): string | null {
+  const start = s.indexOf("{");
+  if (start < 0) {
+    return null;
+  }
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = start; i < s.length; i++) {
+    const c = s[i];
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (c === "\\") {
+        escaped = true;
+      } else if (c === '"') {
+        inString = false;
+      }
+      continue;
+    }
+    if (c === '"') {
+      inString = true;
+      continue;
+    }
+    if (c === "{") {
+      depth++;
+    } else if (c === "}") {
+      depth--;
+      if (depth === 0) {
+        return s.slice(start, i + 1);
+      }
+    }
+  }
+  return null;
+}
+
 async function generateJson<T>(opts: {
   model: ReturnType<typeof getAnalysisModel>;
   schema: z.ZodType<T>;
@@ -72,11 +113,16 @@ async function generateJson<T>(opts: {
   });
   const latencyMs = Date.now() - t0;
 
-  const stripped = text
+  const fenced = text
     .trim()
     .replace(/^```(?:json)?\s*/i, "")
     .replace(/\s*```$/i, "")
     .trim();
+
+  // Gemini occasionally appends a trailing newline + prose/comment after the
+  // JSON object. Parse only the balanced slice between the first `{` and the
+  // matching closing `}` so trailing content doesn't break the parse.
+  const stripped = extractJsonObject(fenced) ?? fenced;
 
   let parsed: unknown;
   let parseError: string | null = null;
