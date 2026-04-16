@@ -96,3 +96,55 @@ describe("computeNawp", () => {
     expect(short.value).not.toBe(long.value);
   });
 });
+
+import { matchEmotionalBigram } from "../scorers";
+
+describe("matchEmotionalBigram", () => {
+  it("problem → hope → resolution scores high", () => {
+    const r = matchEmotionalBigram([
+      { primary: "frustration" },
+      { primary: "problem" },
+      { primary: "hope" },
+      { primary: "resolution" },
+    ]);
+    expect(r.value).toBeGreaterThan(6);
+    expect(r.sequence).toEqual([
+      "frustration",
+      "problem",
+      "hope",
+      "resolution",
+    ]);
+  });
+
+  it("humor → sadness → hope scores high", () => {
+    const r = matchEmotionalBigram([
+      { primary: "humor" },
+      { primary: "humor" },
+      { primary: "sadness" },
+      { primary: "hope" },
+    ]);
+    expect(r.value).toBeGreaterThan(6);
+  });
+
+  it("flat arc scores low", () => {
+    const r = matchEmotionalBigram([
+      { primary: "neutral" },
+      { primary: "neutral" },
+      { primary: "neutral" },
+    ]);
+    expect(r.value).toBeLessThan(4);
+  });
+
+  it("empty input → 0", () => {
+    expect(matchEmotionalBigram([]).value).toBe(0);
+  });
+
+  it("deduplicates adjacent-identical emotions in sequence", () => {
+    const r = matchEmotionalBigram([
+      { primary: "problem" },
+      { primary: "problem" },
+      { primary: "hope" },
+    ]);
+    expect(r.sequence).toEqual(["problem", "hope"]);
+  });
+});

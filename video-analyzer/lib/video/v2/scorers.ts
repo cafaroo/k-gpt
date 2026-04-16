@@ -71,3 +71,94 @@ export function computeNawp(i: NawpInputs): ScorerResult {
     `flow=${i.emotionalFlowMatchScore.toFixed(1)}`;
   return { value, rationale };
 }
+
+export type EmotionalArcItem = { primary: string };
+
+export type BigramResult = {
+  value: number;
+  sequence: string[];
+  matchedPatterns: string[];
+  rationale: string;
+};
+
+// Known high-performing patterns from emotional-flow research
+// (Frontiers 2025 + narrative-transportation lit).
+// Each pattern is a normalized sequence of emotion-families.
+const PATTERNS: { name: string; seq: string[]; weight: number }[] = [
+  { name: "problem-hope-resolution", seq: ["problem", "hope", "resolution"], weight: 9 },
+  { name: "humor-sadness-hope", seq: ["humor", "sadness", "hope"], weight: 9 },
+  { name: "curiosity-reveal-validation", seq: ["curiosity", "reveal", "validation"], weight: 8 },
+  { name: "frustration-relief-joy", seq: ["frustration", "relief", "joy"], weight: 8 },
+  { name: "problem-agitation-resolution", seq: ["problem", "agitation", "resolution"], weight: 7 },
+];
+
+// Fold near-synonyms to pattern vocabulary.
+const SYNONYMS: Record<string, string> = {
+  pain: "problem",
+  struggle: "problem",
+  discomfort: "problem",
+  confusion: "curiosity",
+  intrigue: "curiosity",
+  satisfaction: "validation",
+  joy: "joy",
+  delight: "joy",
+  laughter: "humor",
+  amusement: "humor",
+  sad: "sadness",
+  grief: "sadness",
+  melancholy: "sadness",
+  optimism: "hope",
+  inspiration: "hope",
+  triumph: "resolution",
+  success: "resolution",
+  relief: "relief",
+};
+
+function normalizeEmotion(raw: string): string {
+  const k = raw.toLowerCase().trim();
+  return SYNONYMS[k] ?? k;
+}
+
+function dedupeAdjacent(arr: string[]): string[] {
+  const out: string[] = [];
+  for (const v of arr) {
+    if (out[out.length - 1] !== v) out.push(v);
+  }
+  return out;
+}
+
+function containsSubsequence(hay: string[], needle: string[]): boolean {
+  if (needle.length === 0) return true;
+  let i = 0;
+  for (const h of hay) {
+    if (h === needle[i]) i++;
+    if (i === needle.length) return true;
+  }
+  return false;
+}
+
+export function matchEmotionalBigram(
+  arc: EmotionalArcItem[]
+): BigramResult {
+  if (arc.length === 0) {
+    return { value: 0, sequence: [], matchedPatterns: [], rationale: "empty arc" };
+  }
+  const sequence = dedupeAdjacent(arc.map((a) => normalizeEmotion(a.primary)));
+  const matched: string[] = [];
+  let bestWeight = 0;
+  for (const p of PATTERNS) {
+    if (containsSubsequence(sequence, p.seq)) {
+      matched.push(p.name);
+      bestWeight = Math.max(bestWeight, p.weight);
+    }
+  }
+  // If no pattern match, fall back to variety score (number of distinct emotions).
+  const variety = new Set(sequence).size;
+  const fallback = Math.min(variety * 1.2, 5);
+  const value = Number(Math.max(bestWeight, fallback).toFixed(2));
+  const rationale =
+    matched.length > 0
+      ? `matched: ${matched.join(", ")}`
+      : `no high-performing pattern; variety=${variety}`;
+  return { value, sequence, matchedPatterns: matched, rationale };
+}
