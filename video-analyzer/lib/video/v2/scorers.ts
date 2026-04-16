@@ -162,3 +162,24 @@ export function matchEmotionalBigram(
       : `no high-performing pattern; variety=${variety}`;
   return { value, sequence, matchedPatterns: matched, rationale };
 }
+
+export type ComplexityRhythmInputs = {
+  cutsPerMinute: number;
+  sceneComplexity: { start: number; complexity: number }[];
+};
+
+export function computeComplexityAdjustedRhythm(
+  i: ComplexityRhythmInputs
+): ScorerResult {
+  const complexities = i.sceneComplexity
+    .map((s) => s.complexity)
+    .filter((c) => Number.isFinite(c) && c > 0);
+  const mean =
+    complexities.length === 0
+      ? 5
+      : complexities.reduce((a, b) => a + b, 0) / complexities.length;
+  const raw = i.cutsPerMinute / mean;
+  const value = Number(Math.max(0, Math.min(100, raw)).toFixed(2));
+  const rationale = `cuts/min=${i.cutsPerMinute.toFixed(1)} / meanComplexity=${mean.toFixed(2)}`;
+  return { value, rationale };
+}

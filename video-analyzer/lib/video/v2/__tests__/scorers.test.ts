@@ -148,3 +148,31 @@ describe("matchEmotionalBigram", () => {
     expect(r.sequence).toEqual(["problem", "hope"]);
   });
 });
+
+import { computeComplexityAdjustedRhythm } from "../scorers";
+
+describe("computeComplexityAdjustedRhythm", () => {
+  it("high cuts / high complexity → moderate rhythm", () => {
+    const r = computeComplexityAdjustedRhythm({
+      cutsPerMinute: 30,
+      sceneComplexity: [{ start: 0, complexity: 8 }, { start: 5, complexity: 9 }],
+    });
+    expect(r.value).toBeCloseTo(30 / 8.5, 1);
+  });
+
+  it("empty complexity → fallback baseline of 5", () => {
+    const r = computeComplexityAdjustedRhythm({
+      cutsPerMinute: 20,
+      sceneComplexity: [],
+    });
+    expect(r.value).toBeCloseTo(20 / 5, 1);
+  });
+
+  it("value clamped to [0, 100]", () => {
+    const r = computeComplexityAdjustedRhythm({
+      cutsPerMinute: 1000,
+      sceneComplexity: [{ start: 0, complexity: 0.1 }],
+    });
+    expect(r.value).toBeLessThanOrEqual(100);
+  });
+});
