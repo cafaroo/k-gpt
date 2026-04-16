@@ -148,6 +148,7 @@ export const batch = pgTable("Batch", {
   name: text("name").notNull(),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
 });
+
 export type Batch = InferSelectModel<typeof batch>;
 
 export const video = pgTable("Video", {
@@ -167,6 +168,7 @@ export const video = pgTable("Video", {
   thumbnailUrl: text("thumbnailUrl"),
   uploadedAt: timestamp("uploadedAt").notNull().defaultNow(),
 });
+
 export type Video = InferSelectModel<typeof video>;
 
 export const analysis = pgTable("Analysis", {
@@ -230,4 +232,5 @@ export const analysis = pgTable("Analysis", {
   ruleCompliance: jsonb("ruleCompliance"),
   researchMeta: jsonb("researchMeta"),
 });
+
 export type Analysis = InferSelectModel<typeof analysis>;
