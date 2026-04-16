@@ -1,7 +1,6 @@
 import ExcelJS from "exceljs";
 import { toPng } from "html-to-image";
 import JSZip from "jszip";
-import type { AudioAnalysis } from "./audio-schema";
 import { computeBatchInsights } from "./batch/insights";
 import type { Batch } from "./batch/types";
 import type { QwenAnalysis } from "./qwen-schema";
@@ -15,7 +14,6 @@ type Analysis = {
   extraction: VideoExtraction;
   performance?: PerformanceData;
   qwenAnalysis?: QwenAnalysis | null;
-  audioAnalysis?: AudioAnalysis | null;
 };
 
 export async function exportAnalysis(
@@ -23,17 +21,10 @@ export async function exportAnalysis(
   chartRefs: ExportChartRefs = {}
 ): Promise<void> {
   const zip = new JSZip();
-  const { extraction, performance, qwenAnalysis, audioAnalysis } = analysis;
+  const { extraction, performance, qwenAnalysis } = analysis;
 
-  // 0. AI analysis JSONs
   if (qwenAnalysis) {
     zip.file("qwen-analysis.json", JSON.stringify(qwenAnalysis, null, 2));
-  }
-  if (audioAnalysis) {
-    zip.file("audio-analysis.json", JSON.stringify(audioAnalysis, null, 2));
-    if (audioAnalysis.voiceover.transcript) {
-      zip.file("transcript.txt", audioAnalysis.voiceover.transcript);
-    }
   }
 
   // 1. extraction.json (without huge gray32 arrays and dataUrls)
@@ -145,21 +136,21 @@ export async function exportAnalysis(
       });
     }
 
-    const recSheet = wb.addWorksheet("Recommendations");
-    recSheet.columns = [
-      { header: "Priority", key: "p", width: 10 },
+    const insightsSheet = wb.addWorksheet("Insights");
+    insightsSheet.columns = [
       { header: "Area", key: "a", width: 12 },
-      { header: "Issue", key: "i", width: 50 },
-      { header: "Suggestion", key: "s", width: 60 },
-      { header: "Expected impact", key: "x", width: 40 },
+      { header: "Impact", key: "im", width: 10 },
+      { header: "Observation", key: "ob", width: 60 },
+      { header: "Evidence", key: "ev", width: 50 },
+      { header: "Note", key: "n", width: 40 },
     ];
-    for (const r of qwenAnalysis.recommendations) {
-      recSheet.addRow({
-        p: r.priority,
-        a: r.area,
-        i: r.issue,
-        s: r.suggestion,
-        x: r.expectedImpact,
+    for (const ins of qwenAnalysis.insights) {
+      insightsSheet.addRow({
+        a: ins.area,
+        im: ins.impact,
+        ob: ins.observation,
+        ev: ins.evidence,
+        n: ins.note ?? "",
       });
     }
 
@@ -332,12 +323,6 @@ export async function exportBatch(batch: Batch): Promise<void> {
       }
       if (v.qwen) {
         dir.file("qwen-analysis.json", JSON.stringify(v.qwen, null, 2));
-      }
-      if (v.audio) {
-        dir.file("audio-analysis.json", JSON.stringify(v.audio, null, 2));
-        if (v.audio.voiceover.transcript) {
-          dir.file("transcript.txt", v.audio.voiceover.transcript);
-        }
       }
       if (v.extraction) {
         const slim = {

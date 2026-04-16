@@ -28,7 +28,7 @@ export function RuleComplianceCard({ analysis }: Props) {
         {rules.map((r) => (
           <div
             className="flex items-start gap-2 rounded border-l-2 px-2 py-1.5 text-xs"
-            key={r.ruleId}
+            key={`rc-${r.ruleId}`}
             style={{
               borderLeftColor: r.met ? "rgb(16 185 129)" : "rgb(239 68 68)",
             }}
@@ -83,7 +83,10 @@ export function NichePlaybookCard({ analysis }: Props) {
       </CardHeader>
       <CardContent className="space-y-1.5">
         {niche.playbookCompliance.map((c) => (
-          <div className="flex items-start gap-2 text-xs" key={c.ruleId}>
+          <div
+            className="flex items-start gap-2 text-xs"
+            key={`pc-${c.ruleId}`}
+          >
             <span
               className={`mt-0.5 shrink-0 ${c.met ? "text-emerald-500" : "text-red-500"}`}
             >

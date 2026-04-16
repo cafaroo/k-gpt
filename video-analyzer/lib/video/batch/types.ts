@@ -8,7 +8,6 @@
  * For now everything lives in React state.
  */
 
-import type { AudioAnalysis } from "../audio-schema";
 import type { QwenAnalysis } from "../qwen-schema";
 import type { PerformanceData, VideoExtraction } from "../types";
 
@@ -29,7 +28,6 @@ export type VideoJob = {
   error: string | null;
   extraction: VideoExtraction | null;
   qwen: QwenAnalysis | null;
-  audio: AudioAnalysis | null;
   performance: PerformanceData | null;
   thumbnailDataUrl: string | null;
   startedAt: number | null;

@@ -58,6 +58,21 @@ export async function extractAll(
   }
 }
 
+/**
+ * Read just metadata without extracting frames or audio. Used when Gemini
+ * is the analyzer and we pass the full video — the heavy client-side
+ * extraction pipeline isn't needed anymore.
+ */
+export async function readMetadata(file: File): Promise<VideoMetadata> {
+  const blobUrl = URL.createObjectURL(file);
+  try {
+    const { metadata } = await loadVideo(file, blobUrl);
+    return metadata;
+  } finally {
+    URL.revokeObjectURL(blobUrl);
+  }
+}
+
 function loadVideo(
   file: File,
   blobUrl: string

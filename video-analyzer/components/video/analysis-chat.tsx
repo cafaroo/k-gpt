@@ -7,7 +7,6 @@ import { type FormEvent, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
-import type { AudioAnalysis } from "@/lib/video/audio-schema";
 import type { QwenAnalysis } from "@/lib/video/qwen-schema";
 import type {
   ExtractedFrame,
@@ -21,7 +20,6 @@ type Props = {
   extraction: VideoExtraction;
   performance: PerformanceData;
   qwenAnalysis: QwenAnalysis | null;
-  audioAnalysis: AudioAnalysis | null;
 };
 
 function pickKeyframes(frames: ExtractedFrame[], count = 8): ExtractedFrame[] {
@@ -48,25 +46,18 @@ function stripExtraction(extraction: VideoExtraction): VideoExtraction {
   };
 }
 
-export function AnalysisChat({
-  extraction,
-  performance,
-  qwenAnalysis,
-  audioAnalysis,
-}: Props) {
+export function AnalysisChat({ extraction, performance, qwenAnalysis }: Props) {
   const [modelId, setModelId] = useState("anthropic/claude-sonnet-4-5");
 
   const contextRef = useRef({
     extraction: stripExtraction(extraction),
     performance,
     qwenAnalysis,
-    audioAnalysis,
   });
   contextRef.current = {
     extraction: stripExtraction(extraction),
     performance,
     qwenAnalysis,
-    audioAnalysis,
   };
 
   const keyframes = useMemo(

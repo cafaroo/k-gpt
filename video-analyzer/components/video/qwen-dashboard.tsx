@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertCircle, Loader2, MessageSquare } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -12,8 +12,10 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { AudioAnalysis } from "@/lib/video/audio-schema";
-import type { QwenAnalysis } from "@/lib/video/qwen-schema";
+import type {
+  QwenAnalysis,
+  QwenAnalysisWithExtended,
+} from "@/lib/video/qwen-schema";
 import type {
   ExportChartRefs,
   PerformanceData,
@@ -21,30 +23,37 @@ import type {
 } from "@/lib/video/types";
 import { AnalysisChat } from "./analysis-chat";
 import { AudioChart } from "./audio-chart";
-import { AudioInsights } from "./audio-insights";
+import { AudioInsightsV2 } from "./audio-insights-v2";
 import { BeatMapStrip } from "./beat-map-strip";
+import { EmotionalArcChart } from "./emotional-arc-chart";
 import { ExportButton } from "./export-button";
 import { FrameGallery } from "./frame-gallery";
 import { HeroScorecards, OverallSummary } from "./hero-scorecards";
+import { HookDissectionCard } from "./hook-dissection-card";
+import { InsightsCard } from "./insights-card";
 import { MetricsInput } from "./metrics-input";
+import { MicroMomentsCard } from "./micro-moments-card";
 import { PacingCurve } from "./pacing-curve";
-import { Recommendations } from "./recommendations";
+import { PatternInterruptsCard } from "./pattern-interrupts-card";
+import { PlatformFitCard } from "./platform-fit-card";
 import {
   NichePlaybookCard,
   PerformancePredictionCard,
   RuleComplianceCard,
 } from "./rule-compliance";
 import { SceneNarrative } from "./scene-narrative";
-import { TestPlanCard } from "./test-plan-card";
+import { SwipeRiskCurve } from "./swipe-risk-curve";
 import { Timeline } from "./timeline";
+import { TranscriptCard } from "./transcript-card";
+import { TrustSignalsCard } from "./trust-signals-card";
 import { VideoPlayer, type VideoPlayerHandle } from "./video-player";
 
 type Props = {
   file: File;
   extraction: VideoExtraction;
-  analysis: QwenAnalysis | null;
-  audioAnalysis: AudioAnalysis | null;
+  analysis: QwenAnalysisWithExtended | null;
   analysisError?: string | null;
+  extractionError?: string | null;
   onReset: () => void;
 };
 
@@ -52,8 +61,8 @@ export function QwenDashboard({
   file,
   extraction,
   analysis,
-  audioAnalysis,
   analysisError,
+  extractionError,
   onReset,
 }: Props) {
   const videoRef = useRef<VideoPlayerHandle>(null);
@@ -64,12 +73,16 @@ export function QwenDashboard({
   const [currentTime, setCurrentTime] = useState(0);
   const [performance, setPerformance] = useState<PerformanceData>({});
 
-  const [src, setSrc] = useState<string>("");
+  // Create the blob URL once per file. Using useMemo + an unmount-only
+  // revoke avoids React Strict Mode running the cleanup between mount and
+  // paint (which caused ERR_FILE_NOT_FOUND when <video src=...> tried to
+  // load a URL that had already been revoked).
+  const src = useMemo(() => URL.createObjectURL(file), [file]);
   useEffect(() => {
-    const url = URL.createObjectURL(file);
-    setSrc(url);
-    return () => URL.revokeObjectURL(url);
-  }, [file]);
+    return () => {
+      URL.revokeObjectURL(src);
+    };
+  }, [src]);
 
   const chartRefs: ExportChartRefs = {
     audio: audioChartRef.current,
@@ -99,7 +112,6 @@ export function QwenDashboard({
               extraction,
               performance,
               qwenAnalysis: analysis,
-              audioAnalysis,
             }}
             chartRefs={chartRefs}
           />
@@ -122,7 +134,6 @@ export function QwenDashboard({
               </SheetHeader>
               <div className="min-h-0 flex-1">
                 <AnalysisChat
-                  audioAnalysis={audioAnalysis}
                   extraction={extraction}
                   performance={performance}
                   qwenAnalysis={analysis}
@@ -142,6 +153,22 @@ export function QwenDashboard({
               <p className="font-medium">Qwen analysis unavailable</p>
               <p className="text-muted-foreground mt-1 text-sm">
                 {analysisError}. Extraction data is still available below.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Extraction error banner */}
+      {extractionError && (
+        <Card className="border-amber-500/30 bg-amber-500/5">
+          <CardContent className="flex items-start gap-3 py-4">
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
+            <div className="flex-1">
+              <p className="font-medium">Client-side extraction failed</p>
+              <p className="text-muted-foreground mt-1 text-sm">
+                {extractionError}. Frames, audio RMS and motion analysis won't
+                render — the Qwen analysis above is unaffected.
               </p>
             </div>
           </CardContent>
@@ -183,22 +210,38 @@ export function QwenDashboard({
                 duration={metadata.duration}
                 onSeek={seek}
               />
-              {audioAnalysis && (
-                <AudioInsights audio={audioAnalysis} onSeek={seek} />
-              )}
             </div>
 
-            {/* Right: pacing + predictions + rules + recommendations + test plan */}
+            {/* Right: pacing + predictions + rules + insights */}
             <div className="space-y-4">
               <PerformancePredictionCard analysis={analysis} />
               <PacingCurve analysis={analysis} ref={pacingCurveRef} />
-              <TestPlanCard analysis={analysis} />
-              <Recommendations analysis={analysis} />
+              <InsightsCard analysis={analysis} />
               <RuleComplianceCard analysis={analysis} />
               <NichePlaybookCard analysis={analysis} />
               <DetailCards analysis={analysis} />
             </div>
           </div>
+
+          {/* Extended analysis sections — populated on second Gemini pass */}
+          {analysis.extended && (
+            <ExtendedSections extended={analysis.extended} onSeek={seek} />
+          )}
+          {!analysis.extended && analysis.extendedError && (
+            <Card className="border-amber-500/30 bg-amber-500/5">
+              <CardContent className="flex items-start gap-3 py-4">
+                <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
+                <div className="flex-1">
+                  <p className="font-medium">Extended analysis unavailable</p>
+                  <p className="text-muted-foreground mt-1 text-sm">
+                    {analysis.extendedError}. Core analysis shown above — retry
+                    by uploading the video again for full insights (transcript,
+                    swipe-risk, emotional arc, etc.).
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </>
       ) : (
         // No analysis yet (error/loading): show at least video + raw data
@@ -253,21 +296,32 @@ export function QwenDashboard({
 
             <TabsContent className="mt-3" value="motion">
               <div className="max-h-[28rem] overflow-y-auto">
-                <ul className="text-sm">
-                  {motionSegments.map((m) => (
-                    <li
-                      className="flex items-center justify-between border-b py-1 last:border-0"
-                      key={`${m.startTime}-${m.endTime}`}
-                    >
-                      <span>
-                        {m.startTime.toFixed(1)}–{m.endTime.toFixed(1)}s
-                      </span>
-                      <span className="text-muted-foreground">
-                        {m.interpretation} ({m.motionScore})
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                {motionSegments.length === 0 ? (
+                  <div className="text-muted-foreground rounded-lg border p-4 text-center text-xs">
+                    <p className="font-medium">No motion data available</p>
+                    <p className="mt-1 text-[11px] opacity-70">
+                      Motion analysis runs on sampled frames — extraction likely
+                      failed before producing any samples. Check the browser
+                      console for extractAll warnings.
+                    </p>
+                  </div>
+                ) : (
+                  <ul className="text-sm">
+                    {motionSegments.map((m) => (
+                      <li
+                        className="flex items-center justify-between border-b py-1 last:border-0"
+                        key={`${m.startTime}-${m.endTime}`}
+                      >
+                        <span>
+                          {m.startTime.toFixed(1)}–{m.endTime.toFixed(1)}s
+                        </span>
+                        <span className="text-muted-foreground">
+                          {m.interpretation} ({m.motionScore})
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </TabsContent>
 
@@ -307,6 +361,53 @@ export function QwenDashboard({
           </Tabs>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function ExtendedSections({
+  extended,
+  onSeek,
+}: {
+  extended: NonNullable<QwenAnalysisWithExtended["extended"]>;
+  onSeek: (t: number) => void;
+}) {
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <HookDissectionCard
+          hookDissection={extended.hookDissection}
+          onSeek={onSeek}
+        />
+        <TranscriptCard onSeek={onSeek} transcript={extended.transcript} />
+      </div>
+
+      <AudioInsightsV2 audioExtended={extended.audioExtended} onSeek={onSeek} />
+
+      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <SwipeRiskCurve swipeRiskCurve={extended.swipeRiskCurve} />
+        <EmotionalArcChart
+          emotionalArc={extended.emotionalArc}
+          onSeek={onSeek}
+        />
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <PatternInterruptsCard
+          onSeek={onSeek}
+          patternInterrupts={extended.patternInterrupts}
+        />
+        <TrustSignalsCard
+          onSeek={onSeek}
+          trustSignals={extended.trustSignals}
+        />
+        <MicroMomentsCard
+          microMoments={extended.microMoments}
+          onSeek={onSeek}
+        />
+      </div>
+
+      <PlatformFitCard platformFit={extended.platformFit} />
     </div>
   );
 }
@@ -405,16 +506,48 @@ function DetailCards({ analysis }: { analysis: QwenAnalysis }) {
           <CardTitle className="text-sm">Visual style</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
-          <p className="text-muted-foreground">
-            {analysis.visual.mood} · variety{" "}
-            <strong>{analysis.visual.variety}/10</strong> · text overlays:{" "}
-            {analysis.visual.textOverlayUsage}
-          </p>
+          <div className="flex flex-wrap gap-1.5 text-xs">
+            <span className="bg-muted rounded-full px-2 py-0.5">
+              variety <strong>{analysis.visual.variety}/10</strong>
+            </span>
+            <span className="bg-muted rounded-full px-2 py-0.5">
+              text overlays: {analysis.visual.textOverlayUsage}
+            </span>
+            <span className="bg-muted rounded-full px-2 py-0.5">
+              camera: {analysis.visual.cameraMovement}
+            </span>
+            <span className="bg-muted rounded-full px-2 py-0.5">
+              branding: {analysis.visual.brandingVisibility}
+            </span>
+            <span className="bg-muted rounded-full px-2 py-0.5">
+              face: {Math.round(analysis.visual.dominantFaceRatio * 100)}%
+            </span>
+          </div>
+          {analysis.visual.details && (
+            <p className="leading-relaxed">{analysis.visual.details}</p>
+          )}
+          {analysis.visual.mood && !analysis.visual.details && (
+            <p className="text-muted-foreground">{analysis.visual.mood}</p>
+          )}
+          {analysis.visual.shotTypes.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              <span className="text-muted-foreground text-xs">Shots:</span>
+              {analysis.visual.shotTypes.map((s) => (
+                <span
+                  className="bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs"
+                  key={s}
+                >
+                  {s}
+                </span>
+              ))}
+            </div>
+          )}
           {analysis.visual.dominantColors.length > 0 && (
-            <div className="flex gap-1">
+            <div className="flex items-center gap-1">
+              <span className="text-muted-foreground text-xs">Colors:</span>
               {analysis.visual.dominantColors.map((c) => (
                 <div
-                  className="h-6 w-6 rounded border"
+                  className="h-5 w-5 rounded border"
                   key={c}
                   style={{ backgroundColor: c }}
                   title={c}

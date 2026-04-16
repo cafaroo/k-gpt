@@ -1,4 +1,3 @@
-import type { AudioAnalysis } from "../audio-schema";
 import type { QwenAnalysis } from "../qwen-schema";
 import type { VideoJob } from "./types";
 
@@ -9,7 +8,7 @@ export type UpdateJob = (id: string, patch: Partial<VideoJob>) => void;
  *
  * Spins up `concurrency` workers that pull jobs off a shared queue until
  * drained. Each worker awaits processOne which calls the same pipeline as
- * the single-video flow (extractAll → Qwen + Gemini in parallel).
+ * the single-video flow (extractAll + Gemini analysis).
  */
 export async function runBatch(
   jobs: VideoJob[],
@@ -58,51 +57,25 @@ async function processOne(job: VideoJob, updateJob: UpdateJob): Promise<void> {
       thumbnailDataUrl,
     });
 
-    const qwenPromise = runQwen(extraction);
-    const audioPromise = runAudio(job.file);
-
-    const [qwenResult, audioResult] = await Promise.allSettled([
-      qwenPromise,
-      audioPromise,
-    ]);
-
-    const patch: Partial<VideoJob> = {
-      status: "done",
-      step: "Ready",
-      progress: 1,
-      finishedAt: Date.now(),
-    };
-
-    if (qwenResult.status === "fulfilled") {
-      patch.qwen = qwenResult.value;
-    } else {
-      console.warn(`[batch ${job.filename}] qwen failed`, qwenResult.reason);
+    try {
+      const analysis = await runQwen(extraction, job.file);
+      updateJob(job.id, {
+        status: "done",
+        step: "Ready",
+        progress: 1,
+        finishedAt: Date.now(),
+        qwen: analysis,
+      });
+    } catch (err) {
+      console.warn(`[batch ${job.filename}] analysis failed`, err);
+      updateJob(job.id, {
+        status: "done",
+        step: "Ready (analysis failed)",
+        progress: 1,
+        finishedAt: Date.now(),
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
-    if (audioResult.status === "fulfilled") {
-      patch.audio = audioResult.value;
-    } else {
-      console.warn(`[batch ${job.filename}] audio failed`, audioResult.reason);
-    }
-
-    const errors: string[] = [];
-    if (qwenResult.status === "rejected") {
-      errors.push(
-        `visual: ${qwenResult.reason instanceof Error ? qwenResult.reason.message : String(qwenResult.reason)}`
-      );
-    }
-    if (audioResult.status === "rejected") {
-      errors.push(
-        `audio: ${audioResult.reason instanceof Error ? audioResult.reason.message : String(audioResult.reason)}`
-      );
-    }
-    if (errors.length > 0 && !patch.qwen && !patch.audio) {
-      patch.status = "error";
-      patch.error = errors.join(" · ");
-    } else if (errors.length > 0) {
-      patch.error = errors.join(" · ");
-    }
-
-    updateJob(job.id, patch);
   } catch (err) {
     console.error(`[batch ${job.filename}] unrecoverable`, err);
     updateJob(job.id, {
@@ -114,7 +87,8 @@ async function processOne(job: VideoJob, updateJob: UpdateJob): Promise<void> {
 }
 
 async function runQwen(
-  extraction: import("../types").VideoExtraction
+  extraction: import("../types").VideoExtraction,
+  file: File
 ): Promise<QwenAnalysis> {
   const sampled =
     extraction.frames.length <= 16
@@ -133,6 +107,14 @@ async function runQwen(
     duration: extraction.metadata.duration,
   });
 
+  let videoUrl: string | null = null;
+  try {
+    const { uploadVideo } = await import("../blob-upload");
+    videoUrl = await uploadVideo(file);
+  } catch (err) {
+    console.warn(`[batch ${file.name}] video upload failed`, err);
+  }
+
   const res = await fetch("/analyze/api/analyze", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -141,6 +123,7 @@ async function runQwen(
       audioText,
       motionText,
       frameDataUrls: sampled.map((f) => f.dataUrl),
+      ...(videoUrl ? { videoUrl } : {}),
     }),
   });
 
@@ -149,21 +132,5 @@ async function runQwen(
     throw new Error(body.error || `visual HTTP ${res.status}`);
   }
   const { analysis } = (await res.json()) as { analysis: QwenAnalysis };
-  return analysis;
-}
-
-async function runAudio(file: File): Promise<AudioAnalysis> {
-  const { encodeVideoAudioToWav } = await import("../audio-extract");
-  const wav = await encodeVideoAudioToWav(file);
-  const res = await fetch("/analyze/api/audio", {
-    method: "POST",
-    headers: { "Content-Type": wav.type || "audio/wav" },
-    body: wav,
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.error || `audio HTTP ${res.status}`);
-  }
-  const { analysis } = (await res.json()) as { analysis: AudioAnalysis };
   return analysis;
 }

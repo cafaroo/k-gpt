@@ -51,23 +51,31 @@ export function BeatMapStrip({ analysis, duration, onSeek }: Props) {
       <CardContent className="space-y-3">
         {/* Strip */}
         <div className="relative h-8 w-full overflow-hidden rounded-md bg-muted">
-          {beats.map((b) => {
-            const left = (b.start / duration) * 100;
-            const width = ((b.end - b.start) / duration) * 100;
-            const color = BEAT_COLORS[b.type] ?? BEAT_COLORS.other;
-            return (
-              <button
-                className={`absolute top-0 bottom-0 ${color} border-r border-white/30 px-1 text-[10px] font-semibold text-white transition-opacity hover:opacity-90 truncate`}
-                key={`${b.start}-${b.end}-${b.type}`}
-                onClick={() => onSeek?.(b.start)}
-                style={{ left: `${left}%`, width: `${width}%` }}
-                title={`${b.type} · ${b.start.toFixed(1)}–${b.end.toFixed(1)}s\n${b.description}`}
-                type="button"
-              >
-                {width > 6 ? b.type : ""}
-              </button>
-            );
-          })}
+          {beats
+            .filter(
+              (b) =>
+                typeof b?.start === "number" &&
+                typeof b?.end === "number" &&
+                Number.isFinite(b.start) &&
+                Number.isFinite(b.end)
+            )
+            .map((b) => {
+              const left = (b.start / duration) * 100;
+              const width = ((b.end - b.start) / duration) * 100;
+              const color = BEAT_COLORS[b.type] ?? BEAT_COLORS.other;
+              return (
+                <button
+                  className={`absolute top-0 bottom-0 ${color} border-r border-white/30 px-1 text-[10px] font-semibold text-white transition-opacity hover:opacity-90 truncate`}
+                  key={`b-${b.start}-${b.end}-${b.type}`}
+                  onClick={() => onSeek?.(b.start)}
+                  style={{ left: `${left}%`, width: `${width}%` }}
+                  title={`${b.type} · ${b.start.toFixed(1)}–${b.end.toFixed(1)}s\n${b.description ?? ""}`}
+                  type="button"
+                >
+                  {width > 6 ? b.type : ""}
+                </button>
+              );
+            })}
         </div>
 
         {/* Canonical guide */}
@@ -86,7 +94,7 @@ export function BeatMapStrip({ analysis, duration, onSeek }: Props) {
             return (
               <button
                 className="flex w-full gap-2 rounded border p-2 text-left text-xs transition-colors hover:bg-muted/50"
-                key={`row-${b.start}-${b.type}`}
+                key={`row-${b.start}-${b.end}-${b.type}`}
                 onClick={() => onSeek?.(b.start)}
                 type="button"
               >

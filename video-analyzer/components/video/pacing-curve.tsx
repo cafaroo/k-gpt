@@ -25,6 +25,21 @@ export const PacingCurve = forwardRef<HTMLDivElement, Props>(
       note: pt.note,
     }));
 
+    if (data.length === 0) {
+      return (
+        <Card ref={ref}>
+          <CardHeader>
+            <CardTitle className="text-sm">
+              Engagement intensity curve
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-muted-foreground text-xs">
+            Intensity-kurvan saknas från Gemini-output.
+          </CardContent>
+        </Card>
+      );
+    }
+
     return (
       <Card ref={ref}>
         <CardHeader className="flex flex-row items-center justify-between">
@@ -34,7 +49,7 @@ export const PacingCurve = forwardRef<HTMLDivElement, Props>(
           </span>
         </CardHeader>
         <CardContent>
-          <div className="h-56 w-full">
+          <div style={{ width: "100%", height: 224, minWidth: 280 }}>
             <ResponsiveContainer height="100%" width="100%">
               <AreaChart data={data}>
                 <defs>

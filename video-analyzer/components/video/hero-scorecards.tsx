@@ -32,7 +32,8 @@ function Scorecard({
   icon: React.ReactNode;
   sublabel?: string;
 }) {
-  const color = getScoreColor(value, max);
+  const num = typeof value === "number" && Number.isFinite(value) ? value : 0;
+  const color = getScoreColor(num, max);
   return (
     <Card className="p-4">
       <div className="flex items-center justify-between">
@@ -43,7 +44,7 @@ function Scorecard({
       </div>
       <div className="mt-2 flex items-baseline gap-1">
         <span className={`text-3xl font-semibold ${color}`}>
-          {value.toFixed(max === 100 ? 0 : 1)}
+          {num.toFixed(max === 100 ? 0 : 1)}
         </span>
         <span className="text-muted-foreground text-xs">/ {max}</span>
       </div>
@@ -61,29 +62,39 @@ export function HeroScorecards({ analysis }: Props) {
         icon={<Activity className="h-4 w-4" />}
         label="Overall"
         max={100}
-        sublabel={analysis.overall.tagline}
-        value={analysis.overall.score}
+        sublabel={analysis.overall?.tagline ?? "—"}
+        value={analysis.overall?.score ?? 0}
       />
       <Scorecard
         icon={<Flame className="h-4 w-4" />}
         label="Hook"
         max={10}
-        sublabel={`${analysis.hook.duration.toFixed(1)}s`}
-        value={analysis.hook.score}
+        sublabel={
+          analysis.hook?.duration == null
+            ? "—"
+            : `${analysis.hook.duration.toFixed(1)}s`
+        }
+        value={analysis.hook?.score ?? 0}
       />
       <Scorecard
         icon={<Activity className="h-4 w-4" />}
         label="Pacing"
         max={10}
-        sublabel={`${analysis.pacing.rhythm} · ${analysis.pacing.cutsPerMinute.toFixed(0)} cpm`}
-        value={analysis.pacing.score}
+        sublabel={
+          analysis.pacing
+            ? `${analysis.pacing.rhythm ?? "?"} · ${(analysis.pacing.cutsPerMinute ?? 0).toFixed(0)} cpm`
+            : "—"
+        }
+        value={analysis.pacing?.score ?? 0}
       />
       <Scorecard
         icon={<MousePointerClick className="h-4 w-4" />}
         label="CTA"
         max={10}
-        sublabel={analysis.cta.exists ? analysis.cta.timing : "missing"}
-        value={analysis.cta.exists ? analysis.cta.clarity : 0}
+        sublabel={
+          analysis.cta?.exists ? (analysis.cta.timing ?? "?") : "missing"
+        }
+        value={analysis.cta?.exists ? (analysis.cta.clarity ?? 0) : 0}
       />
     </div>
   );
@@ -118,14 +129,31 @@ export function OverallSummary({ analysis }: Props) {
           <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
             {analysis.overall.summary}
           </p>
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-            <span className="text-muted-foreground">Predicted:</span>
-            <span className="flex items-center gap-1">
-              completion {badge(predicted.completionRate)}
-            </span>
-            <span className="flex items-center gap-1">
-              engagement {badge(predicted.engagementRate)}
-            </span>
+          <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-xs md:grid-cols-3">
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">Completion</span>
+              {badge(predicted.completionRate)}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">Engagement</span>
+              {badge(predicted.engagementRate)}
+            </div>
+            <div>
+              <span className="text-muted-foreground">Hold-to-3s </span>
+              <strong>{predicted.holdTo3sScore.toFixed(0)}%</strong>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Save </span>
+              <strong>{predicted.saveLikelihood.toFixed(1)}/10</strong>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Comment </span>
+              <strong>{predicted.commentLikelihood.toFixed(1)}/10</strong>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Share </span>
+              <strong>{predicted.shareLikelihood.toFixed(1)}/10</strong>
+            </div>
           </div>
           <p className="text-muted-foreground mt-2 text-xs italic">
             {predicted.rationale}

@@ -1,15 +1,16 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import type { AudioAnalysis } from "@/lib/video/audio-schema";
 import type { QwenAnalysis } from "@/lib/video/qwen-schema";
-import type { ProcessingState, VideoExtraction } from "@/lib/video/types";
+import type {
+  ProcessingState,
+  VideoExtraction,
+  VideoMetadata,
+} from "@/lib/video/types";
 
 const STEPS = [
   "Loading video",
-  "Extracting frames",
-  "Motion & scenes analyzed",
-  "Audio analyzed",
+  "Uploading",
   "Running AI analysis",
   "Ready",
 ] as const;
@@ -18,190 +19,100 @@ export function useVideoProcessor() {
   const [state, setState] = useState<ProcessingState>("idle");
   const [progress, setProgress] = useState(0);
   const [step, setStep] = useState<string>("");
-  const [extraction, setExtraction] = useState<VideoExtraction | null>(null);
+  const [metadata, setMetadata] = useState<VideoMetadata | null>(null);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<QwenAnalysis | null>(null);
-  const [audioAnalysis, setAudioAnalysis] = useState<AudioAnalysis | null>(
-    null
-  );
+  const [extraction, setExtraction] = useState<VideoExtraction | null>(null);
+  const [extractionError, setExtractionError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const processVideo = useCallback(async (file: File) => {
     try {
       setError(null);
+      setExtractionError(null);
       setState("loading");
       setStep("Loading video");
-      setProgress(0);
+      setProgress(0.05);
 
-      setState("extracting");
-      const { extractAll } = await import("@/lib/video/extractors");
-      const result = await extractAll(file, (stepName, p) => {
-        setStep(stepName);
-        setProgress(p * 0.45);
-      });
+      const { readMetadata } = await import("@/lib/video/extractors");
+      const meta = await readMetadata(file);
+      setMetadata(meta);
 
-      setExtraction(result);
+      // Kick off client-side extraction in parallel — frames/audio/scenes for
+      // UX (FrameGallery, AudioChart, BeatMap thumbnails, export zip). Not on
+      // the critical path: if it fails we still have Gemini's analysis.
+      const extractPromise = import("@/lib/video/extractors")
+        .then(({ extractAll }) => extractAll(file))
+        .then((ex) => {
+          setExtraction(ex);
+          return ex;
+        })
+        .catch((err) => {
+          const msg = err instanceof Error ? err.message : String(err);
+          console.warn("[useVideoProcessor] extractAll failed:", err);
+          setExtractionError(msg);
+          return null;
+        });
+
+      setStep("Uploading");
+      setProgress(0.2);
+      const { uploadVideo } = await import("@/lib/video/blob-upload");
+      const url = await uploadVideo(file);
+      setVideoUrl(url);
+      console.log("[useVideoProcessor] video uploaded:", url);
 
       setState("analyzing");
       setStep("Running AI analysis");
       setProgress(0.5);
 
-      // Cap frames to 16 and pre-summarize extraction client-side so POST body
-      // stays well under Vercel's 4.5 MB limit even for 3+ minute videos.
-      const pickFrames = <T>(arr: T[], max: number): T[] => {
-        if (arr.length <= max) {
-          return arr;
-        }
-        const step = arr.length / max;
-        return Array.from({ length: max }, (_, i) => arr[Math.floor(i * step)]);
-      };
-      const sampledFrames = pickFrames(result.frames, 16);
+      const payload = { metadata: meta, videoUrl: url };
+      const body = JSON.stringify(payload);
 
-      const { summarizeExtraction } = await import(
-        "@/lib/video/extraction-summary"
-      );
-      const { audioText, motionText } = summarizeExtraction({
-        audioSegments: result.audioSegments,
-        motionSegments: result.motionSegments,
-        sceneChanges: result.sceneChanges,
-        duration: result.metadata.duration,
-      });
-
-      const runQwen = async (): Promise<QwenAnalysis> => {
-        const payload = {
-          metadata: result.metadata,
-          audioText,
-          motionText,
-          frameDataUrls: sampledFrames.map((f) => f.dataUrl),
-        };
-        const body = JSON.stringify(payload);
-        console.log(
-          "[useVideoProcessor] Qwen POST body size:",
-          (body.length / 1024 / 1024).toFixed(2),
-          "MB"
-        );
-
-        const maxAttempts = 3;
-        let lastErr: unknown;
-        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-          try {
-            const res = await fetch("/analyze/api/analyze", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body,
-            });
-            if (!res.ok) {
-              const errBody = await res.json().catch(() => ({}));
-              throw new Error(
-                errBody.error || `Visual analysis HTTP ${res.status}`
-              );
-            }
-            const { analysis: qwen } = (await res.json()) as {
-              analysis: QwenAnalysis;
-            };
-            return qwen;
-          } catch (err) {
-            lastErr = err;
-            const msg = err instanceof Error ? err.message : String(err);
-            const isNetwork =
-              msg.includes("Failed to fetch") ||
-              msg.includes("NetworkError") ||
-              msg.includes("network");
-            if (!isNetwork || attempt === maxAttempts) {
-              throw err;
-            }
-            console.warn(
-              `[useVideoProcessor] Qwen attempt ${attempt} failed (${msg}), retrying…`
+      const maxAttempts = 3;
+      let lastErr: unknown;
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          const res = await fetch("/analyze/api/analyze", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body,
+          });
+          if (!res.ok) {
+            const errBody = await res.json().catch(() => ({}));
+            throw new Error(
+              errBody.error || `Visual analysis HTTP ${res.status}`
             );
-            await new Promise((r) => setTimeout(r, 1500 * attempt));
           }
-        }
-        throw lastErr;
-      };
-
-      const runAudio = async (): Promise<AudioAnalysis> => {
-        const { encodeVideoAudioToWav } = await import(
-          "@/lib/video/audio-extract"
-        );
-        const wav = await encodeVideoAudioToWav(file);
-        console.log(
-          "[useVideoProcessor] Audio POST size:",
-          (wav.size / 1024 / 1024).toFixed(2),
-          "MB"
-        );
-
-        const maxAttempts = 3;
-        let lastErr: unknown;
-        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-          try {
-            const res = await fetch("/analyze/api/audio", {
-              method: "POST",
-              headers: { "Content-Type": wav.type || "audio/wav" },
-              body: wav,
-            });
-            if (!res.ok) {
-              const errBody = await res.json().catch(() => ({}));
-              throw new Error(
-                errBody.error || `Audio analysis HTTP ${res.status}`
-              );
-            }
-            const { analysis: audio } = (await res.json()) as {
-              analysis: AudioAnalysis;
-            };
-            return audio;
-          } catch (err) {
-            lastErr = err;
-            const msg = err instanceof Error ? err.message : String(err);
-            const isNetwork =
-              msg.includes("Failed to fetch") ||
-              msg.includes("NetworkError") ||
-              msg.includes("network");
-            if (!isNetwork || attempt === maxAttempts) {
-              throw err;
-            }
-            console.warn(
-              `[useVideoProcessor] Audio attempt ${attempt} failed (${msg}), retrying…`
-            );
-            await new Promise((r) => setTimeout(r, 1500 * attempt));
+          const { analysis: result } = (await res.json()) as {
+            analysis: QwenAnalysis;
+          };
+          setAnalysis(result);
+          lastErr = null;
+          break;
+        } catch (err) {
+          lastErr = err;
+          const msg = err instanceof Error ? err.message : String(err);
+          const isNetwork =
+            msg.includes("Failed to fetch") ||
+            msg.includes("NetworkError") ||
+            msg.includes("network");
+          if (!isNetwork || attempt === maxAttempts) {
+            throw err;
           }
+          console.warn(
+            `[useVideoProcessor] analyze attempt ${attempt} failed (${msg}), retrying…`
+          );
+          await new Promise((r) => setTimeout(r, 1500 * attempt));
         }
+      }
+      if (lastErr) {
         throw lastErr;
-      };
-
-      // Run sequentially — parallel long-lived HTTP connections are more
-      // likely to be dropped mid-flight by Chrome's network-change detection
-      // on flaky Wi-Fi. Total wall time grows by ~10s but reliability jumps.
-      const qwenResult = await runQwen()
-        .then((v) => ({ status: "fulfilled" as const, value: v }))
-        .catch((e: unknown) => ({ status: "rejected" as const, reason: e }));
-      const audioResult = await runAudio()
-        .then((v) => ({ status: "fulfilled" as const, value: v }))
-        .catch((e: unknown) => ({ status: "rejected" as const, reason: e }));
-
-      if (qwenResult.status === "fulfilled") {
-        setAnalysis(qwenResult.value);
-      } else {
-        console.warn("[useVideoProcessor] Qwen failed:", qwenResult.reason);
-      }
-      if (audioResult.status === "fulfilled") {
-        setAudioAnalysis(audioResult.value);
-      } else {
-        console.warn("[useVideoProcessor] audio failed:", audioResult.reason);
       }
 
-      const errors: string[] = [];
-      if (qwenResult.status === "rejected") {
-        errors.push(
-          `Visual: ${qwenResult.reason instanceof Error ? qwenResult.reason.message : String(qwenResult.reason)}`
-        );
-      }
-      if (audioResult.status === "rejected") {
-        errors.push(
-          `Audio: ${audioResult.reason instanceof Error ? audioResult.reason.message : String(audioResult.reason)}`
-        );
-      }
-      if (errors.length > 0) {
-        setError(errors.join(" · "));
-      }
+      // Wait for extraction before declaring done so the dashboard has
+      // frames/audio to render on first paint. Extraction usually finishes
+      // well before Gemini so this typically resolves immediately.
+      await extractPromise;
 
       setProgress(1);
       setState("done");
@@ -217,9 +128,11 @@ export function useVideoProcessor() {
     setState("idle");
     setProgress(0);
     setStep("");
-    setExtraction(null);
+    setMetadata(null);
+    setVideoUrl(null);
     setAnalysis(null);
-    setAudioAnalysis(null);
+    setExtraction(null);
+    setExtractionError(null);
     setError(null);
   }, []);
 
@@ -227,9 +140,11 @@ export function useVideoProcessor() {
     state,
     progress,
     step,
-    extraction,
+    metadata,
+    videoUrl,
     analysis,
-    audioAnalysis,
+    extraction,
+    extractionError,
     error,
     processVideo,
     reset,

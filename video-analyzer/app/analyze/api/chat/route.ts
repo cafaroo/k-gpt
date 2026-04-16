@@ -1,6 +1,5 @@
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
 import { getLanguageModel } from "@/lib/ai/providers";
-import type { AudioAnalysis } from "@/lib/video/audio-schema";
 import { buildVideoAnalysisPrompt } from "@/lib/video/prompts";
 import type { QwenAnalysis } from "@/lib/video/qwen-schema";
 import type { PerformanceData, VideoExtraction } from "@/lib/video/types";
@@ -13,7 +12,6 @@ type RequestBody = {
     extraction: VideoExtraction;
     performance?: PerformanceData;
     qwenAnalysis?: QwenAnalysis | null;
-    audioAnalysis?: AudioAnalysis | null;
   };
   selectedModel?: string;
 };
@@ -48,16 +46,6 @@ export async function POST(req: Request) {
     systemParts.push(
       `## Prior visual analysis by Qwen3 VL Thinking\n\nUse as ground truth; don't re-analyze — discuss and extend.\n\n\`\`\`json\n${JSON.stringify(
         videoContext.qwenAnalysis,
-        null,
-        2
-      )}\n\`\`\``
-    );
-  }
-
-  if (videoContext.audioAnalysis) {
-    systemParts.push(
-      `## Prior audio analysis by Gemini 3 Flash\n\nMusic, voiceover, sentiment, sfx and sound design — treat as ground truth.\n\n\`\`\`json\n${JSON.stringify(
-        videoContext.audioAnalysis,
         null,
         2
       )}\n\`\`\``

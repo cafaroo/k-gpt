@@ -52,7 +52,6 @@ export default function BatchPage() {
         <QwenDashboard
           analysis={drill.qwen}
           analysisError={drill.error}
-          audioAnalysis={drill.audio}
           extraction={drill.extraction}
           file={drill.file}
           onReset={() => setDrillId(null)}

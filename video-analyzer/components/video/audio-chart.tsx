@@ -24,6 +24,23 @@ export const AudioChart = forwardRef<HTMLDivElement, Props>(function AudioChart(
     rms: Math.max(-60, s.rmsLevel),
   }));
 
+  if (data.length === 0) {
+    return (
+      <div
+        className="bg-background text-muted-foreground flex w-full flex-col items-center justify-center rounded-lg border p-4 text-center text-xs"
+        ref={ref}
+        style={{ height: 192 }}
+      >
+        <p className="font-medium">No audio data available</p>
+        <p className="mt-1 text-[11px] opacity-70">
+          Client-side extraction produced zero samples — the browser may have
+          blocked decoding, or the file has no audio track. Try a smaller file
+          or check the browser console for extractAll warnings.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div
       className="bg-background w-full rounded-lg border p-2"

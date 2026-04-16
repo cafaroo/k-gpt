@@ -5,6 +5,7 @@ import { ExtractionProgress } from "@/components/video/extraction-progress";
 import { QwenDashboard } from "@/components/video/qwen-dashboard";
 import { VideoUpload } from "@/components/video/video-upload";
 import { useVideoProcessor } from "@/hooks/use-video-processor";
+import type { VideoExtraction } from "@/lib/video/types";
 
 export default function AnalyzePage() {
   const [file, setFile] = useState<File | null>(null);
@@ -20,13 +21,21 @@ export default function AnalyzePage() {
     processor.reset();
   };
 
-  if (processor.state === "done" && processor.extraction && file) {
+  if (processor.state === "done" && processor.metadata && file) {
+    const extraction: VideoExtraction = processor.extraction ?? {
+      metadata: processor.metadata,
+      frames: [],
+      audioSegments: [],
+      sceneChanges: [],
+      motionSegments: [],
+      extractedAt: new Date().toISOString(),
+    };
     return (
       <QwenDashboard
         analysis={processor.analysis}
         analysisError={processor.error}
-        audioAnalysis={processor.audioAnalysis}
-        extraction={processor.extraction}
+        extraction={extraction}
+        extractionError={processor.extractionError}
         file={file}
         onReset={handleReset}
       />

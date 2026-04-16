@@ -45,7 +45,7 @@ export function SceneNarrative({ analysis, duration, onSeek }: Props) {
             return (
               <button
                 className={`absolute top-0 bottom-0 ${color} border-r border-white/30 px-1 text-[10px] font-medium transition-opacity hover:opacity-90 truncate`}
-                key={`${s.start}-${s.end}`}
+                key={`s-${s.start}-${s.end}`}
                 onClick={() => onSeek?.(s.start)}
                 style={{ left: `${left}%`, width: `${width}%` }}
                 title={`${s.label} (${s.start.toFixed(1)}–${s.end.toFixed(1)}s)`}
@@ -64,7 +64,7 @@ export function SceneNarrative({ analysis, duration, onSeek }: Props) {
             return (
               <button
                 className="flex w-full gap-3 rounded-md border p-2 text-left transition-colors hover:bg-muted/50"
-                key={`row-${s.start}-${s.end}`}
+                key={`row-${s.start}-${s.end}-${s.function}`}
                 onClick={() => onSeek?.(s.start)}
                 type="button"
               >

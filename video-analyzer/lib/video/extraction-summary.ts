@@ -60,8 +60,7 @@ function summarizeAudio(segments: AudioSegment[]): string {
     }
   }
 
-  const variance =
-    rms.reduce((s, v) => s + (v - mean) ** 2, 0) / rms.length;
+  const variance = rms.reduce((s, v) => s + (v - mean) ** 2, 0) / rms.length;
   const std = Math.sqrt(variance);
 
   return [
@@ -91,7 +90,9 @@ function summarizeMotion(
     .join(", ");
   const avgMotion =
     motion.length > 0
-      ? Math.round(motion.reduce((s, m) => s + m.motionScore, 0) / motion.length)
+      ? Math.round(
+          motion.reduce((s, m) => s + m.motionScore, 0) / motion.length
+        )
       : 0;
 
   return [
