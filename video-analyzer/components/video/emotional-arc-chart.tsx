@@ -43,50 +43,48 @@ export function EmotionalArcChart({ emotionalArc, onSeek }: Props) {
         <CardTitle className="text-sm">Emotional arc</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
-        <div style={{ width: "100%", height: 160, minWidth: 280 }}>
-          <ResponsiveContainer height="100%" width="100%">
-            <AreaChart data={data}>
-              <defs>
-                <linearGradient id="emoGrad" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.6} />
-                  <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.05} />
-                </linearGradient>
-              </defs>
-              <XAxis
-                dataKey="t"
-                fontSize={10}
-                tickFormatter={(v) => `${v.toFixed(0)}s`}
-              />
-              <YAxis domain={[0, 10]} fontSize={10} width={24} />
-              <Tooltip
-                contentStyle={{
-                  background: "hsl(var(--popover))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: 6,
-                  fontSize: 12,
-                }}
-                formatter={(value, _name, ctx) => {
-                  const primary =
-                    (ctx?.payload as { primary?: string } | undefined)
-                      ?.primary ?? "";
-                  return [
-                    `${Number(value).toFixed(1)} · ${primary}`,
-                    "intensity",
-                  ];
-                }}
-                labelFormatter={(v) => `t=${v}s`}
-              />
-              <Area
-                dataKey="i"
-                fill="url(#emoGrad)"
-                isAnimationActive={false}
-                stroke="#f59e0b"
-                strokeWidth={2}
-                type="monotone"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+        <ResponsiveContainer height={160} minWidth={280} width="100%">
+          <AreaChart data={data}>
+            <defs>
+              <linearGradient id="emoGrad" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.6} />
+                <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.05} />
+              </linearGradient>
+            </defs>
+            <XAxis
+              dataKey="t"
+              fontSize={10}
+              tickFormatter={(v) => `${v.toFixed(0)}s`}
+            />
+            <YAxis domain={[0, 10]} fontSize={10} width={24} />
+            <Tooltip
+              contentStyle={{
+                background: "hsl(var(--popover))",
+                border: "1px solid hsl(var(--border))",
+                borderRadius: 6,
+                fontSize: 12,
+              }}
+              formatter={(value, _name, ctx) => {
+                const primary =
+                  (ctx?.payload as { primary?: string } | undefined)?.primary ??
+                  "";
+                return [
+                  `${Number(value).toFixed(1)} · ${primary}`,
+                  "intensity",
+                ];
+              }}
+              labelFormatter={(v) => `t=${v}s`}
+            />
+            <Area
+              dataKey="i"
+              fill="url(#emoGrad)"
+              isAnimationActive={false}
+              stroke="#f59e0b"
+              strokeWidth={2}
+              type="monotone"
+            />
+          </AreaChart>
+        </ResponsiveContainer>
         <div className="flex flex-wrap gap-1 text-xs">
           {data.map((d) => (
             <button

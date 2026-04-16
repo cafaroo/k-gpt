@@ -48,46 +48,41 @@ export function SwipeRiskCurve({ swipeRiskCurve }: Props) {
         </span>
       </CardHeader>
       <CardContent>
-        <div style={{ width: "100%", height: 200, minWidth: 280 }}>
-          <ResponsiveContainer height="100%" width="100%">
-            <LineChart data={data}>
-              <CartesianGrid
-                stroke="hsl(var(--border))"
-                strokeDasharray="3 3"
-              />
-              <XAxis
-                dataKey="t"
-                fontSize={10}
-                tickFormatter={(v) => `${v.toFixed(0)}s`}
-              />
-              <YAxis domain={[0, 10]} fontSize={10} width={24} />
-              <ReferenceLine stroke="#ef4444" strokeDasharray="3 3" y={7} />
-              <Tooltip
-                contentStyle={{
-                  background: "hsl(var(--popover))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: 6,
-                  fontSize: 12,
-                }}
-                formatter={(value, _name, ctx) => {
-                  const reason =
-                    (ctx?.payload as { reason?: string } | undefined)?.reason ??
-                    "";
-                  return [`${Number(value).toFixed(1)} — ${reason}`, "risk"];
-                }}
-                labelFormatter={(v) => `t=${v}s`}
-              />
-              <Line
-                dataKey="risk"
-                dot={false}
-                isAnimationActive={false}
-                stroke="#ef4444"
-                strokeWidth={2}
-                type="monotone"
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+        <ResponsiveContainer height={200} minWidth={280} width="100%">
+          <LineChart data={data}>
+            <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" />
+            <XAxis
+              dataKey="t"
+              fontSize={10}
+              tickFormatter={(v) => `${v.toFixed(0)}s`}
+            />
+            <YAxis domain={[0, 10]} fontSize={10} width={24} />
+            <ReferenceLine stroke="#ef4444" strokeDasharray="3 3" y={7} />
+            <Tooltip
+              contentStyle={{
+                background: "hsl(var(--popover))",
+                border: "1px solid hsl(var(--border))",
+                borderRadius: 6,
+                fontSize: 12,
+              }}
+              formatter={(value, _name, ctx) => {
+                const reason =
+                  (ctx?.payload as { reason?: string } | undefined)?.reason ??
+                  "";
+                return [`${Number(value).toFixed(1)} — ${reason}`, "risk"];
+              }}
+              labelFormatter={(v) => `t=${v}s`}
+            />
+            <Line
+              dataKey="risk"
+              dot={false}
+              isAnimationActive={false}
+              stroke="#ef4444"
+              strokeWidth={2}
+              type="monotone"
+            />
+          </LineChart>
+        </ResponsiveContainer>
       </CardContent>
     </Card>
   );

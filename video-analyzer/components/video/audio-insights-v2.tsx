@@ -71,46 +71,40 @@ export function AudioInsightsV2({ audioExtended, onSeek }: Props) {
               </span>
             </div>
             {energyData.length > 0 && (
-              <div style={{ width: "100%", height: 80, minWidth: 240 }}>
-                <ResponsiveContainer height="100%" width="100%">
-                  <AreaChart data={energyData}>
-                    <defs>
-                      <linearGradient
-                        id="musicEnergy"
-                        x1="0"
-                        x2="0"
-                        y1="0"
-                        y2="1"
-                      >
-                        <stop
-                          offset="0%"
-                          stopColor="#a855f7"
-                          stopOpacity={0.6}
-                        />
-                        <stop
-                          offset="100%"
-                          stopColor="#a855f7"
-                          stopOpacity={0.05}
-                        />
-                      </linearGradient>
-                    </defs>
-                    <XAxis
-                      dataKey="t"
-                      fontSize={9}
-                      tickFormatter={(v) => `${v.toFixed(0)}s`}
-                    />
-                    <YAxis domain={[0, 10]} fontSize={9} width={22} />
-                    <Area
-                      dataKey="e"
-                      fill="url(#musicEnergy)"
-                      isAnimationActive={false}
-                      stroke="#a855f7"
-                      strokeWidth={2}
-                      type="monotone"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
+              <ResponsiveContainer height={80} minWidth={240} width="100%">
+                <AreaChart data={energyData}>
+                  <defs>
+                    <linearGradient
+                      id="musicEnergy"
+                      x1="0"
+                      x2="0"
+                      y1="0"
+                      y2="1"
+                    >
+                      <stop offset="0%" stopColor="#a855f7" stopOpacity={0.6} />
+                      <stop
+                        offset="100%"
+                        stopColor="#a855f7"
+                        stopOpacity={0.05}
+                      />
+                    </linearGradient>
+                  </defs>
+                  <XAxis
+                    dataKey="t"
+                    fontSize={9}
+                    tickFormatter={(v) => `${v.toFixed(0)}s`}
+                  />
+                  <YAxis domain={[0, 10]} fontSize={9} width={22} />
+                  <Area
+                    dataKey="e"
+                    fill="url(#musicEnergy)"
+                    isAnimationActive={false}
+                    stroke="#a855f7"
+                    strokeWidth={2}
+                    type="monotone"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             )}
             {music.drops.length > 0 && (
               <ul className="text-muted-foreground space-y-0.5 text-xs">

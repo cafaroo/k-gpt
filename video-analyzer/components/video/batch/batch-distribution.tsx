@@ -32,40 +32,38 @@ export function BatchDistribution({ videos }: Props) {
         <CardTitle className="text-sm">Score distribution</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-40 w-full">
-          <ResponsiveContainer height="100%" width="100%">
-            <BarChart data={data}>
-              <XAxis
-                dataKey="bucket"
-                fontSize={11}
-                stroke="hsl(var(--muted-foreground))"
-              />
-              <YAxis
-                allowDecimals={false}
-                fontSize={11}
-                stroke="hsl(var(--muted-foreground))"
-                width={28}
-              />
-              <Tooltip
-                contentStyle={{
-                  background: "hsl(var(--popover))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: 6,
-                  fontSize: 12,
-                }}
-              />
-              <Bar
-                dataKey="count"
-                isAnimationActive={false}
-                radius={[4, 4, 0, 0]}
-              >
-                {data.map((d, idx) => (
-                  <Cell fill={COLORS[idx]} key={d.bucket} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        <ResponsiveContainer height={160} minWidth={240} width="100%">
+          <BarChart data={data}>
+            <XAxis
+              dataKey="bucket"
+              fontSize={11}
+              stroke="hsl(var(--muted-foreground))"
+            />
+            <YAxis
+              allowDecimals={false}
+              fontSize={11}
+              stroke="hsl(var(--muted-foreground))"
+              width={28}
+            />
+            <Tooltip
+              contentStyle={{
+                background: "hsl(var(--popover))",
+                border: "1px solid hsl(var(--border))",
+                borderRadius: 6,
+                fontSize: 12,
+              }}
+            />
+            <Bar
+              dataKey="count"
+              isAnimationActive={false}
+              radius={[4, 4, 0, 0]}
+            >
+              {data.map((d, idx) => (
+                <Cell fill={COLORS[idx]} key={d.bucket} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
       </CardContent>
     </Card>
   );

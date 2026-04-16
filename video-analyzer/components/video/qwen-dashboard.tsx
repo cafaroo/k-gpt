@@ -228,7 +228,11 @@ export function QwenDashboard({
 
           {/* Extended analysis sections — populated on second Gemini pass */}
           {analysis.extended && (
-            <ExtendedSections extended={analysis.extended} onSeek={seek} />
+            <ExtendedSections
+              extended={analysis.extended}
+              hookDuration={analysis.hook.duration}
+              onSeek={seek}
+            />
           )}
           {!analysis.extended && analysis.extendedError && (
             <Card className="border-amber-500/30 bg-amber-500/5">
@@ -370,9 +374,11 @@ export function QwenDashboard({
 
 function ExtendedSections({
   extended,
+  hookDuration,
   onSeek,
 }: {
   extended: NonNullable<QwenAnalysisWithExtended["extended"]>;
+  hookDuration: number;
   onSeek: (t: number) => void;
 }) {
   return (
@@ -380,6 +386,7 @@ function ExtendedSections({
       <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <HookDissectionCard
           hookDissection={extended.hookDissection}
+          hookDuration={hookDuration}
           onSeek={onSeek}
         />
         <TranscriptCard onSeek={onSeek} transcript={extended.transcript} />

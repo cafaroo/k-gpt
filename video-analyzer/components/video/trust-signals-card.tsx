@@ -21,10 +21,11 @@ export function TrustSignalsCard({ trustSignals, onSeek }: Props) {
         <CardTitle className="text-sm">Trust signals</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
-        {sorted.map((t) => (
+        {sorted.map((t, i) => (
           <div
             className="flex items-start gap-3 rounded-md border bg-muted/20 p-2"
-            key={`ts-${t.timestamp}-${t.type}`}
+            // biome-ignore lint/suspicious/noArrayIndexKey: Gemini may emit multiple trust signals at same timestamp+type; index disambiguates
+            key={`ts-${i}-${t.timestamp}-${t.type}`}
           >
             <button
               className="text-muted-foreground hover:text-foreground shrink-0 font-mono text-xs"

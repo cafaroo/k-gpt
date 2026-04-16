@@ -5,17 +5,34 @@ import type { AnalysisExtended } from "@/lib/video/analysis-extended-schema";
 
 type Props = {
   hookDissection: AnalysisExtended["hookDissection"];
+  hookDuration?: number;
   onSeek?: (time: number) => void;
 };
 
-export function HookDissectionCard({ hookDissection, onSeek }: Props) {
+export function HookDissectionCard({
+  hookDissection,
+  hookDuration,
+  onSeek,
+}: Props) {
   const { firstSecond, firstThreeSeconds, curiosityGap, stopPower } =
     hookDissection;
+
+  // Show every per-second sample we got. Cap at 8 to keep the grid readable
+  // on narrow screens; analysts rarely need second-by-second detail beyond
+  // the hook window.
+  const perSecond = firstThreeSeconds.slice(0, 8);
+  const lastSecond =
+    perSecond.length > 0
+      ? Math.max(...perSecond.map((s) => s.second))
+      : Math.max(3, Math.ceil(hookDuration ?? 3));
+  const titleRange = `0–${lastSecond}s`;
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-sm">Hook dissection (0–3s)</CardTitle>
+        <CardTitle className="text-sm">
+          Hook dissection ({titleRange})
+        </CardTitle>
         <div className="flex items-baseline gap-1">
           <span className="text-2xl font-semibold text-emerald-500">
             {stopPower.toFixed(1)}
@@ -60,13 +77,18 @@ export function HookDissectionCard({ hookDissection, onSeek }: Props) {
           )}
         </div>
 
-        {firstThreeSeconds.length > 0 && (
+        {perSecond.length > 0 && (
           <div>
             <div className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">
               Second-by-second
             </div>
-            <div className="grid grid-cols-4 gap-2">
-              {firstThreeSeconds.slice(0, 4).map((s) => (
+            <div
+              className="grid gap-2"
+              style={{
+                gridTemplateColumns: `repeat(${Math.min(perSecond.length, 4)}, minmax(0, 1fr))`,
+              }}
+            >
+              {perSecond.map((s) => (
                 <button
                   className="hover:bg-muted/40 rounded-md border p-2 text-left text-xs"
                   key={`sec-${s.second}`}

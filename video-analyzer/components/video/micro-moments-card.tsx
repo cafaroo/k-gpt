@@ -31,10 +31,11 @@ export function MicroMomentsCard({ microMoments, onSeek }: Props) {
         <CardTitle className="text-sm">Micro-moments</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
-        {sorted.map((m) => (
+        {sorted.map((m, i) => (
           <div
             className="flex items-start gap-3 rounded-md border bg-muted/20 p-2"
-            key={`mm-${m.timestamp}-${m.kind}`}
+            // biome-ignore lint/suspicious/noArrayIndexKey: Gemini may emit multiple micro-moments at same timestamp+kind; index disambiguates
+            key={`mm-${i}-${m.timestamp}-${m.kind}`}
           >
             <button
               className="text-muted-foreground hover:text-foreground shrink-0 font-mono text-xs"
