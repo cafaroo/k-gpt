@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoTooltip } from "@/components/video/v2/info-tooltip";
 
 type Scene = {
   start: number;
@@ -101,7 +102,10 @@ export function ScenesTimeline({ scenes, totalDuration, onSeek }: Props) {
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between gap-4">
-          <CardTitle className="text-base">Scenes</CardTitle>
+          <div className="flex items-center gap-1">
+            <CardTitle className="text-base">Scenes</CardTitle>
+            <InfoTooltip metricKey="acts" side="bottom" />
+          </div>
           <span className="text-xs text-muted-foreground font-mono">
             {laneItems.length} scenes · {fmt(dur)}
           </span>

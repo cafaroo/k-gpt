@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Area, AreaChart, ResponsiveContainer } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoTooltip } from "@/components/video/v2/info-tooltip";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -212,9 +213,12 @@ export function AudioLandscapeV2({ audioExtended, totalDuration, onSeek }: Props
           {voiceoverPace && <PaceBadge pace={voiceoverPace} />}
           {audioDensity && <DensityBadge density={audioDensity} />}
           {voiceoverCadence != null && (
-            <div className="flex items-baseline gap-0.5">
-              <span className="text-lg font-bold tabular-nums">{voiceoverCadence}</span>
-              <span className="text-xs text-muted-foreground">syl/sec</span>
+            <div className="flex items-center gap-1">
+              <div className="flex items-baseline gap-0.5">
+                <span className="text-lg font-bold tabular-nums">{voiceoverCadence}</span>
+                <span className="text-xs text-muted-foreground">syl/sec</span>
+              </div>
+              <InfoTooltip metricKey="voiceoverCadence" side="top" />
             </div>
           )}
           {music?.genre && (

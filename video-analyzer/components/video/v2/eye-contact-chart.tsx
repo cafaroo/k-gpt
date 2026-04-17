@@ -10,6 +10,7 @@ import {
   YAxis,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoTooltip } from "@/components/video/v2/info-tooltip";
 
 type EyeContactScene = {
   start: number;
@@ -104,7 +105,10 @@ export function EyeContactChart({ eyeContact }: Props) {
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between gap-4">
-          <CardTitle className="text-base">Eye Contact</CardTitle>
+          <div className="flex items-center gap-1">
+            <CardTitle className="text-base">Eye Contact</CardTitle>
+            <InfoTooltip metricKey="eyeContactScore" side="bottom" />
+          </div>
           <div className="flex items-baseline gap-1">
             <span
               className="text-3xl font-bold tabular-nums"
@@ -119,11 +123,14 @@ export function EyeContactChart({ eyeContact }: Props) {
       <CardContent className="space-y-4">
         {/* Donuts row */}
         <div className="flex justify-around">
-          <DonutSegment
-            color={color}
-            label="Direct address"
-            pct={directAddressPct}
-          />
+          <div className="flex flex-col items-center gap-1">
+            <DonutSegment
+              color={color}
+              label="Direct address"
+              pct={directAddressPct}
+            />
+            <InfoTooltip metricKey="directAddressPct" side="bottom" className="mt-0.5" />
+          </div>
           <div className="flex flex-col items-center gap-1 justify-center">
             <div
               className="text-4xl font-bold tabular-nums"

@@ -2,6 +2,7 @@
 
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoTooltip } from "@/components/video/v2/info-tooltip";
 
 type Props = {
   sequence: string[];
@@ -96,8 +97,9 @@ export function EmotionalFlowDiagram({
             {/* Match score */}
             <div className="flex items-end gap-3">
               <div>
-                <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1">
+                <div className="flex items-center gap-1 text-[11px] uppercase tracking-wide text-muted-foreground mb-1">
                   Pattern match score
+                  <InfoTooltip metricKey="emotionalFlowMatchScore" side="top" />
                 </div>
                 <div
                   className="text-4xl font-bold tabular-nums"

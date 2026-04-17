@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoTooltip } from "@/components/video/v2/info-tooltip";
 
 type AudienceProfile = {
   primaryAgeRange: string;
@@ -106,8 +107,9 @@ function PurchasePipeline({
 
   return (
     <div className="space-y-2">
-      <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+      <div className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
         Purchase Readiness
+        <InfoTooltip metricKey="purchaseReadiness" side="top" />
       </div>
       <div className="flex items-center gap-1">
         {FUNNEL_STAGES.map((s, i) => {
@@ -193,10 +195,12 @@ export function AudienceProfileCard({ audienceProfile }: Props) {
           <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-[11px] font-medium">
             <span className="text-muted-foreground">Socioeco.</span>
             <strong>{SOCIO_LABELS[socioeconomic] ?? socioeconomic}</strong>
+            <InfoTooltip metricKey="socioeconomic" side="bottom" />
           </span>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-[11px] font-medium">
             <span className="text-muted-foreground">Location</span>
             <strong>{urbanicity}</strong>
+            <InfoTooltip metricKey="urbanicity" side="bottom" />
           </span>
           {region && (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-[11px] font-medium">

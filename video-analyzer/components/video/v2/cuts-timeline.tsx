@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoTooltip } from "@/components/video/v2/info-tooltip";
 
 type Cut = {
   timestamp: number;
@@ -86,7 +87,10 @@ export function CutsTimeline({ cutsMap, totalDuration, onSeek }: Props) {
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between gap-4">
-          <CardTitle className="text-base">Cuts Map</CardTitle>
+          <div className="flex items-center gap-1">
+            <CardTitle className="text-base">Cuts Map</CardTitle>
+            <InfoTooltip metricKey="cutsMap" side="bottom" />
+          </div>
           <span className="text-xs text-muted-foreground font-mono">
             {sorted.length} cuts · {fmt(dur)}
           </span>

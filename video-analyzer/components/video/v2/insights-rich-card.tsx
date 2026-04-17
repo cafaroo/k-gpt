@@ -3,6 +3,7 @@
 import { AlertCircle, CheckCircle2, MinusCircle } from "lucide-react";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoTooltip } from "@/components/video/v2/info-tooltip";
 
 type Insight = {
   area:
@@ -80,7 +81,10 @@ export function InsightsRichCard({ insights }: Props) {
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle className="text-base">Insights</CardTitle>
+          <div className="flex items-center gap-1">
+            <CardTitle className="text-base">Insights</CardTitle>
+            <InfoTooltip metricKey="insights" side="bottom" />
+          </div>
           <span className="text-muted-foreground text-xs">
             {filtered.length}/{insights.length}
           </span>

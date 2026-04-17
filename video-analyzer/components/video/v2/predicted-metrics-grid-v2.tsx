@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoTooltip } from "@/components/video/v2/info-tooltip";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -121,12 +122,19 @@ function CircularGauge({ value }: { value: number }) {
 
 // ── Cell components ────────────────────────────────────────────────────────────
 
+const LEVEL_CELL_KEYS: Record<string, string> = {
+  "Completion Rate": "completionRate",
+  "Engagement Rate": "engagementRate",
+};
+
 function LevelCell({ label, value }: { label: string; value: string }) {
   const { text } = levelColor(value);
+  const metricKey = LEVEL_CELL_KEYS[label];
   return (
     <div className="rounded-lg border p-3 flex flex-col gap-2">
-      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+      <div className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
         {label}
+        {metricKey && <InfoTooltip metricKey={metricKey} side="top" />}
       </div>
       <div className="text-lg font-bold capitalize" style={{ color: text }}>
         {value}
@@ -140,20 +148,29 @@ function Hold3sCell({ value }: { value: number }) {
   const normalized = normalizeHold(value);
   return (
     <div className="rounded-lg border p-3 flex flex-col gap-2">
-      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+      <div className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
         Hold to 3s
+        <InfoTooltip metricKey="holdTo3sScore" side="top" />
       </div>
       <CircularGauge value={normalized} />
     </div>
   );
 }
 
+const SCORE_CELL_KEYS: Record<string, string> = {
+  "Save Likelihood": "saveLikelihood",
+  "Comment Likelihood": "commentLikelihood",
+  "Share Likelihood": "shareLikelihood",
+};
+
 function ScoreCell({ label, value }: { label: string; value: number }) {
   const color = scoreColor(Math.max(0, Math.min(10, value)));
+  const metricKey = SCORE_CELL_KEYS[label];
   return (
     <div className="rounded-lg border p-3 flex flex-col gap-2">
-      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+      <div className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
         {label}
+        {metricKey && <InfoTooltip metricKey={metricKey} side="top" />}
       </div>
       <div className="text-lg font-bold tabular-nums" style={{ color }}>
         {value.toFixed(1)}

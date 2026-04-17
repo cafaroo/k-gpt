@@ -10,6 +10,7 @@ import {
   Tooltip,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoTooltip } from "@/components/video/v2/info-tooltip";
 
 type PlatformFit = {
   tiktok: { score: number; reasoning: string };
@@ -71,7 +72,10 @@ export function PlatformFitRadar({ platformFit }: Props) {
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm">Platform fit</CardTitle>
+          <div className="flex items-center gap-1">
+            <CardTitle className="text-sm">Platform fit</CardTitle>
+            <InfoTooltip metricKey="platformFit" side="bottom" />
+          </div>
           {platformFit.bestFit !== "all-equal" && (
             <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase text-primary">
               Best: {bestFitLabel}

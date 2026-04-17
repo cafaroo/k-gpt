@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoTooltip } from "@/components/video/v2/info-tooltip";
 
 type Act = {
   name: string;
@@ -108,14 +109,23 @@ export function ScriptAngleCard({ scriptAngle, totalDuration }: Props) {
     <Card>
       <CardHeader className="border-b">
         <div className="flex flex-wrap items-center gap-2">
-          <span
-            className="inline-block rounded-lg px-3 py-1 text-sm font-bold text-white"
-            style={{ background: angleColor }}
-          >
-            {angle}
-          </span>
-          <Badge label={narrativeStyle} variant="muted" />
-          <Badge label={hookType} variant="muted" />
+          <div className="flex items-center gap-1">
+            <span
+              className="inline-block rounded-lg px-3 py-1 text-sm font-bold text-white"
+              style={{ background: angleColor }}
+            >
+              {angle}
+            </span>
+            <InfoTooltip metricKey="scriptAngle" side="bottom" />
+          </div>
+          <div className="flex items-center gap-1">
+            <Badge label={narrativeStyle} variant="muted" />
+            <InfoTooltip metricKey="narrativeStyle" side="bottom" />
+          </div>
+          <div className="flex items-center gap-1">
+            <Badge label={hookType} variant="muted" />
+            <InfoTooltip metricKey="hookType" side="bottom" />
+          </div>
         </div>
         {thesis && (
           <p className="text-sm italic text-muted-foreground mt-2 leading-relaxed">
@@ -128,8 +138,9 @@ export function ScriptAngleCard({ scriptAngle, totalDuration }: Props) {
         {/* Acts Gantt */}
         {acts.length > 0 && (
           <div className="space-y-2">
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <div className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
               Narrative Structure
+              <InfoTooltip metricKey="acts" side="top" />
             </div>
             <div className="relative h-8 rounded-md overflow-hidden border bg-muted/20">
               {acts.map((act, i) => {

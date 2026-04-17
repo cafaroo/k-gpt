@@ -10,6 +10,7 @@ import {
   Tooltip,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoTooltip } from "@/components/video/v2/info-tooltip";
 
 type Props = {
   payload: {
@@ -71,7 +72,10 @@ export function VisualCharacterRadar({ payload }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm">Visual character</CardTitle>
+        <div className="flex items-center gap-1">
+          <CardTitle className="text-sm">Visual character</CardTitle>
+          <InfoTooltip metricKey="visualVariety" side="bottom" />
+        </div>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer height={240} width="100%">

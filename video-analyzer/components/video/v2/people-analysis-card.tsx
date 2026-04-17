@@ -2,6 +2,7 @@
 
 import { AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoTooltip } from "@/components/video/v2/info-tooltip";
 
 type Actor = {
   id: string;
@@ -110,8 +111,9 @@ function GenderMixBar({
 
   return (
     <div className="space-y-1">
-      <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+      <div className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
         Gender mix
+        <InfoTooltip metricKey="genderMix" side="top" />
       </div>
       <div className="flex h-3 overflow-hidden rounded-full">
         {malePct > 0 && (
@@ -253,13 +255,15 @@ export function PeopleAnalysisCard({ peopleAnalysis }: Props) {
         <div className="flex items-center justify-between gap-4">
           <CardTitle className="text-base">People Analysis</CardTitle>
           <div className="flex gap-3 text-xs text-muted-foreground">
-            <span>
+            <span className="flex items-center gap-1">
               Max on screen:{" "}
               <strong className="text-foreground">{countMax}</strong>
+              <InfoTooltip metricKey="peopleCountMax" side="bottom" />
             </span>
-            <span>
+            <span className="flex items-center gap-1">
               Avg:{" "}
               <strong className="text-foreground">{countAvg.toFixed(1)}</strong>
+              <InfoTooltip metricKey="peopleCountAvg" side="bottom" />
             </span>
           </div>
         </div>

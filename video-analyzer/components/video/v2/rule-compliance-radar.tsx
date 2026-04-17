@@ -10,6 +10,7 @@ import {
   Tooltip,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoTooltip } from "@/components/video/v2/info-tooltip";
 
 type Rule = {
   ruleId: string;
@@ -60,7 +61,10 @@ export function RuleComplianceRadar({ rules }: Props) {
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm">Rule compliance</CardTitle>
+          <div className="flex items-center gap-1">
+            <CardTitle className="text-sm">Rule compliance</CardTitle>
+            <InfoTooltip metricKey="ruleCompliance" side="bottom" />
+          </div>
           <span className="text-muted-foreground text-xs">
             {metCount}/{rules.length} met
           </span>

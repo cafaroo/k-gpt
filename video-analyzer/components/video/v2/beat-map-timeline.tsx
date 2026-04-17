@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoTooltip } from "@/components/video/v2/info-tooltip";
 
 type Beat = {
   type: string;
@@ -106,7 +107,10 @@ export function BeatMapTimeline({ beatMap, totalDuration, onSeek }: Props) {
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between gap-4">
-          <CardTitle className="text-base">Beat Map</CardTitle>
+          <div className="flex items-center gap-1">
+            <CardTitle className="text-base">Beat Map</CardTitle>
+            <InfoTooltip metricKey="patternInterrupts" side="bottom" />
+          </div>
           <span className="text-xs text-muted-foreground font-mono">
             {laneItems.length} beats · {fmt(dur)}
           </span>

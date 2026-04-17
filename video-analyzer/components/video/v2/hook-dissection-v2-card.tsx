@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoTooltip } from "@/components/video/v2/info-tooltip";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -191,8 +192,9 @@ export function HookDissectionV2Card({ hookDissection, hookDuration, onSeek }: P
             >
               {stopPower.toFixed(1)}
             </div>
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+            <div className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
               Stop Power
+              <InfoTooltip metricKey="stopPower" side="right" />
             </div>
           </div>
 
@@ -200,8 +202,9 @@ export function HookDissectionV2Card({ hookDissection, hookDuration, onSeek }: P
           {colloqPct != null && (
             <div className="flex flex-col gap-1 min-w-[120px]">
               <div className="flex justify-between items-baseline">
-                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                <span className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
                   Colloquiality
+                  <InfoTooltip metricKey="hookColloquiality" side="top" />
                 </span>
                 <span
                   className="text-sm font-bold tabular-nums"
@@ -220,14 +223,17 @@ export function HookDissectionV2Card({ hookDissection, hookDuration, onSeek }: P
           )}
 
           {/* Curiosity gap pill */}
-          <div
-            className={`rounded-full px-3 py-1 text-xs font-semibold self-start ${
-              curiosityGap.present
-                ? "bg-emerald-500/15 text-emerald-600"
-                : "bg-muted text-muted-foreground"
-            }`}
-          >
-            {curiosityGap.present ? "Curiosity gap present" : "No curiosity gap"}
+          <div className="flex items-center gap-1.5 self-start">
+            <div
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                curiosityGap.present
+                  ? "bg-emerald-500/15 text-emerald-600"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {curiosityGap.present ? "Curiosity gap present" : "No curiosity gap"}
+            </div>
+            <InfoTooltip metricKey="curiosityGap" side="top" />
           </div>
         </div>
 

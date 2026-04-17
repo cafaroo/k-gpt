@@ -2,6 +2,7 @@
 
 import { AlertTriangle, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoTooltip } from "@/components/video/v2/info-tooltip";
 
 type PredictedMetrics = {
   completionRate: string;
@@ -150,11 +151,13 @@ export function OverallScorecard({ analysis }: Props) {
                   <AlertTriangle className="h-3 w-3" />
                 )}
                 Authenticity: {authBand}
+                <InfoTooltip metricKey="authenticityBand" side="bottom" />
               </span>
             )}
             {brandHeritage && (
-              <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+              <span className="flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
                 Brand heritage: {brandHeritage}
+                <InfoTooltip metricKey="brandHeritageSalience" side="bottom" />
               </span>
             )}
           </div>
@@ -172,18 +175,38 @@ export function OverallScorecard({ analysis }: Props) {
             Research metrics
           </div>
           <div className="flex flex-wrap gap-2">
-            <MiniBadge label="ECR" unit="0-1" value={ecr.toFixed(2)} />
-            <MiniBadge label="NAWP" unit="0-1" value={nawp.toFixed(2)} />
-            <MiniBadge
-              label="Stop power"
-              unit="0-10"
-              value={stopPower.toFixed(1)}
-            />
-            <MiniBadge
-              label="Colloquiality"
-              unit="0-10"
-              value={colloq.toFixed(1)}
-            />
+            <div className="flex flex-col items-center rounded-lg border px-3 py-2 min-w-[72px]">
+              <span className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                ECR
+                <InfoTooltip metricKey="ecr" side="top" />
+              </span>
+              <span className="text-base font-semibold tabular-nums">{ecr.toFixed(2)}</span>
+              <span className="text-[9px] text-muted-foreground">0-1</span>
+            </div>
+            <div className="flex flex-col items-center rounded-lg border px-3 py-2 min-w-[72px]">
+              <span className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                NAWP
+                <InfoTooltip metricKey="nawp" side="top" />
+              </span>
+              <span className="text-base font-semibold tabular-nums">{nawp.toFixed(2)}</span>
+              <span className="text-[9px] text-muted-foreground">0-1</span>
+            </div>
+            <div className="flex flex-col items-center rounded-lg border px-3 py-2 min-w-[72px]">
+              <span className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                Stop power
+                <InfoTooltip metricKey="stopPower" side="top" />
+              </span>
+              <span className="text-base font-semibold tabular-nums">{stopPower.toFixed(1)}</span>
+              <span className="text-[9px] text-muted-foreground">0-10</span>
+            </div>
+            <div className="flex flex-col items-center rounded-lg border px-3 py-2 min-w-[72px]">
+              <span className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                Colloquiality
+                <InfoTooltip metricKey="colloquialityScore" side="top" />
+              </span>
+              <span className="text-base font-semibold tabular-nums">{colloq.toFixed(1)}</span>
+              <span className="text-[9px] text-muted-foreground">0-10</span>
+            </div>
           </div>
         </div>
 
@@ -203,22 +226,66 @@ export function OverallScorecard({ analysis }: Props) {
             />
           </div>
           <div className="grid gap-2 sm:grid-cols-2">
-            <LikelihoodBar
-              label="Hold to 3s"
-              value={predictedMetrics.holdTo3sScore}
-            />
-            <LikelihoodBar
-              label="Save"
-              value={predictedMetrics.saveLikelihood}
-            />
-            <LikelihoodBar
-              label="Comment"
-              value={predictedMetrics.commentLikelihood}
-            />
-            <LikelihoodBar
-              label="Share"
-              value={predictedMetrics.shareLikelihood}
-            />
+            <div className="space-y-0.5">
+              <div className="flex justify-between text-[11px]">
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  Hold to 3s
+                  <InfoTooltip metricKey="holdTo3sScore" side="top" />
+                </span>
+                <span className="tabular-nums font-medium">{predictedMetrics.holdTo3sScore.toFixed(1)}/10</span>
+              </div>
+              <div className="bg-muted h-1.5 overflow-hidden rounded-full">
+                <div
+                  className={`h-full rounded-full ${predictedMetrics.holdTo3sScore < 4 ? "bg-red-500" : predictedMetrics.holdTo3sScore < 6.5 ? "bg-amber-500" : "bg-emerald-500"} transition-all`}
+                  style={{ width: `${Math.max(0, Math.min(10, predictedMetrics.holdTo3sScore)) * 10}%` }}
+                />
+              </div>
+            </div>
+            <div className="space-y-0.5">
+              <div className="flex justify-between text-[11px]">
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  Save
+                  <InfoTooltip metricKey="saveLikelihood" side="top" />
+                </span>
+                <span className="tabular-nums font-medium">{predictedMetrics.saveLikelihood.toFixed(1)}/10</span>
+              </div>
+              <div className="bg-muted h-1.5 overflow-hidden rounded-full">
+                <div
+                  className={`h-full rounded-full ${predictedMetrics.saveLikelihood < 4 ? "bg-red-500" : predictedMetrics.saveLikelihood < 6.5 ? "bg-amber-500" : "bg-emerald-500"} transition-all`}
+                  style={{ width: `${Math.max(0, Math.min(10, predictedMetrics.saveLikelihood)) * 10}%` }}
+                />
+              </div>
+            </div>
+            <div className="space-y-0.5">
+              <div className="flex justify-between text-[11px]">
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  Comment
+                  <InfoTooltip metricKey="commentLikelihood" side="top" />
+                </span>
+                <span className="tabular-nums font-medium">{predictedMetrics.commentLikelihood.toFixed(1)}/10</span>
+              </div>
+              <div className="bg-muted h-1.5 overflow-hidden rounded-full">
+                <div
+                  className={`h-full rounded-full ${predictedMetrics.commentLikelihood < 4 ? "bg-red-500" : predictedMetrics.commentLikelihood < 6.5 ? "bg-amber-500" : "bg-emerald-500"} transition-all`}
+                  style={{ width: `${Math.max(0, Math.min(10, predictedMetrics.commentLikelihood)) * 10}%` }}
+                />
+              </div>
+            </div>
+            <div className="space-y-0.5">
+              <div className="flex justify-between text-[11px]">
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  Share
+                  <InfoTooltip metricKey="shareLikelihood" side="top" />
+                </span>
+                <span className="tabular-nums font-medium">{predictedMetrics.shareLikelihood.toFixed(1)}/10</span>
+              </div>
+              <div className="bg-muted h-1.5 overflow-hidden rounded-full">
+                <div
+                  className={`h-full rounded-full ${predictedMetrics.shareLikelihood < 4 ? "bg-red-500" : predictedMetrics.shareLikelihood < 6.5 ? "bg-amber-500" : "bg-emerald-500"} transition-all`}
+                  style={{ width: `${Math.max(0, Math.min(10, predictedMetrics.shareLikelihood)) * 10}%` }}
+                />
+              </div>
+            </div>
           </div>
           {predictedMetrics.rationale && (
             <p className="text-muted-foreground mt-2 text-xs italic leading-relaxed">

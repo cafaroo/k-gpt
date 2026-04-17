@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoTooltip } from "@/components/video/v2/info-tooltip";
 
 type PatternInterrupt = {
   timestamp: number;
@@ -230,10 +231,22 @@ export function EventsTimeline({
                   style={{ width: `${LABEL_INSET}px` }}
                 >
                   <span
-                    className="text-[11px] font-semibold uppercase tracking-wider"
+                    className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider"
                     style={{ color: LANE_COLOR[lane.key] }}
                   >
                     {LANE_LABEL[lane.key]}
+                    <span className="pointer-events-auto">
+                      <InfoTooltip
+                        metricKey={
+                          lane.key === "interrupts"
+                            ? "patternInterrupts"
+                            : lane.key === "trust"
+                              ? "trustSignals"
+                              : "microMoments"
+                        }
+                        side="right"
+                      />
+                    </span>
                   </span>
                 </div>
                 <div
