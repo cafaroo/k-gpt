@@ -9,7 +9,7 @@ import {
   logMetrics,
   summarizeZodIssues,
 } from "@/lib/video/analyze-metrics";
-import { adaptBase, adaptExtended } from "@/lib/video/gemini-adapter";
+import { adaptBaseV2 as adaptBase, adaptExtendedV2 as adaptExtended } from "./adapters";
 import { ensureBaseShape, normalizeScores } from "@/lib/video/qwen-schema";
 import type { VideoMetadata } from "@/lib/video/types";
 import { QWEN_V2_SYSTEM_PROMPT } from "./analysis-v2-base-prompt";
