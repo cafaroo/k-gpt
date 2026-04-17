@@ -1,5 +1,6 @@
 "use client";
 
+import { AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Actor = {
@@ -264,6 +265,19 @@ export function PeopleAnalysisCard({ peopleAnalysis }: Props) {
         </div>
       </CardHeader>
       <CardContent className="space-y-4 pt-4">
+        {/* Ethics disclaimer — surfaces uncertainty on demographic inferences */}
+        <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] leading-snug text-amber-700 dark:text-amber-400">
+          <AlertTriangle className="size-3.5 shrink-0 mt-0.5" />
+          <div>
+            <span className="font-semibold">AI estimates — not verified.</span>{" "}
+            Gender, age range, and ethnicity below are inferred by an AI model
+            from video content. Estimates carry meaningful error rates, may
+            reflect training biases, and should never be used for targeting
+            enforcement, casting decisions, or any other high-stakes use
+            without explicit human verification.
+          </div>
+        </div>
+
         {/* Gender mix bar */}
         <GenderMixBar mix={overallGenderMix} />
 
