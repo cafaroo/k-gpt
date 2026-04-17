@@ -9,7 +9,7 @@ type Music = {
   mood?: string;
   energyCurve?: number[];
   beatSync?: string | boolean;
-  drops?: string[];
+  drops?: { timestamp?: number; effect?: string }[];
 };
 
 type AudioExtended = {
@@ -167,9 +167,14 @@ export function AudioLandscapeExpanded({ audioExtended }: Props) {
                   {music.drops.map((drop, i) => (
                     <span
                       className="rounded-full bg-purple-500/15 px-2.5 py-0.5 text-xs text-purple-600"
-                      key={`drop-${i}`}
+                      key={`drop-${i}-${drop.timestamp ?? i}`}
                     >
-                      Drop: {drop}
+                      <span className="font-mono mr-1">
+                        {drop.timestamp != null
+                          ? `${drop.timestamp.toFixed(1)}s`
+                          : ""}
+                      </span>
+                      {drop.effect ?? ""}
                     </span>
                   ))}
                 </div>
