@@ -81,13 +81,32 @@ Measure viewer-facing gaze coverage:
 If there is no human talent (product-only video), set overallScore=0, directAddressPct=0, perScene=[].
 
 ### cutsMap
-List EVERY visible edit (cut, dissolve, wipe, etc.) in chronological order:
+List EVERY visible edit (cut, dissolve, wipe, etc.) in chronological order, from
+0s all the way through to the final frame. **Do NOT stop halfway.** Many ads
+have faster pacing in the second half (payoff / CTA montage / logo-reveal) —
+if your list gets sparser after the midpoint you are MISSING cuts. Explicitly
+include the final cut-to-end-card / logo-reveal if present.
+
+Sanity-check before submitting: if you report \`pacing.cutsPerMinute\` = 30,
+then a 60-second video needs ≈30 entries; 90s needs ≈45; 120s needs ≈60.
+Your list length must be broadly consistent with duration × cuts-per-minute.
+If the metadata says duration = 99s and you have 9 cuts with the last at 50s,
+that is wrong — keep going past the midpoint.
+
+Per entry:
 - \`timestamp\`: seconds at which the cut occurs.
-- \`type\`: choose from the provided enum. "hard-cut" is a clean frame cut; "jump-cut"
-  is a cut on the same subject that jumps forward; "dissolve" is a gradual blend.
+- \`type\`: one of the enum values. "hard-cut" = clean frame cut; "jump-cut" =
+  same-subject forward jump; "dissolve" = gradual blend; "fade-out" = close-to-
+  black; "fade-in" = open-from-black.
 - \`beforeShot\` / \`afterShot\`: 5-10 word description of the outgoing/incoming shot.
-- \`intent\` (optional): brief reason — "pace acceleration", "scene transition", "continuity cut".
-Aim for comprehensive coverage. A 30-second ad might have 8-25 entries.
+- \`intent\` (optional): "pace acceleration", "scene transition", "continuity cut".
+
+Rough count expectations by duration:
+- <15s: 4-15 cuts
+- 15-30s: 8-25
+- 30-60s: 15-50
+- 60-120s: 30-100+
+Fewer than 5 entries for a 60s+ video is almost certainly incomplete.
 
 ### peopleAnalysis
 Objective observation of on-screen people — this is for creative research, not surveillance.
