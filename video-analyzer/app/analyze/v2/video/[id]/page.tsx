@@ -1,5 +1,10 @@
 import { redirect } from "next/navigation";
 import { v2Session as auth } from "@/lib/video/v2/session";
+
+// Next 16 flags DB reads outside <Suspense> as blocking. For the POC we
+// opt this route into full dynamic rendering — no static optimization,
+// always SSR on every request.
+export const dynamic = "force-dynamic";
 import { EmotionalArcChart } from "@/components/video/emotional-arc-chart";
 import { HookDissectionCard } from "@/components/video/hook-dissection-card";
 import { MicroMomentsCard } from "@/components/video/micro-moments-card";

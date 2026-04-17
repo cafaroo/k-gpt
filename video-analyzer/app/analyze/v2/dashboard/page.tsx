@@ -6,6 +6,8 @@ import { EcrHistogram } from "@/components/video/v2/ecr-histogram";
 import { listAnalyses } from "@/lib/db/queries";
 import { v2Session as auth } from "@/lib/video/v2/session";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user?.id) {
