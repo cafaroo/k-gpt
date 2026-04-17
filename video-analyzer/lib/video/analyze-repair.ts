@@ -73,6 +73,8 @@ export async function runRepairPass(opts: {
     model: getRepairModel(),
     system: REPAIR_SYSTEM_PROMPT,
     messages: [{ role: "user", content: userPrompt }],
+    // Repair is pure reformatting, never creative — keep it deterministic.
+    temperature: 0,
   });
   const latencyMs = Date.now() - t0;
 

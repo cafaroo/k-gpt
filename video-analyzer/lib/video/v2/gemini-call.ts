@@ -158,6 +158,12 @@ export async function callGeminiJson(opts: {
       model: opts.model,
       system: `${opts.system}\n\nReturn ONLY a single valid JSON object matching the described shape. No prose, no markdown fences, no comments.`,
       messages: [{ role: "user", content: opts.content }],
+      // Low temperature makes the analysis repeatable across runs on the
+      // same video — users were seeing different scores / cut counts /
+      // actor rosters on repeated uploads. Keep slightly above 0 so
+      // Gemini still fills softer judgment fields (taglines, rationales).
+      temperature: 0.15,
+      topP: 0.9,
     });
     return t;
   }, opts.label);
