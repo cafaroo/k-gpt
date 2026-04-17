@@ -1,10 +1,6 @@
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { v2Session as auth } from "@/lib/video/v2/session";
-
-// Next 16 flags DB reads outside <Suspense> as blocking. For the POC we
-// opt this route into full dynamic rendering — no static optimization,
-// always SSR on every request.
-export const dynamic = "force-dynamic";
 import { EmotionalArcChart } from "@/components/video/emotional-arc-chart";
 import { HookDissectionCard } from "@/components/video/hook-dissection-card";
 import { MicroMomentsCard } from "@/components/video/micro-moments-card";
@@ -21,7 +17,33 @@ import { VisualCharacterRadar } from "@/components/video/v2/visual-character-rad
 import { PerVideoClient } from "@/components/video/v2/per-video-client";
 import { getAnalysisById } from "@/lib/db/queries";
 
-export default async function PerVideoPage({
+export default function PerVideoPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  return (
+    <Suspense fallback={<PerVideoSkeleton />}>
+      <PerVideoBody params={params} />
+    </Suspense>
+  );
+}
+
+function PerVideoSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="aspect-video md:aspect-auto md:h-[380px] rounded-lg border bg-muted/30 animate-pulse" />
+      <div className="h-44 rounded-lg border bg-muted/30 animate-pulse" />
+      <div className="grid md:grid-cols-3 gap-4">
+        <div className="h-64 rounded-lg border bg-muted/30 animate-pulse" />
+        <div className="h-64 rounded-lg border bg-muted/30 animate-pulse" />
+        <div className="h-64 rounded-lg border bg-muted/30 animate-pulse" />
+      </div>
+    </div>
+  );
+}
+
+async function PerVideoBody({
   params,
 }: {
   params: Promise<{ id: string }>;

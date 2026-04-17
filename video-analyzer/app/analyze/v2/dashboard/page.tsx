@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { AnalysesTable } from "@/components/video/v2/analyses-table";
 import { AuthenticityBars } from "@/components/video/v2/authenticity-bars";
 import { DashboardAdvancedCharts } from "@/components/video/v2/dashboard-advanced-charts";
@@ -6,9 +7,23 @@ import { EcrHistogram } from "@/components/video/v2/ecr-histogram";
 import { listAnalyses } from "@/lib/db/queries";
 import { v2Session as auth } from "@/lib/video/v2/session";
 
-export const dynamic = "force-dynamic";
+export default function DashboardPage() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold">Dashboard</h1>
+        <p className="text-sm text-muted-foreground">
+          Research-grounded metrics across all analyses.
+        </p>
+      </div>
+      <Suspense fallback={<DashboardSkeleton />}>
+        <DashboardBody />
+      </Suspense>
+    </div>
+  );
+}
 
-export default async function DashboardPage() {
+async function DashboardBody() {
   const session = await auth();
   if (!session?.user?.id) {
     redirect("/login");
@@ -59,12 +74,6 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">
-          {total} analyses · research-grounded metrics.
-        </p>
-      </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard label="Videos" value={String(total)} />
         <StatCard
@@ -110,6 +119,24 @@ export default async function DashboardPage() {
           createdAt: r.createdAt.toISOString(),
         }))}
       />
+    </div>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="h-24 rounded-lg border bg-muted/30 animate-pulse" />
+        <div className="h-24 rounded-lg border bg-muted/30 animate-pulse" />
+        <div className="h-24 rounded-lg border bg-muted/30 animate-pulse" />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="h-56 rounded-lg border bg-muted/30 animate-pulse" />
+        <div className="h-56 rounded-lg border bg-muted/30 animate-pulse" />
+      </div>
+      <div className="h-64 rounded-lg border bg-muted/30 animate-pulse" />
+      <div className="h-96 rounded-lg border bg-muted/30 animate-pulse" />
     </div>
   );
 }
