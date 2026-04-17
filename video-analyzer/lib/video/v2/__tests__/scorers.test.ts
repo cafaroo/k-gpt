@@ -155,7 +155,10 @@ describe("computeComplexityAdjustedRhythm", () => {
   it("high cuts / high complexity → moderate rhythm", () => {
     const r = computeComplexityAdjustedRhythm({
       cutsPerMinute: 30,
-      sceneComplexity: [{ start: 0, complexity: 8 }, { start: 5, complexity: 9 }],
+      sceneComplexity: [
+        { start: 0, complexity: 8 },
+        { start: 5, complexity: 9 },
+      ],
     });
     expect(r.value).toBeCloseTo(30 / 8.5, 1);
   });

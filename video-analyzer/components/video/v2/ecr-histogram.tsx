@@ -1,5 +1,12 @@
 "use client";
-import { Bar, BarChart, Tooltip, XAxis, YAxis, ResponsiveContainer } from "recharts";
+import {
+  Bar,
+  BarChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 export function EcrHistogram({ ecrs }: { ecrs: number[] }) {
   const buckets = Array.from({ length: 10 }, (_, i) => ({
@@ -16,7 +23,7 @@ export function EcrHistogram({ ecrs }: { ecrs: number[] }) {
       <ResponsiveContainer height={200} minWidth={280} width="100%">
         <BarChart data={buckets}>
           <XAxis dataKey="range" fontSize={10} />
-          <YAxis fontSize={10} allowDecimals={false} width={24} />
+          <YAxis allowDecimals={false} fontSize={10} width={24} />
           <Tooltip />
           <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
         </BarChart>

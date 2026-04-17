@@ -27,6 +27,8 @@ export async function GET(
     .where(and(eq(analysis.id, id), eq(analysis.userId, session.user.id)))
     .limit(1);
 
-  if (!row) return NextResponse.json({ error: "not found" }, { status: 404 });
+  if (!row) {
+    return NextResponse.json({ error: "not found" }, { status: 404 });
+  }
   return NextResponse.json(row);
 }

@@ -21,24 +21,24 @@ export function ScoreGauge({
       <div className="text-xs uppercase tracking-wide text-muted-foreground">
         {label}
       </div>
-      <svg viewBox="0 0 100 100" className="h-20 w-20 -rotate-90">
+      <svg className="h-20 w-20 -rotate-90" viewBox="0 0 100 100">
         <circle
           cx="50"
           cy="50"
-          r="36"
           fill="none"
+          r="36"
           stroke="hsl(var(--border))"
           strokeWidth="8"
         />
         <circle
           cx="50"
           cy="50"
-          r="36"
           fill="none"
+          r="36"
           stroke={color}
-          strokeWidth="8"
           strokeDasharray={`${dash} ${circumference}`}
           strokeLinecap="round"
+          strokeWidth="8"
         />
       </svg>
       <div className="text-2xl font-semibold tabular-nums">

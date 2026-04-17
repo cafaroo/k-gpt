@@ -1,5 +1,5 @@
-import { eq } from "drizzle-orm";
 import { put } from "@vercel/blob";
+import { eq } from "drizzle-orm";
 import { getAnalysisModel } from "@/lib/ai/providers";
 import { db } from "@/lib/db/queries";
 import { analysis as analysisTable } from "@/lib/db/schema";
@@ -7,21 +7,17 @@ import {
   type AnalyzeMetrics,
   computeCompleteness,
   logMetrics,
-  type PassMetrics,
   summarizeZodIssues,
 } from "@/lib/video/analyze-metrics";
 import { adaptBase, adaptExtended } from "@/lib/video/gemini-adapter";
-import {
-  ensureBaseShape,
-  normalizeScores,
-} from "@/lib/video/qwen-schema";
+import { ensureBaseShape, normalizeScores } from "@/lib/video/qwen-schema";
 import type { VideoMetadata } from "@/lib/video/types";
+import { QWEN_V2_SYSTEM_PROMPT } from "./analysis-v2-base-prompt";
+import { EXTENDED_V2_SYSTEM_PROMPT } from "./analysis-v2-extended-prompt";
 import {
   AnalysisExtendedV2Schema,
   QwenAnalysisV2Schema,
 } from "./analysis-v2-schema";
-import { QWEN_V2_SYSTEM_PROMPT } from "./analysis-v2-base-prompt";
-import { EXTENDED_V2_SYSTEM_PROMPT } from "./analysis-v2-extended-prompt";
 import { callGeminiJson } from "./gemini-call";
 import {
   computeComplexityAdjustedRhythm,
@@ -94,7 +90,9 @@ export async function runAnalysisV2(input: AnalyzeV2Input): Promise<void> {
       }),
     ]);
 
-    if (baseRes.status === "rejected") throw baseRes.reason;
+    if (baseRes.status === "rejected") {
+      throw baseRes.reason;
+    }
 
     // Step 4: adapt + hydrate + validate
     const adaptedBase = adaptBase(baseRes.value.raw);
@@ -129,8 +127,7 @@ export async function runAnalysisV2(input: AnalyzeV2Input): Promise<void> {
 
     // Post-hoc scorers
     const hook = (hydratedBase.hook ?? {}) as Record<string, any>;
-    const hookDissection =
-      (extendedPayload as any)?.hookDissection ?? {};
+    const hookDissection = (extendedPayload as any)?.hookDissection ?? {};
     const visual = (hydratedBase.visual ?? {}) as Record<string, any>;
     const pacing = (hydratedBase.pacing ?? {}) as Record<string, any>;
 
@@ -215,8 +212,10 @@ export async function runAnalysisV2(input: AnalyzeV2Input): Promise<void> {
       passes: [
         {
           label: "base",
-          latencyMs: baseRes.status === "fulfilled" ? baseRes.value.latencyMs : 0,
-          repaired: baseRes.status === "fulfilled" ? baseRes.value.repaired : false,
+          latencyMs:
+            baseRes.status === "fulfilled" ? baseRes.value.latencyMs : 0,
+          repaired:
+            baseRes.status === "fulfilled" ? baseRes.value.repaired : false,
           parseError: null,
           zodIssueCount: baseIssues.length,
           zodIssueSample: summarizeZodIssues(baseIssues as never).sample,
@@ -224,7 +223,8 @@ export async function runAnalysisV2(input: AnalyzeV2Input): Promise<void> {
         {
           label: "extended",
           latencyMs: extRes.status === "fulfilled" ? extRes.value.latencyMs : 0,
-          repaired: extRes.status === "fulfilled" ? extRes.value.repaired : false,
+          repaired:
+            extRes.status === "fulfilled" ? extRes.value.repaired : false,
           parseError: extendedError,
           zodIssueCount: extendedIssues.length,
           zodIssueSample: summarizeZodIssues(extendedIssues as never).sample,
@@ -249,7 +249,9 @@ export async function runAnalysisV2(input: AnalyzeV2Input): Promise<void> {
         completenessScore: completeness.score.toFixed(3),
         zodIssueCount: baseIssues.length + extendedIssues.length,
 
-        overallScore: Math.round(Number((hydratedBase.overall as any)?.score ?? 0)),
+        overallScore: Math.round(
+          Number((hydratedBase.overall as any)?.score ?? 0)
+        ),
         hookScore: String(hook.score ?? 0),
         hookDuration: String(hook.duration ?? 0),
         stopPower: String(hookDissection.stopPower ?? 0),
@@ -279,10 +281,14 @@ export async function runAnalysisV2(input: AnalyzeV2Input): Promise<void> {
         ecr: String(ecr.value),
         nawp: String(nawp.value),
         ctaClarity: String((hydratedBase.cta as any)?.clarity ?? 0),
-        payoffIsEarly: Boolean((hydratedBase.payoffTiming as any)?.isEarly ?? false),
+        payoffIsEarly: Boolean(
+          (hydratedBase.payoffTiming as any)?.isEarly ?? false
+        ),
         niche: String((hydratedBase.niche as any)?.detected ?? "other"),
         formatPrimary: String((hydratedBase.format as any)?.primary ?? "other"),
-        platformBestFit: String((extendedPayload as any)?.platformFit?.bestFit ?? ""),
+        platformBestFit: String(
+          (extendedPayload as any)?.platformFit?.bestFit ?? ""
+        ),
 
         insights: hydratedBase.insights ?? [],
         beatMap: hydratedBase.beatMap ?? [],

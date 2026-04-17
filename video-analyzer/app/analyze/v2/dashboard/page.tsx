@@ -1,15 +1,20 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/app/(auth)/auth";
 import { AnalysesTable } from "@/components/video/v2/analyses-table";
-import { EcrHistogram } from "@/components/video/v2/ecr-histogram";
 import { AuthenticityBars } from "@/components/video/v2/authenticity-bars";
+import { EcrHistogram } from "@/components/video/v2/ecr-histogram";
 import { listAnalyses } from "@/lib/db/queries";
 
 export default async function DashboardPage() {
   const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
 
-  const { rows, total } = await listAnalyses({ userId: session.user.id, limit: 50 });
+  const { rows, total } = await listAnalyses({
+    userId: session.user.id,
+    limit: 50,
+  });
 
   const medianEcr =
     rows.length === 0
@@ -21,21 +26,33 @@ export default async function DashboardPage() {
             .sort((a, b) => a - b);
           return nums[Math.floor(nums.length / 2)] ?? null;
         })();
-  const moderateCount = rows.filter((r) => r.authenticityBand === "moderate").length;
+  const moderateCount = rows.filter(
+    (r) => r.authenticityBand === "moderate"
+  ).length;
 
-  const ecrs = rows.map((r) => (r.ecr ? Number(r.ecr) : null)).filter((n): n is number => n !== null);
-  const bands: Record<"low" | "moderate" | "high", number[]> = { low: [], moderate: [], high: [] };
+  const ecrs = rows
+    .map((r) => (r.ecr ? Number(r.ecr) : null))
+    .filter((n): n is number => n !== null);
+  const bands: Record<"low" | "moderate" | "high", number[]> = {
+    low: [],
+    moderate: [],
+    high: [],
+  };
   for (const r of rows) {
-    if (r.authenticityBand && r.ecr) bands[r.authenticityBand].push(Number(r.ecr));
+    if (r.authenticityBand && r.ecr) {
+      bands[r.authenticityBand].push(Number(r.ecr));
+    }
   }
-  const authenticityRows = (["low", "moderate", "high"] as const).map((band) => ({
-    band,
-    count: bands[band].length,
-    avgEcr:
-      bands[band].length > 0
-        ? bands[band].reduce((a, b) => a + b, 0) / bands[band].length
-        : 0,
-  }));
+  const authenticityRows = (["low", "moderate", "high"] as const).map(
+    (band) => ({
+      band,
+      count: bands[band].length,
+      avgEcr:
+        bands[band].length > 0
+          ? bands[band].reduce((a, b) => a + b, 0) / bands[band].length
+          : 0,
+    })
+  );
 
   return (
     <div className="space-y-6">
@@ -49,12 +66,12 @@ export default async function DashboardPage() {
         <StatCard label="Videos" value={String(total)} />
         <StatCard
           label="Median ECR"
-          value={medianEcr !== null ? medianEcr.toFixed(2) : "—"}
+          value={medianEcr === null ? "—" : medianEcr.toFixed(2)}
         />
         <StatCard
+          hint="Research flags U-shape risk"
           label="In moderate-auth zone"
           value={String(moderateCount)}
-          hint="Research flags U-shape risk"
         />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

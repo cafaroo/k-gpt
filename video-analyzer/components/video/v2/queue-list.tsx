@@ -11,13 +11,15 @@ const STATE_LABEL: Record<QueueItem["state"], string> = {
 };
 
 export function QueueList({ items }: { items: QueueItem[] }) {
-  if (items.length === 0) return null;
+  if (items.length === 0) {
+    return null;
+  }
   return (
     <div className="mt-8 rounded-lg border divide-y">
       {items.map((item) => (
         <div
-          key={item.id}
           className="flex items-center gap-4 px-4 py-3 text-sm"
+          key={item.id}
         >
           <div className="flex-1 truncate font-medium">{item.file.name}</div>
           <div className="text-xs text-muted-foreground tabular-nums">
@@ -36,8 +38,8 @@ export function QueueList({ items }: { items: QueueItem[] }) {
           </div>
           {item.state === "done" && item.analysisId && (
             <Link
-              href={`/analyze/v2/video/${item.analysisId}`}
               className="text-xs text-primary hover:underline"
+              href={`/analyze/v2/video/${item.analysisId}`}
             >
               View →
             </Link>

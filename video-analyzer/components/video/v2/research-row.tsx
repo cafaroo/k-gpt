@@ -25,14 +25,24 @@ export function ResearchRow({
   } as const;
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <ScoreGauge value={ecr} label="ECR" sublabel={ecrRationale} color="#3b82f6" />
-      <ScoreGauge value={nawp} label="NAWP" sublabel={nawpRationale} color="#a855f7" />
       <ScoreGauge
-        value={colloquiality}
-        max={10}
-        label="Colloquiality"
-        sublabel="Zhang 2025 top predictor"
+        color="#3b82f6"
+        label="ECR"
+        sublabel={ecrRationale}
+        value={ecr}
+      />
+      <ScoreGauge
+        color="#a855f7"
+        label="NAWP"
+        sublabel={nawpRationale}
+        value={nawp}
+      />
+      <ScoreGauge
         color="#f59e0b"
+        label="Colloquiality"
+        max={10}
+        sublabel="Zhang 2025 top predictor"
+        value={colloquiality}
       />
       <div className="rounded-lg border p-4 flex flex-col items-center gap-2">
         <div className="text-xs uppercase tracking-wide text-muted-foreground">

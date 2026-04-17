@@ -11,7 +11,10 @@ export async function POST(request: Request) {
   const { name } = (await request.json()) as { name?: string };
   const [row] = await db
     .insert(batch)
-    .values({ userId: session.user.id, name: name ?? `Batch ${new Date().toISOString()}` })
+    .values({
+      userId: session.user.id,
+      name: name ?? `Batch ${new Date().toISOString()}`,
+    })
     .returning({ id: batch.id, name: batch.name });
   return NextResponse.json({ batchId: row.id, name: row.name });
 }

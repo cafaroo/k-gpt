@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/app/(auth)/auth";
-import { listAnalyses, type AnalysisFilters } from "@/lib/db/queries";
+import { type AnalysisFilters, listAnalyses } from "@/lib/db/queries";
 
 export async function GET(request: Request) {
   const session = await auth();
@@ -14,7 +14,11 @@ export async function GET(request: Request) {
     userId: session.user.id,
     ecrGte: p.get("ecrGte") ? Number(p.get("ecrGte")) : undefined,
     ecrLte: p.get("ecrLte") ? Number(p.get("ecrLte")) : undefined,
-    authenticityBandIn: p.getAll("authenticity") as ("low" | "moderate" | "high")[],
+    authenticityBandIn: p.getAll("authenticity") as (
+      | "low"
+      | "moderate"
+      | "high"
+    )[],
     nicheIn: p.getAll("niche"),
     platformBestFitIn: p.getAll("platform"),
     limit: p.get("limit") ? Number(p.get("limit")) : 50,

@@ -44,18 +44,24 @@ export type NawpInputs = {
 };
 
 function durationBucketBaseline(seconds: number): number {
-  if (seconds < 15) return 0.72;
-  if (seconds < 30) return 0.58;
-  if (seconds < 60) return 0.45;
+  if (seconds < 15) {
+    return 0.72;
+  }
+  if (seconds < 30) {
+    return 0.58;
+  }
+  if (seconds < 60) {
+    return 0.45;
+  }
   return 0.32;
 }
 
 export function computeNawp(i: NawpInputs): ScorerResult {
   const baseline = durationBucketBaseline(i.durationSec);
   const adj =
-    0.08 * (i.pacingScore - 5) / 5 +
+    (0.08 * (i.pacingScore - 5)) / 5 +
     (i.payoffIsEarly ? 0.06 : -0.06) +
-    0.04 * (i.emotionalFlowMatchScore - 5) / 5;
+    (0.04 * (i.emotionalFlowMatchScore - 5)) / 5;
   const value = Number(clamp01(baseline + adj).toFixed(3));
   const bucket =
     i.durationSec < 15
@@ -85,11 +91,27 @@ export type BigramResult = {
 // (Frontiers 2025 + narrative-transportation lit).
 // Each pattern is a normalized sequence of emotion-families.
 const PATTERNS: { name: string; seq: string[]; weight: number }[] = [
-  { name: "problem-hope-resolution", seq: ["problem", "hope", "resolution"], weight: 9 },
+  {
+    name: "problem-hope-resolution",
+    seq: ["problem", "hope", "resolution"],
+    weight: 9,
+  },
   { name: "humor-sadness-hope", seq: ["humor", "sadness", "hope"], weight: 9 },
-  { name: "curiosity-reveal-validation", seq: ["curiosity", "reveal", "validation"], weight: 8 },
-  { name: "frustration-relief-joy", seq: ["frustration", "relief", "joy"], weight: 8 },
-  { name: "problem-agitation-resolution", seq: ["problem", "agitation", "resolution"], weight: 7 },
+  {
+    name: "curiosity-reveal-validation",
+    seq: ["curiosity", "reveal", "validation"],
+    weight: 8,
+  },
+  {
+    name: "frustration-relief-joy",
+    seq: ["frustration", "relief", "joy"],
+    weight: 8,
+  },
+  {
+    name: "problem-agitation-resolution",
+    seq: ["problem", "agitation", "resolution"],
+    weight: 7,
+  },
 ];
 
 // Fold near-synonyms to pattern vocabulary.
@@ -122,26 +144,37 @@ function normalizeEmotion(raw: string): string {
 function dedupeAdjacent(arr: string[]): string[] {
   const out: string[] = [];
   for (const v of arr) {
-    if (out[out.length - 1] !== v) out.push(v);
+    if (out.at(-1) !== v) {
+      out.push(v);
+    }
   }
   return out;
 }
 
 function containsSubsequence(hay: string[], needle: string[]): boolean {
-  if (needle.length === 0) return true;
+  if (needle.length === 0) {
+    return true;
+  }
   let i = 0;
   for (const h of hay) {
-    if (h === needle[i]) i++;
-    if (i === needle.length) return true;
+    if (h === needle[i]) {
+      i++;
+    }
+    if (i === needle.length) {
+      return true;
+    }
   }
   return false;
 }
 
-export function matchEmotionalBigram(
-  arc: EmotionalArcItem[]
-): BigramResult {
+export function matchEmotionalBigram(arc: EmotionalArcItem[]): BigramResult {
   if (arc.length === 0) {
-    return { value: 0, sequence: [], matchedPatterns: [], rationale: "empty arc" };
+    return {
+      value: 0,
+      sequence: [],
+      matchedPatterns: [],
+      rationale: "empty arc",
+    };
   }
   const sequence = dedupeAdjacent(arc.map((a) => normalizeEmotion(a.primary)));
   const matched: string[] = [];

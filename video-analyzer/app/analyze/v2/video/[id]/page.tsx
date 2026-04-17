@@ -1,16 +1,16 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/app/(auth)/auth";
+import { AudioInsightsV2 } from "@/components/video/audio-insights-v2";
+import { EmotionalArcChart } from "@/components/video/emotional-arc-chart";
+import { HookDissectionCard } from "@/components/video/hook-dissection-card";
+import { MicroMomentsCard } from "@/components/video/micro-moments-card";
+import { PacingCurve } from "@/components/video/pacing-curve";
+import { PatternInterruptsCard } from "@/components/video/pattern-interrupts-card";
+import { PlatformFitCard } from "@/components/video/platform-fit-card";
+import { SwipeRiskCurve } from "@/components/video/swipe-risk-curve";
+import { TrustSignalsCard } from "@/components/video/trust-signals-card";
 import { ResearchRow } from "@/components/video/v2/research-row";
 import { getAnalysisById } from "@/lib/db/queries";
-import { HookDissectionCard } from "@/components/video/hook-dissection-card";
-import { PacingCurve } from "@/components/video/pacing-curve";
-import { SwipeRiskCurve } from "@/components/video/swipe-risk-curve";
-import { EmotionalArcChart } from "@/components/video/emotional-arc-chart";
-import { PatternInterruptsCard } from "@/components/video/pattern-interrupts-card";
-import { AudioInsightsV2 } from "@/components/video/audio-insights-v2";
-import { TrustSignalsCard } from "@/components/video/trust-signals-card";
-import { MicroMomentsCard } from "@/components/video/micro-moments-card";
-import { PlatformFitCard } from "@/components/video/platform-fit-card";
 
 export default async function PerVideoPage({
   params,
@@ -18,7 +18,9 @@ export default async function PerVideoPage({
   params: Promise<{ id: string }>;
 }) {
   const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
   const { id } = await params;
   const row = await getAnalysisById(id, session.user.id);
   if (!row) {
@@ -35,7 +37,9 @@ export default async function PerVideoPage({
   if (a.analysisBlobUrl) {
     try {
       const res = await fetch(a.analysisBlobUrl);
-      if (res.ok) fullPayload = await res.json();
+      if (res.ok) {
+        fullPayload = await res.json();
+      }
     } catch {
       // no-op
     }
@@ -46,7 +50,11 @@ export default async function PerVideoPage({
       <div className="grid md:grid-cols-[2fr_3fr] gap-6">
         <div className="aspect-[9/16] bg-muted rounded-lg overflow-hidden">
           {/* biome-ignore lint/a11y/useMediaCaption: no caption for POC */}
-          <video src={v.blobUrl} controls className="h-full w-full object-contain" />
+          <video
+            className="h-full w-full object-contain"
+            controls
+            src={v.blobUrl}
+          />
         </div>
         <div className="space-y-3">
           <h1 className="text-xl font-semibold">{v.filename}</h1>
@@ -58,11 +66,11 @@ export default async function PerVideoPage({
       </div>
 
       <ResearchRow
-        ecr={a.ecr ? Number(a.ecr) : 0}
-        nawp={a.nawp ? Number(a.nawp) : 0}
-        colloquiality={a.colloquialityScore ? Number(a.colloquialityScore) : 0}
         authenticityBand={a.authenticityBand}
+        colloquiality={a.colloquialityScore ? Number(a.colloquialityScore) : 0}
+        ecr={a.ecr ? Number(a.ecr) : 0}
         ecrRationale={fullPayload?.researchMeta?.ecr?.rationale}
+        nawp={a.nawp ? Number(a.nawp) : 0}
         nawpRationale={fullPayload?.researchMeta?.nawp?.rationale}
       />
 
@@ -87,10 +95,14 @@ export default async function PerVideoPage({
             <PacingCurve analysis={fullPayload} />
             <div className="grid md:grid-cols-2 gap-4">
               {fullPayload.extended?.swipeRiskCurve && (
-                <SwipeRiskCurve swipeRiskCurve={fullPayload.extended.swipeRiskCurve} />
+                <SwipeRiskCurve
+                  swipeRiskCurve={fullPayload.extended.swipeRiskCurve}
+                />
               )}
               {fullPayload.extended?.emotionalArc && (
-                <EmotionalArcChart emotionalArc={fullPayload.extended.emotionalArc} />
+                <EmotionalArcChart
+                  emotionalArc={fullPayload.extended.emotionalArc}
+                />
               )}
             </div>
             {fullPayload.extended?.patternInterrupts && (
@@ -99,7 +111,9 @@ export default async function PerVideoPage({
               />
             )}
             {fullPayload.extended?.audioExtended && (
-              <AudioInsightsV2 audioExtended={fullPayload.extended.audioExtended} />
+              <AudioInsightsV2
+                audioExtended={fullPayload.extended.audioExtended}
+              />
             )}
           </section>
 
@@ -109,10 +123,14 @@ export default async function PerVideoPage({
             </h2>
             <div className="grid md:grid-cols-2 gap-4">
               {fullPayload.extended?.trustSignals && (
-                <TrustSignalsCard trustSignals={fullPayload.extended.trustSignals} />
+                <TrustSignalsCard
+                  trustSignals={fullPayload.extended.trustSignals}
+                />
               )}
               {fullPayload.extended?.microMoments && (
-                <MicroMomentsCard microMoments={fullPayload.extended.microMoments} />
+                <MicroMomentsCard
+                  microMoments={fullPayload.extended.microMoments}
+                />
               )}
             </div>
             {fullPayload.extended?.platformFit && (

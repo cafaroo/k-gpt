@@ -11,8 +11,8 @@ import {
   inArray,
   lt,
   lte,
-  sql,
   type SQL,
+  sql,
 } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
@@ -651,14 +651,25 @@ export type AnalysisFilters = {
 };
 
 export async function listAnalyses(f: AnalysisFilters) {
-  const conditions = [eq(analysis.userId, f.userId), eq(analysis.status, "done")];
-  if (typeof f.ecrGte === "number") conditions.push(gte(analysis.ecr, String(f.ecrGte)));
-  if (typeof f.ecrLte === "number") conditions.push(lte(analysis.ecr, String(f.ecrLte)));
-  if (f.authenticityBandIn?.length)
+  const conditions = [
+    eq(analysis.userId, f.userId),
+    eq(analysis.status, "done"),
+  ];
+  if (typeof f.ecrGte === "number") {
+    conditions.push(gte(analysis.ecr, String(f.ecrGte)));
+  }
+  if (typeof f.ecrLte === "number") {
+    conditions.push(lte(analysis.ecr, String(f.ecrLte)));
+  }
+  if (f.authenticityBandIn?.length) {
     conditions.push(inArray(analysis.authenticityBand, f.authenticityBandIn));
-  if (f.nicheIn?.length) conditions.push(inArray(analysis.niche, f.nicheIn));
-  if (f.platformBestFitIn?.length)
+  }
+  if (f.nicheIn?.length) {
+    conditions.push(inArray(analysis.niche, f.nicheIn));
+  }
+  if (f.platformBestFitIn?.length) {
     conditions.push(inArray(analysis.platformBestFit, f.platformBestFitIn));
+  }
 
   const sortCol = {
     createdAt: analysis.createdAt,

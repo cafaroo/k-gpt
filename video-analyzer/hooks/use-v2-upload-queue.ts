@@ -13,7 +13,7 @@ export type QueueItem = {
 
 const MAX_CONCURRENT = 3;
 
-async function probeMetadata(file: File): Promise<{
+function probeMetadata(file: File): Promise<{
   duration: number;
   width: number;
   height: number;
@@ -41,6 +41,11 @@ async function probeMetadata(file: File): Promise<{
 export function useV2UploadQueue() {
   const [items, setItems] = useState<QueueItem[]>([]);
   const activeRef = useRef(0);
+  // Ref holds latest `pump` so runOne can call it without creating a
+  // circular callback dependency.
+  const pumpRef = useRef<() => void>(() => {
+    /* noop until set */
+  });
 
   const patch = useCallback((id: string, change: Partial<QueueItem>) => {
     setItems((prev) =>
@@ -54,7 +59,9 @@ export function useV2UploadQueue() {
       while (Date.now() < deadline) {
         await new Promise((r) => setTimeout(r, 3000));
         const res = await fetch(`/analyze/v2/api/jobs/${analysisId}`);
-        if (!res.ok) continue;
+        if (!res.ok) {
+          continue;
+        }
         const data = (await res.json()) as {
           status: "pending" | "done" | "error";
           errorMessage?: string;
@@ -89,7 +96,9 @@ export function useV2UploadQueue() {
           method: "POST",
           body: form,
         });
-        if (!upRes.ok) throw new Error("upload failed");
+        if (!upRes.ok) {
+          throw new Error("upload failed");
+        }
         const { videoId } = (await upRes.json()) as { videoId: string };
         patch(item.id, { state: "analyzing", videoId });
 
@@ -98,7 +107,9 @@ export function useV2UploadQueue() {
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ videoId }),
         });
-        if (!jobRes.ok) throw new Error("job start failed");
+        if (!jobRes.ok) {
+          throw new Error("job start failed");
+        }
         const { jobId } = (await jobRes.json()) as { jobId: string };
         patch(item.id, { analysisId: jobId });
 
@@ -110,7 +121,7 @@ export function useV2UploadQueue() {
         });
       } finally {
         activeRef.current--;
-        pump();
+        pumpRef.current();
       }
     },
     [patch, pollJob]
@@ -121,12 +132,16 @@ export function useV2UploadQueue() {
       for (const item of prev) {
         if (item.state === "queued" && activeRef.current < MAX_CONCURRENT) {
           activeRef.current++;
-          void runOne(item);
+          runOne(item).catch(() => {
+            /* runOne handles its own errors via patch() */
+          });
         }
       }
       return prev;
     });
   }, [runOne]);
+
+  pumpRef.current = pump;
 
   const enqueue = useCallback(
     (files: File[]) => {

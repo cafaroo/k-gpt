@@ -1,6 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import { after } from "next/server";
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { auth } from "@/app/(auth)/auth";
 import { db } from "@/lib/db/queries";
 import { analysis, video } from "@/lib/db/schema";

@@ -21,8 +21,8 @@ import {
 import { schemaToSkeleton } from "@/lib/video/schema-to-skeleton";
 import type { VideoMetadata } from "@/lib/video/types";
 import {
-  callGeminiJson as generateJson,
   type GenerateJsonResult,
+  callGeminiJson as generateJson,
 } from "@/lib/video/v2/gemini-call";
 
 export type AnalyzeWorkerInput = {
@@ -54,7 +54,6 @@ async function persistRun(
     );
   }
 }
-
 
 function buildPassMetrics(
   label: string,

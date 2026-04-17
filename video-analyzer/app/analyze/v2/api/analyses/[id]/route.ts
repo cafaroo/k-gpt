@@ -12,16 +12,24 @@ export async function GET(
   }
   const { id } = await params;
   const row = await getAnalysisById(id, session.user.id);
-  if (!row) return NextResponse.json({ error: "not found" }, { status: 404 });
+  if (!row) {
+    return NextResponse.json({ error: "not found" }, { status: 404 });
+  }
 
   let fullPayload: unknown = null;
   if (row.Analysis.analysisBlobUrl) {
     try {
       const res = await fetch(row.Analysis.analysisBlobUrl);
-      if (res.ok) fullPayload = await res.json();
+      if (res.ok) {
+        fullPayload = await res.json();
+      }
     } catch {
       // Fall through — return what we have
     }
   }
-  return NextResponse.json({ analysis: row.Analysis, video: row.Video, fullPayload });
+  return NextResponse.json({
+    analysis: row.Analysis,
+    video: row.Video,
+    fullPayload,
+  });
 }

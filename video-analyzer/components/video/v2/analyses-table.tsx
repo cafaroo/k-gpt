@@ -38,18 +38,20 @@ export function AnalysesTable({ rows }: { rows: Row[] }) {
         <tbody>
           {rows.map((r) => (
             <tr
-              key={r.id}
               className="border-b last:border-0 hover:bg-muted/30 cursor-pointer"
+              key={r.id}
             >
               <td className="px-4 py-2">
                 <Link
-                  href={`/analyze/v2/video/${r.id}`}
                   className="hover:underline"
+                  href={`/analyze/v2/video/${r.id}`}
                 >
                   {r.filename}
                 </Link>
               </td>
-              <td className="px-4 py-2 tabular-nums">{r.overallScore ?? "—"}</td>
+              <td className="px-4 py-2 tabular-nums">
+                {r.overallScore ?? "—"}
+              </td>
               <td className="px-4 py-2 tabular-nums">
                 {r.ecr ? Number(r.ecr).toFixed(2) : "—"}
               </td>

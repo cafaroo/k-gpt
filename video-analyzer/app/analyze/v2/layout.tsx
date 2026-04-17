@@ -12,13 +12,19 @@ export default function AnalyzeV2Layout({
   return (
     <div className="min-h-screen bg-background">
       <nav className="border-b px-6 py-3 flex items-center gap-6">
-        <Link href="/analyze/v2" className="font-semibold">
+        <Link className="font-semibold" href="/analyze/v2">
           analyzer v2
         </Link>
-        <Link href="/analyze/v2" className="text-sm text-muted-foreground hover:text-foreground">
+        <Link
+          className="text-sm text-muted-foreground hover:text-foreground"
+          href="/analyze/v2"
+        >
           Upload
         </Link>
-        <Link href="/analyze/v2/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
+        <Link
+          className="text-sm text-muted-foreground hover:text-foreground"
+          href="/analyze/v2/dashboard"
+        >
           Dashboard
         </Link>
       </nav>

@@ -1,6 +1,6 @@
 import { generateText } from "ai";
 import { jsonrepair } from "jsonrepair";
-import { getAnalysisModel } from "@/lib/ai/providers";
+import type { getAnalysisModel } from "@/lib/ai/providers";
 
 /**
  * Converts `"key": 1:01.5,` → `"key": 61.5,` for timestamp-like keys.
