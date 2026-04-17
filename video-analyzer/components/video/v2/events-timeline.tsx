@@ -194,9 +194,9 @@ export function EventsTimeline({
     },
   ];
 
-  const LANE_ROW_HEIGHT = 28;
+  const LANE_ROW_HEIGHT = 40;
   const TRACK_HEIGHT = LANE_ROW_HEIGHT * 3 + LANE_GAP * 2;
-  const LABEL_INSET = 72; // px of lane width reserved for label
+  const LABEL_INSET = 96; // px of lane width reserved for label
 
   return (
     <Card>
@@ -221,14 +221,21 @@ export function EventsTimeline({
                   height: `${LANE_ROW_HEIGHT}px`,
                 }}
               >
-                {/* Lane label pinned to the left; dots are positioned
-                    relative to the scrolling zone to the right of it. */}
-                <span
-                  className="pointer-events-none absolute top-1/2 -translate-y-1/2 left-2 text-[10px] font-semibold uppercase tracking-wide z-[1]"
-                  style={{ color: LANE_COLOR[lane.key] }}
+                {/* Lane label pinned to the left. Use explicit flex centering
+                    instead of top-1/2 + translate (tailwind compat pitfall
+                    with some Next 16 builds where the transform didn't
+                    actually apply). */}
+                <div
+                  className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 pr-2 z-[1]"
+                  style={{ width: `${LABEL_INSET}px` }}
                 >
-                  {LANE_LABEL[lane.key]}
-                </span>
+                  <span
+                    className="text-[11px] font-semibold uppercase tracking-wider"
+                    style={{ color: LANE_COLOR[lane.key] }}
+                  >
+                    {LANE_LABEL[lane.key]}
+                  </span>
+                </div>
                 <div
                   className="absolute inset-y-0"
                   style={{
