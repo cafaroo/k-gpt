@@ -22,6 +22,12 @@ import {
 import { QWEN_V2_SYSTEM_PROMPT } from "./analysis-v2-base-prompt";
 import { EXTENDED_V2_SYSTEM_PROMPT } from "./analysis-v2-extended-prompt";
 import { callGeminiJson } from "./gemini-call";
+import {
+  computeComplexityAdjustedRhythm,
+  computeEcr,
+  computeNawp,
+  matchEmotionalBigram,
+} from "./scorers";
 
 export type AnalyzeV2Input = {
   analysisId: string;
@@ -108,7 +114,65 @@ export async function runAnalysisV2(input: AnalyzeV2Input): Promise<void> {
       extendedError: extendedError ?? undefined,
     } as Record<string, unknown>;
 
-    // TODO (3.2): invoke scorers and patch analysis + researchMeta.
+    // Post-hoc scorers
+    const hook = (hydratedBase.hook ?? {}) as Record<string, any>;
+    const hookDissection =
+      (extendedPayload as any)?.hookDissection ?? {};
+    const visual = (hydratedBase.visual ?? {}) as Record<string, any>;
+    const pacing = (hydratedBase.pacing ?? {}) as Record<string, any>;
+
+    const ecr = computeEcr({
+      hookScore: Number(hook.score ?? 0),
+      timeToFirstVisualChange: Number(hook.timeToFirstVisualChange ?? 2),
+      stopPower: Number(hookDissection.stopPower ?? 5),
+      dominantFaceRatio: Number(visual.dominantFaceRatio ?? 0),
+      hookColloquiality: Number(hookDissection.colloquialityScore ?? 5),
+    });
+
+    const arc = (extendedPayload as any)?.emotionalArc ?? [];
+    const bigram = matchEmotionalBigram(arc);
+
+    const nawp = computeNawp({
+      durationSec: metadata.duration,
+      pacingScore: Number(pacing.score ?? 5),
+      payoffIsEarly: Boolean(
+        (hydratedBase.payoffTiming as any)?.isEarly ?? false
+      ),
+      emotionalFlowMatchScore: bigram.value,
+    });
+
+    const rhythm = computeComplexityAdjustedRhythm({
+      cutsPerMinute: Number(pacing.cutsPerMinute ?? 0),
+      sceneComplexity: pacing.sceneComplexity ?? [],
+    });
+
+    // Patch predictions into base shape
+    (analysis as any).predictedMetrics = {
+      ...(hydratedBase.predictedMetrics ?? {}),
+      ecr: ecr.value,
+      nawp: nawp.value,
+      ecrRationale: ecr.rationale,
+      nawpRationale: nawp.rationale,
+    };
+    (analysis as any).pacing = {
+      ...(hydratedBase.pacing ?? {}),
+      complexityAdjustedRhythm: rhythm.value,
+    };
+    if (extendedPayload) {
+      (extendedPayload as any).emotionalFlowSequence = bigram.sequence;
+      (extendedPayload as any).emotionalFlowMatchScore = bigram.value;
+    }
+    const researchMeta = {
+      ecr: { value: ecr.value, rationale: ecr.rationale },
+      nawp: { value: nawp.value, rationale: nawp.rationale },
+      bigram: {
+        value: bigram.value,
+        sequence: bigram.sequence,
+        matched: bigram.matchedPatterns,
+        rationale: bigram.rationale,
+      },
+      complexityRhythm: { value: rhythm.value, rationale: rhythm.rationale },
+    };
 
     // Step 6: persist — TODO (3.3) write to Postgres + Blob.
 
