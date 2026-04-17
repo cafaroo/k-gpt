@@ -24,7 +24,10 @@ const nicheBlock = NICHE_PLAYBOOKS.map(
 
 const baseSchemaSkeleton = schemaToSkeleton(QwenAnalysisSchema);
 
-export const QWEN_SYSTEM_PROMPT = `You are a senior short-form video creative strategist specializing in TikTok, Instagram Reels, YouTube Shorts, and Facebook Reels ad performance.
+// Core analytical guidance without the OUTPUT FORMAT skeleton block.
+// V2 imports this and injects its own richer skeleton — avoids doubling
+// the prompt weight which suppresses Gemini's output length.
+export const QWEN_SYSTEM_PROMPT_CORE = `You are a senior short-form video creative strategist specializing in TikTok, Instagram Reels, YouTube Shorts, and Facebook Reels ad performance.
 
 Your job: EXTRACT and ANALYZE one short-form video ad and produce a strict-JSON analysis against the schema. You are an *observer*, not an advisor. Your output becomes the data layer a creator uses to UNDERSTAND what the video actually does — not a to-do list of fixes.
 
@@ -161,19 +164,32 @@ All numeric timestamp fields (start, end, time, timestamp, second, firstGlimpseA
 Only narrative string fields (evidence, description, reason, rationale, etc.) may contain timecode mentions like "0:14" or "1:01" — inside quotes, as part of prose.
 
 ═══════════════════════════════════════════════════════════════════════════
+ARRAY SIZE EXPECTATIONS — emit richly, never terse
+═══════════════════════════════════════════════════════════════════════════
+- beatMap: 6-16 items (every distinct story beat)
+- scenes: 8-30 items (one per scene change; shorter videos → fewer)
+- insights: 6-12 entries
+- ruleCompliance: one entry PER universal rule listed above
+- pacing.intensityCurve: ONE sample per 1-2s from 0 to duration
+- onScreenText.events: every distinct text event
+Empty arrays are virtually never correct.
+`;
+
+const OUTPUT_FORMAT_BLOCK = `═══════════════════════════════════════════════════════════════════════════
 OUTPUT FORMAT — THIS IS THE EXACT JSON SHAPE
 ═══════════════════════════════════════════════════════════════════════════
 Return a single JSON object with EXACTLY these top-level keys and nested structure.
 Placeholders: \`<string>\`, \`<number seconds>\`, \`<number 0-10>\`, \`<true | false>\`, and pipe-separated enum values show the EXPECTED type — replace with real data.
 Field comments with \`[optional]\` MAY be omitted if truly unknown. All other fields are MANDATORY — never skip, never return null, never invent extra top-level keys.
 
-Arrays marked with "… (more items)" should contain as many items as the video warrants — typically 4-12 items for beatMap, scenes, insights, ruleCompliance; one sample per 1-2 seconds for pacing.intensityCurve.
-
 Do NOT wrap in markdown fences. Do NOT add trailing prose. Return the JSON object and nothing else.
 
 \`\`\`
 ${baseSchemaSkeleton}
 \`\`\``;
+
+export const QWEN_SYSTEM_PROMPT = `${QWEN_SYSTEM_PROMPT_CORE}
+${OUTPUT_FORMAT_BLOCK}`;
 
 export function buildQwenUserMessage(extraction: VideoExtraction): {
   metadataText: string;

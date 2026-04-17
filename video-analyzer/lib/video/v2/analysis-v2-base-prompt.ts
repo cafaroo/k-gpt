@@ -1,16 +1,15 @@
 // lib/video/v2/analysis-v2-base-prompt.ts
-import { QWEN_SYSTEM_PROMPT } from "@/lib/video/qwen-prompt";
+import { QWEN_SYSTEM_PROMPT_CORE } from "@/lib/video/qwen-prompt";
 import { schemaToSkeleton } from "@/lib/video/schema-to-skeleton";
 import { QwenAnalysisV2Schema } from "./analysis-v2-schema";
 
 const v2Skeleton = schemaToSkeleton(QwenAnalysisV2Schema);
 
-// Stitch v2-specific guidance onto the v1 prompt. The v1 prompt already
-// carries rules, taxonomy, few-shot examples, and timestamp format
-// requirements — v2 only needs to (a) announce the added fields and
-// (b) inject the new skeleton. The base pass does NOT compute ECR/NAWP
-// (those are server-side post-hoc) — but it DOES sample scene complexity.
-export const QWEN_V2_SYSTEM_PROMPT = `${QWEN_SYSTEM_PROMPT}
+// V2 reuses v1's analytical CORE (rules, taxonomy, examples, timestamp
+// format) but injects only ONE skeleton — the v2 one. Stacking two
+// skeletons (~50k chars) caused Gemini to emit "light mode" output with
+// 60-80% fewer array items.
+export const QWEN_V2_SYSTEM_PROMPT = `${QWEN_SYSTEM_PROMPT_CORE}
 
 ═══════════════════════════════════════════════════════════════════════════
 V2 ADDITIONS — SCENE COMPLEXITY (mandatory)

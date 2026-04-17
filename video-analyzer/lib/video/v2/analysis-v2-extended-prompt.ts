@@ -1,15 +1,31 @@
 // lib/video/v2/analysis-v2-extended-prompt.ts
-import { EXTENDED_SYSTEM_PROMPT } from "@/lib/video/analysis-extended-prompt";
+import { EXTENDED_SYSTEM_PROMPT_CORE } from "@/lib/video/analysis-extended-prompt";
 import { schemaToSkeleton } from "@/lib/video/schema-to-skeleton";
 import { AnalysisExtendedV2Schema } from "./analysis-v2-schema";
 
 const v2ExtendedSkeleton = schemaToSkeleton(AnalysisExtendedV2Schema);
 
-export const EXTENDED_V2_SYSTEM_PROMPT = `${EXTENDED_SYSTEM_PROMPT}
+// Reuses v1's CORE guidance (rubrics, taxonomies, timestamp rules) but
+// injects ONLY the v2 skeleton. Previously stacked two skeletons which
+// pushed Gemini into terse output mode.
+export const EXTENDED_V2_SYSTEM_PROMPT = `${EXTENDED_SYSTEM_PROMPT_CORE}
 
 ═══════════════════════════════════════════════════════════════════════════
-V2 ADDITIONS — RESEARCH FIELDS (all mandatory)
+V2 ADDITIONS — RESEARCH FIELDS (ALL MANDATORY, NEVER NULL)
 ═══════════════════════════════════════════════════════════════════════════
+These fields are load-bearing for the whole v2 pipeline. If any of them is
+null, empty, or missing the analysis is considered failed. You MUST emit a
+concrete value for every one of them — use your best inference when uncertain.
+
+Required v2 fields:
+  colloquialityScore         — number 0-10 (video level)
+  hookDissection.colloquialityScore — number 0-10 (first 3s)
+  authenticityBand           — "low" | "moderate" | "high" (pick one, never null)
+  brandHeritageSalience      — "absent" | "moderate" | "high" (pick one)
+  audioExtended.voiceoverCadence — number (syllables/sec, > 0)
+  emotionalFlowSequence      — emit []  (server fills)
+  emotionalFlowMatchScore    — emit 0   (server fills)
+
 
 ### colloquialityScore (0-10, video-level) and hookDissection.colloquialityScore (0-10, first-3s)
 Rubric (Zhang et al. 2025, JBR — single strongest predictor of engagement behaviors):

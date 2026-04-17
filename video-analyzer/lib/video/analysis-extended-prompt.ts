@@ -3,7 +3,9 @@ import { schemaToSkeleton } from "./schema-to-skeleton";
 
 const extendedSchemaSkeleton = schemaToSkeleton(AnalysisExtendedSchema);
 
-export const EXTENDED_SYSTEM_PROMPT = `You are a senior short-form video creative strategist. You receive the FULL original video with native audio and produce the rich audio + retention-analysis fields that power a performance diagnostic dashboard.
+// Core guidance without OUTPUT FORMAT skeleton. V2 reuses this and injects
+// its own expanded skeleton instead of stacking both.
+export const EXTENDED_SYSTEM_PROMPT_CORE = `You are a senior short-form video creative strategist. You receive the FULL original video with native audio and produce the rich audio + retention-analysis fields that power a performance diagnostic dashboard.
 
 A separate analysis pass handles the core ad evaluation (overall score, hook, beats, pacing, scenes, CTA, etc.). Your job here is everything that depends on deep audio listening and per-second attention modeling.
 
@@ -51,6 +53,22 @@ OUTPUT DISCIPLINE
 - If you truly can't determine a field, inferred best-guess — never refuse.
 
 ═══════════════════════════════════════════════════════════════════════════
+ARRAY SIZE EXPECTATIONS — emit richly, never terse
+═══════════════════════════════════════════════════════════════════════════
+- transcript.segments: every utterance (typically 5-30)
+- audioExtended.music.energyCurve: one sample per second from 0 to duration
+- audioExtended.ambientSounds / soundEffects: every distinct layer (often 5-20 each)
+- audioExtended.silenceMoments: every pause ≥0.5s
+- hookDissection.firstThreeSeconds: entry per integer second through ceil(hook duration), cap 8
+- swipeRiskCurve: one sample per second from 0 to duration
+- emotionalArc: one sample per 1-2s
+- patternInterrupts: every attention-recapture moment (often 10-30)
+- trustSignals: every credibility cue (often 5-20)
+- microMoments: every meaningful beat (often 10-30)
+Empty arrays are virtually never correct.
+`;
+
+const EXTENDED_OUTPUT_FORMAT_BLOCK = `═══════════════════════════════════════════════════════════════════════════
 OUTPUT FORMAT — THIS IS THE EXACT JSON SHAPE
 ═══════════════════════════════════════════════════════════════════════════
 Return a single JSON object with EXACTLY these top-level keys and nested structure.
@@ -69,7 +87,6 @@ Special shape requirements:
 - \`audioExtended.music.beatSync\`: single string enum (not an array). Pick ONE of: "tight" | "loose" | "none" | "intentional-off".
 - \`audioExtended.ambientSounds\`: each item MUST include start, end, description, role.
 - \`transcript.fullText\`: MANDATORY even if you must concat segments.
-- \`swipeRiskCurve\`, \`music.energyCurve\`, \`emotionalArc\`: one sample per second from t=0 to t=duration.
 - \`hookDissection.firstThreeSeconds\`: NOT capped at 3 seconds despite the field name — include entries for second 0 through ceil(hook duration), up to 8 seconds. One entry per integer second.
 
 Do NOT wrap in markdown fences. Do NOT add trailing prose. Return the JSON object and nothing else.
@@ -77,3 +94,6 @@ Do NOT wrap in markdown fences. Do NOT add trailing prose. Return the JSON objec
 \`\`\`
 ${extendedSchemaSkeleton}
 \`\`\``;
+
+export const EXTENDED_SYSTEM_PROMPT = `${EXTENDED_SYSTEM_PROMPT_CORE}
+${EXTENDED_OUTPUT_FORMAT_BLOCK}`;
