@@ -14,7 +14,10 @@ export async function POST(request: NextRequest): Promise<Response> {
       body,
       request,
       onBeforeGenerateToken: (pathname: string) => {
-        if (!pathname.startsWith("analysis/video/")) {
+        const allowed =
+          pathname.startsWith("analysis/video/") ||
+          pathname.startsWith("v2/videos/");
+        if (!allowed) {
           return Promise.reject(new Error(`Pathname not allowed: ${pathname}`));
         }
         return Promise.resolve({

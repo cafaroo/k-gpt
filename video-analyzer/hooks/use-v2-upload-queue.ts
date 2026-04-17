@@ -1,4 +1,5 @@
 "use client";
+import { upload } from "@vercel/blob/client";
 import { useCallback, useRef, useState } from "react";
 
 export type QueueItem = {
@@ -89,15 +90,33 @@ export function useV2UploadQueue() {
         const meta = await probeMetadata(item.file);
         patch(item.id, { state: "uploading", progress: 0 });
 
-        const form = new FormData();
-        form.append("file", item.file);
-        form.append("metadata", JSON.stringify(meta));
+        // 1. Direct-to-Blob upload (browser → Vercel Blob). Bypasses the
+        //    ~4.5 MB request-body limit on serverless functions.
+        const ext = item.file.name.split(".").pop()?.toLowerCase() || "mp4";
+        const safeName = item.file.name.replace(/[^a-zA-Z0-9._-]+/g, "_");
+        const path = `v2/videos/${Date.now()}-${safeName}.${ext}`;
+        const blob = await upload(path, item.file, {
+          access: "public",
+          handleUploadUrl: "/api/blob/upload",
+          contentType: item.file.type || "video/mp4",
+          onUploadProgress: ({ percentage }) => {
+            patch(item.id, { progress: percentage });
+          },
+        });
+
+        // 2. Register metadata with our API (tiny JSON body).
         const upRes = await fetch("/analyze/v2/api/uploads", {
           method: "POST",
-          body: form,
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            blobUrl: blob.url,
+            filename: item.file.name,
+            fileSize: item.file.size,
+            metadata: meta,
+          }),
         });
         if (!upRes.ok) {
-          throw new Error("upload failed");
+          throw new Error("upload registration failed");
         }
         const { videoId } = (await upRes.json()) as { videoId: string };
         patch(item.id, { state: "analyzing", videoId });
