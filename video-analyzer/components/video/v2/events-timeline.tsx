@@ -257,16 +257,15 @@ export function EventsTimeline({
               </div>
             ))}
 
-              {/* Tooltip — floats above the track so it never pushes
-                  surrounding layout. leftPct is in the dot-track coordinate
-                  space, so we offset by LABEL_INSET to align with the pointer. */}
+              {/* Tooltip — floats directly above the hovered lane (just
+                  above the dot), not above the whole track. */}
               {tooltip && (
                 <div
                   className="pointer-events-none absolute z-20"
                   style={{
                     left: `calc(${LABEL_INSET}px + clamp(0px, ${tooltip.leftPct}% , calc(100% - ${LABEL_INSET}px - 240px)))`,
-                    bottom: "100%",
-                    marginBottom: "10px",
+                    top: `${tooltip.laneIndex * (LANE_ROW_HEIGHT + LANE_GAP)}px`,
+                    transform: "translateY(calc(-100% - 6px))",
                   }}
                 >
                   <div className="rounded-lg border bg-popover px-3 py-2 text-xs shadow-xl max-w-[240px]">
