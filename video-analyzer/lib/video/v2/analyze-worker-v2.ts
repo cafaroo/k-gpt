@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import { put } from "@vercel/blob";
 import { getAnalysisModel } from "@/lib/ai/providers";
 import { db } from "@/lib/db/queries";
 import { analysis as analysisTable } from "@/lib/db/schema";
@@ -28,6 +29,18 @@ import {
   computeNawp,
   matchEmotionalBigram,
 } from "./scorers";
+
+async function uploadJsonToBlob(
+  pathname: string,
+  payload: unknown
+): Promise<string> {
+  const blob = await put(pathname, JSON.stringify(payload), {
+    access: "public",
+    contentType: "application/json",
+    addRandomSuffix: true,
+  });
+  return blob.url;
+}
 
 export type AnalyzeV2Input = {
   analysisId: string;
@@ -174,7 +187,24 @@ export async function runAnalysisV2(input: AnalyzeV2Input): Promise<void> {
       complexityRhythm: { value: rhythm.value, rationale: rhythm.rationale },
     };
 
-    // Step 6: persist — TODO (3.3) write to Postgres + Blob.
+    // Step 6: persist
+    const finalPayload = {
+      ...analysis,
+      researchMeta,
+    };
+    const [analysisBlobUrl, rawBaseBlobUrl, rawExtBlobUrl] = await Promise.all([
+      uploadJsonToBlob(`v2/${analysisId}/analysis.json`, finalPayload),
+      uploadJsonToBlob(`v2/${analysisId}/raw-base.json`, {
+        raw: baseRes.value.raw,
+        rawText: baseRes.value.rawText,
+      }),
+      extRes.status === "fulfilled"
+        ? uploadJsonToBlob(`v2/${analysisId}/raw-extended.json`, {
+            raw: extRes.value.raw,
+            rawText: extRes.value.rawText,
+          })
+        : Promise.resolve(""),
+    ]);
 
     // Step 7: metrics
     const completeness = computeCompleteness(analysis);
@@ -207,7 +237,60 @@ export async function runAnalysisV2(input: AnalyzeV2Input): Promise<void> {
     };
     logMetrics(metrics);
 
-    // TODO (3.3): UPDATE analyses SET status='done'.
+    await db
+      .update(analysisTable)
+      .set({
+        status: "done",
+        analysisBlobUrl,
+        rawBaseBlobUrl,
+        rawExtendedBlobUrl: rawExtBlobUrl || null,
+        completedAt: new Date(),
+        latencyMs: Date.now() - t0,
+        completenessScore: completeness.score.toFixed(3),
+        zodIssueCount: baseIssues.length + extendedIssues.length,
+
+        overallScore: Math.round(Number((hydratedBase.overall as any)?.score ?? 0)),
+        hookScore: String(hook.score ?? 0),
+        hookDuration: String(hook.duration ?? 0),
+        stopPower: String(hookDissection.stopPower ?? 0),
+        hookColloquiality: String(hookDissection.colloquialityScore ?? 0),
+        pacingScore: String(pacing.score ?? 0),
+        cutsPerMinute: String(pacing.cutsPerMinute ?? 0),
+        complexityAdjustedRhythm: String(rhythm.value),
+        voiceoverCadence: String(
+          (extendedPayload as any)?.audioExtended?.voiceoverCadence ?? 0
+        ),
+        emotionalTransitionScore: String(bigram.value),
+        colloquialityScore: String(
+          (extendedPayload as any)?.colloquialityScore ?? 0
+        ),
+        authenticityBand:
+          ((extendedPayload as any)?.authenticityBand as
+            | "low"
+            | "moderate"
+            | "high"
+            | undefined) ?? null,
+        brandHeritageSalience:
+          ((extendedPayload as any)?.brandHeritageSalience as
+            | "absent"
+            | "moderate"
+            | "high"
+            | undefined) ?? null,
+        ecr: String(ecr.value),
+        nawp: String(nawp.value),
+        ctaClarity: String((hydratedBase.cta as any)?.clarity ?? 0),
+        payoffIsEarly: Boolean((hydratedBase.payoffTiming as any)?.isEarly ?? false),
+        niche: String((hydratedBase.niche as any)?.detected ?? "other"),
+        formatPrimary: String((hydratedBase.format as any)?.primary ?? "other"),
+        platformBestFit: String((extendedPayload as any)?.platformFit?.bestFit ?? ""),
+
+        insights: hydratedBase.insights ?? [],
+        beatMap: hydratedBase.beatMap ?? [],
+        scenes: hydratedBase.scenes ?? [],
+        ruleCompliance: hydratedBase.ruleCompliance ?? [],
+        researchMeta,
+      })
+      .where(eq(analysisTable.id, analysisId));
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     await db
