@@ -3,6 +3,7 @@
 import { useCallback } from "react";
 import { AudioLandscapeV2 } from "@/components/video/v2/audio-landscape-v2";
 import { BeatMapTimeline } from "@/components/video/v2/beat-map-timeline";
+import { CutsTimeline } from "@/components/video/v2/cuts-timeline";
 import { EmotionalFlowDiagram } from "@/components/video/v2/emotional-flow-diagram";
 import { EventsTimeline } from "@/components/video/v2/events-timeline";
 import { ScenesTimeline } from "@/components/video/v2/scenes-timeline";
@@ -58,6 +59,15 @@ export function PerVideoClient({ fullPayload, video }: Props) {
         <ScenesTimeline
           onSeek={onSeek}
           scenes={fullPayload.scenes}
+          totalDuration={totalDuration}
+        />
+      )}
+
+      {/* Cuts timeline — Batch 4 */}
+      {fullPayload?.extended?.cutsMap?.length > 0 && (
+        <CutsTimeline
+          cutsMap={fullPayload.extended.cutsMap}
+          onSeek={onSeek}
           totalDuration={totalDuration}
         />
       )}

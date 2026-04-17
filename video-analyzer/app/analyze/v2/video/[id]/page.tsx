@@ -5,13 +5,17 @@ import { EmotionalArcChart } from "@/components/video/emotional-arc-chart";
 import { PacingCurve } from "@/components/video/pacing-curve";
 import { PlatformFitCard } from "@/components/video/platform-fit-card";
 import { SwipeRiskCurve } from "@/components/video/swipe-risk-curve";
+import { AudienceProfileCard } from "@/components/video/v2/audience-profile-card";
+import { EyeContactChart } from "@/components/video/v2/eye-contact-chart";
 import { ExportButton } from "@/components/video/v2/export-button";
 import { HookDissectionV2Card } from "@/components/video/v2/hook-dissection-v2-card";
 import { InsightsRichCard } from "@/components/video/v2/insights-rich-card";
 import { OverallScorecard } from "@/components/video/v2/overall-scorecard";
+import { PeopleAnalysisCard } from "@/components/video/v2/people-analysis-card";
 import { PlatformFitRadar } from "@/components/video/v2/platform-fit-radar";
 import { PredictedMetricsGridV2 } from "@/components/video/v2/predicted-metrics-grid-v2";
 import { RuleComplianceRadar } from "@/components/video/v2/rule-compliance-radar";
+import { ScriptAngleCard } from "@/components/video/v2/script-angle-card";
 import { VisualCharacterRadar } from "@/components/video/v2/visual-character-radar";
 import { PerVideoClient } from "@/components/video/v2/per-video-client";
 import { getAnalysisById } from "@/lib/db/queries";
@@ -92,9 +96,22 @@ async function PerVideoBody({
       {/* Overall scorecard */}
       {fullPayload && <OverallScorecard analysis={fullPayload} />}
 
+      {/* Batch 4: Script angle — near overall scorecard */}
+      {fullPayload?.extended?.scriptAngle && (
+        <ScriptAngleCard
+          scriptAngle={fullPayload.extended.scriptAngle}
+          totalDuration={Number(v.durationSec ?? 0)}
+        />
+      )}
+
       {/* Rich insights */}
       {fullPayload?.insights && (
         <InsightsRichCard insights={fullPayload.insights} />
+      )}
+
+      {/* Batch 4: Audience profile — near insights */}
+      {fullPayload?.audienceProfile && (
+        <AudienceProfileCard audienceProfile={fullPayload.audienceProfile} />
       )}
 
       {/* Three-way radar grid */}
@@ -141,6 +158,10 @@ async function PerVideoBody({
                   emotionalArc={fullPayload.extended.emotionalArc}
                 />
               )}
+              {/* Batch 4: Eye contact alongside emotional arc */}
+              {fullPayload.extended?.eyeContact && (
+                <EyeContactChart eyeContact={fullPayload.extended.eyeContact} />
+              )}
             </div>
             {/* AudioLandscapeV2 is rendered in PerVideoClient above */}
           </section>
@@ -153,6 +174,18 @@ async function PerVideoBody({
               <PlatformFitCard platformFit={fullPayload.extended.platformFit} />
             )}
           </section>
+
+          {/* Batch 4: People analysis — own section */}
+          {fullPayload.extended?.peopleAnalysis && (
+            <section className="space-y-4">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                People Analysis
+              </h2>
+              <PeopleAnalysisCard
+                peopleAnalysis={fullPayload.extended.peopleAnalysis}
+              />
+            </section>
+          )}
         </>
       )}
     </div>
