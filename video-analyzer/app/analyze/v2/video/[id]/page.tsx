@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/app/(auth)/auth";
+import { v2Session as auth } from "@/lib/video/v2/session";
 import { AudioInsightsV2 } from "@/components/video/audio-insights-v2";
 import { EmotionalArcChart } from "@/components/video/emotional-arc-chart";
 import { HookDissectionCard } from "@/components/video/hook-dissection-card";

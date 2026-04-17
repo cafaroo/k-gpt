@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/app/(auth)/auth";
+import { v2Session as auth } from "@/lib/video/v2/session";
 import { type AnalysisFilters, listAnalyses } from "@/lib/db/queries";
 
 export async function GET(request: Request) {

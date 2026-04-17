@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/app/(auth)/auth";
+import { v2Session as auth } from "@/lib/video/v2/session";
 import { AnalysesTable } from "@/components/video/v2/analyses-table";
 import { AuthenticityBars } from "@/components/video/v2/authenticity-bars";
 import { EcrHistogram } from "@/components/video/v2/ecr-histogram";

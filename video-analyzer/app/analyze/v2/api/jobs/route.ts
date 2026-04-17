@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { after, NextResponse } from "next/server";
-import { auth } from "@/app/(auth)/auth";
+import { v2Session as auth } from "@/lib/video/v2/session";
 import { db } from "@/lib/db/queries";
 import { analysis, video } from "@/lib/db/schema";
 import { runAnalysisV2 } from "@/lib/video/v2/analyze-worker-v2";

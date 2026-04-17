@@ -1,6 +1,6 @@
 import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
-import { auth } from "@/app/(auth)/auth";
+import { v2Session as auth } from "@/lib/video/v2/session";
 import { db } from "@/lib/db/queries";
 import { video } from "@/lib/db/schema";
 
