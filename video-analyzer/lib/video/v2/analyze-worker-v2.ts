@@ -52,12 +52,11 @@ export async function runAnalysisV2(input: AnalyzeV2Input): Promise<void> {
 
   try {
     // Step 1: fetch video
-    const vres = await fetch(videoUrl);
-    if (!vres.ok) {
-      throw new Error(`failed to fetch video blob (HTTP ${vres.status})`);
-    }
-    const videoBytes = new Uint8Array(await vres.arrayBuffer());
-    const videoMediaType = vres.headers.get("content-type") ?? "video/mp4";
+    // HEAD for content-type sniff only — avoid pulling 30+ MB of video bytes
+    // into the function's memory. Gemini fetches the blob itself.
+    const head = await fetch(videoUrl, { method: "HEAD" }).catch(() => null);
+    const videoMediaType =
+      head?.headers.get("content-type") ?? "video/mp4";
 
     const metadataText = [
       "Video metadata:",
@@ -66,9 +65,17 @@ export async function runAnalysisV2(input: AnalyzeV2Input): Promise<void> {
       `- dimensions: ${metadata.width}×${metadata.height} (${metadata.aspectRatio})`,
     ].join("\n");
 
+    // Pass the public Blob URL as `data`. AI SDK forwards it to Gemini which
+    // fetches the file server-side. This bypasses the Vercel AI Gateway
+    // inline-request body limit that was rejecting ~35 MB+ videos with
+    // "Gateway request failed".
     const content = [
       { type: "text" as const, text: metadataText },
-      { type: "file" as const, data: videoBytes, mediaType: videoMediaType },
+      {
+        type: "file" as const,
+        data: new URL(videoUrl),
+        mediaType: videoMediaType,
+      },
     ];
 
     const model = getAnalysisModel();
