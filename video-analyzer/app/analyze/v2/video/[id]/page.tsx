@@ -5,6 +5,7 @@ import { EmotionalArcChart } from "@/components/video/emotional-arc-chart";
 import { PacingCurve } from "@/components/video/pacing-curve";
 import { PlatformFitCard } from "@/components/video/platform-fit-card";
 import { SwipeRiskCurve } from "@/components/video/swipe-risk-curve";
+import { ExportButton } from "@/components/video/v2/export-button";
 import { HookDissectionV2Card } from "@/components/video/v2/hook-dissection-v2-card";
 import { InsightsRichCard } from "@/components/video/v2/insights-rich-card";
 import { OverallScorecard } from "@/components/video/v2/overall-scorecard";
@@ -76,6 +77,14 @@ async function PerVideoBody({
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between gap-4">
+        <h2 className="text-lg font-semibold truncate">{v.filename}</h2>
+        <ExportButton
+          href={`/analyze/v2/api/analyses/${a.id}/export`}
+          label="Export ZIP"
+        />
+      </div>
+
       {/* Batch 2: client wrapper owns VideoWithOverlay + all timeline/seek components
           (including EventsTimeline which needs onSeek) */}
       <PerVideoClient fullPayload={fullPayload} video={v} />

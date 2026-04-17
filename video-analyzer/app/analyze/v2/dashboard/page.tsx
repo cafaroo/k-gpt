@@ -4,6 +4,7 @@ import { AnalysesTable } from "@/components/video/v2/analyses-table";
 import { AuthenticityBars } from "@/components/video/v2/authenticity-bars";
 import { DashboardAdvancedCharts } from "@/components/video/v2/dashboard-advanced-charts";
 import { EcrHistogram } from "@/components/video/v2/ecr-histogram";
+import { ExportButton } from "@/components/video/v2/export-button";
 import { RecentAnalysesCards } from "@/components/video/v2/recent-analyses-cards";
 import { listAnalyses } from "@/lib/db/queries";
 import { v2Session as auth } from "@/lib/video/v2/session";
@@ -11,11 +12,17 @@ import { v2Session as auth } from "@/lib/video/v2/session";
 export default function DashboardPage() {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">
-          Research-grounded metrics across all analyses.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold">Dashboard</h1>
+          <p className="text-sm text-muted-foreground">
+            Research-grounded metrics across all analyses.
+          </p>
+        </div>
+        <ExportButton
+          href="/analyze/v2/api/export"
+          label="Export all as ZIP"
+        />
       </div>
       <Suspense fallback={<DashboardSkeleton />}>
         <DashboardBody />
