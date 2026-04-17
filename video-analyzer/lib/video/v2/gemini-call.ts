@@ -158,12 +158,15 @@ export async function callGeminiJson(opts: {
       model: opts.model,
       system: `${opts.system}\n\nReturn ONLY a single valid JSON object matching the described shape. No prose, no markdown fences, no comments.`,
       messages: [{ role: "user", content: opts.content }],
-      // Low temperature makes the analysis repeatable across runs on the
-      // same video — users were seeing different scores / cut counts /
-      // actor rosters on repeated uploads. Keep slightly above 0 so
-      // Gemini still fills softer judgment fields (taglines, rationales).
+      // Deterministic sampling: low temperature + fixed seed. Same video
+      // input → same output across runs (modulo minor provider-side
+      // indeterminism). Seed is shared between base and extended passes
+      // intentionally — the two prompts differ enough that this doesn't
+      // collapse responses. Bump this number if you ever need to force
+      // regeneration of all cached analyses.
       temperature: 0.15,
       topP: 0.9,
+      seed: 42,
     });
     return t;
   }, opts.label);
