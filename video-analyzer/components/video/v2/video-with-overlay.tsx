@@ -276,8 +276,8 @@ export function VideoWithOverlay({ video, fullPayload }: Props) {
     <div className="space-y-3">
       {/* Video + live overlay panel */}
       <div className="grid gap-4 md:grid-cols-[2fr_1fr]">
-        {/* Video */}
-        <div className="bg-black rounded-lg overflow-hidden aspect-[9/16] md:aspect-video">
+        {/* Video with floating callouts */}
+        <div className="relative bg-black rounded-lg overflow-hidden aspect-[9/16] md:aspect-video">
           {/* biome-ignore lint/a11y/useMediaCaption: no caption for POC */}
           <video
             className="h-full w-full object-contain"
@@ -287,6 +287,49 @@ export function VideoWithOverlay({ video, fullPayload }: Props) {
             ref={videoRef}
             src={video.blobUrl}
           />
+
+          {/* Floating callouts — absolute so they don't push layout */}
+          <div className="pointer-events-none absolute top-3 right-3 flex flex-col gap-2 max-w-[240px] z-10">
+            {nearbyInterrupt && (
+              <div className="rounded-md border border-amber-500/60 bg-amber-950/85 backdrop-blur-sm px-3 py-2 shadow-lg animate-in fade-in slide-in-from-right-2 duration-200">
+                <div className="text-[10px] uppercase tracking-wide text-amber-300 mb-0.5">
+                  Pattern interrupt
+                </div>
+                <div className="text-xs font-semibold text-amber-200">
+                  {nearbyInterrupt.type}
+                </div>
+                <p className="text-[10px] text-amber-100/80 mt-0.5 leading-snug line-clamp-2">
+                  {nearbyInterrupt.description}
+                </p>
+              </div>
+            )}
+            {nearbyTrust && (
+              <div className="rounded-md border border-emerald-500/60 bg-emerald-950/85 backdrop-blur-sm px-3 py-2 shadow-lg animate-in fade-in slide-in-from-right-2 duration-200">
+                <div className="text-[10px] uppercase tracking-wide text-emerald-300 mb-0.5">
+                  Trust signal
+                </div>
+                <div className="text-xs font-semibold text-emerald-200">
+                  {nearbyTrust.type}
+                </div>
+                <p className="text-[10px] text-emerald-100/80 mt-0.5 leading-snug line-clamp-2">
+                  {nearbyTrust.description}
+                </p>
+              </div>
+            )}
+            {nearbyMoment && (
+              <div className="rounded-md border border-purple-500/60 bg-purple-950/85 backdrop-blur-sm px-3 py-2 shadow-lg animate-in fade-in slide-in-from-right-2 duration-200">
+                <div className="text-[10px] uppercase tracking-wide text-purple-300 mb-0.5">
+                  Micro-moment
+                </div>
+                <div className="text-xs font-semibold text-purple-200">
+                  {nearbyMoment.kind}
+                </div>
+                <p className="text-[10px] text-purple-100/80 mt-0.5 leading-snug line-clamp-2">
+                  {nearbyMoment.description}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Live panel */}
@@ -418,50 +461,6 @@ export function VideoWithOverlay({ video, fullPayload }: Props) {
             </div>
           )}
 
-          {/* Nearby pattern interrupt */}
-          {nearbyInterrupt && (
-            <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 animate-pulse">
-              <div className="text-[10px] uppercase tracking-wide text-amber-600 mb-1">
-                Pattern interrupt
-              </div>
-              <div className="text-xs font-semibold text-amber-600">
-                {nearbyInterrupt.type}
-              </div>
-              <p className="text-[10px] text-amber-700/80 mt-0.5 leading-snug line-clamp-2">
-                {nearbyInterrupt.description}
-              </p>
-            </div>
-          )}
-
-          {/* Nearby trust signal */}
-          {nearbyTrust && (
-            <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2">
-              <div className="text-[10px] uppercase tracking-wide text-emerald-600 mb-1">
-                Trust signal
-              </div>
-              <div className="text-xs font-semibold text-emerald-600">
-                {nearbyTrust.type}
-              </div>
-              <p className="text-[10px] text-emerald-700/80 mt-0.5 leading-snug line-clamp-2">
-                {nearbyTrust.description}
-              </p>
-            </div>
-          )}
-
-          {/* Nearby micro-moment */}
-          {nearbyMoment && (
-            <div className="rounded-lg border border-purple-500/40 bg-purple-500/10 px-3 py-2">
-              <div className="text-[10px] uppercase tracking-wide text-purple-600 mb-1">
-                Micro-moment
-              </div>
-              <div className="text-xs font-semibold text-purple-600">
-                {nearbyMoment.kind}
-              </div>
-              <p className="text-[10px] text-purple-700/80 mt-0.5 leading-snug line-clamp-2">
-                {nearbyMoment.description}
-              </p>
-            </div>
-          )}
         </div>
       </div>
 
