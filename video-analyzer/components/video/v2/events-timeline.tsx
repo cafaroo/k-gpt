@@ -194,8 +194,9 @@ export function EventsTimeline({
     },
   ];
 
-  const LABEL_W = 72;
-  const TRACK_HEIGHT = LANE_HEIGHT * 3 + LANE_GAP * 2;
+  const LANE_ROW_HEIGHT = 28;
+  const TRACK_HEIGHT = LANE_ROW_HEIGHT * 3 + LANE_GAP * 2;
+  const LABEL_INSET = 72; // px of lane width reserved for label
 
   return (
     <Card>
@@ -208,46 +209,31 @@ export function EventsTimeline({
         </div>
       </CardHeader>
       <CardContent className="space-y-2">
-        {/* Track area with labels */}
-        <div className="flex gap-2">
-          {/* Lane labels */}
-          <div
-            className="flex flex-col shrink-0"
-            style={{ width: `${LABEL_W}px`, height: `${TRACK_HEIGHT}px` }}
-          >
+        {/* Track area — labels are anchored INSIDE each lane (like a video editor) */}
+        <div className="relative">
+          <div className="relative" style={{ height: `${TRACK_HEIGHT}px` }}>
             {lanes.map((lane, li) => (
               <div
                 key={lane.key}
-                className="flex items-center"
+                className="absolute left-0 right-0 rounded border bg-muted/20 overflow-visible"
                 style={{
-                  height: `${LANE_HEIGHT}px`,
-                  marginTop: li > 0 ? `${LANE_GAP}px` : 0,
+                  top: li * (LANE_ROW_HEIGHT + LANE_GAP),
+                  height: `${LANE_ROW_HEIGHT}px`,
                 }}
               >
+                {/* Lane label pinned to the left; dots are positioned
+                    relative to the scrolling zone to the right of it. */}
                 <span
-                  className="text-[10px] font-semibold uppercase tracking-wide"
+                  className="pointer-events-none absolute top-1/2 -translate-y-1/2 left-2 text-[10px] font-semibold uppercase tracking-wide z-[1]"
                   style={{ color: LANE_COLOR[lane.key] }}
                 >
                   {LANE_LABEL[lane.key]}
                 </span>
-              </div>
-            ))}
-          </div>
-
-          {/* Timeline tracks */}
-          <div className="flex-1 relative">
-            {/* Lane tracks */}
-            <div
-              className="relative"
-              style={{ height: `${TRACK_HEIGHT}px` }}
-            >
-              {lanes.map((lane, li) => (
                 <div
-                  key={lane.key}
-                  className="absolute left-0 right-0 rounded border bg-muted/20"
+                  className="absolute inset-y-0"
                   style={{
-                    top: li * (LANE_HEIGHT + LANE_GAP),
-                    height: `${LANE_HEIGHT}px`,
+                    left: `${LABEL_INSET}px`,
+                    right: 0,
                   }}
                 >
                   <LaneDots
@@ -261,7 +247,8 @@ export function EventsTimeline({
                     onSeek={onSeek}
                   />
                 </div>
-              ))}
+              </div>
+            ))}
 
               {/* Tooltip — rendered below the track */}
               {tooltip && (
@@ -317,18 +304,20 @@ export function EventsTimeline({
               )}
             </div>
 
-            {/* Time axis */}
-            <div className="relative h-4 mt-1">
-              {ticks.map((tick) => (
-                <span
-                  key={tick.pct}
-                  className="absolute -translate-x-1/2 text-[10px] text-muted-foreground font-mono"
-                  style={{ left: `${tick.pct}%` }}
-                >
-                  {tick.label}
-                </span>
-              ))}
-            </div>
+          {/* Time axis — offset by label inset so ticks align with dots */}
+          <div
+            className="relative h-4 mt-1"
+            style={{ marginLeft: `${LABEL_INSET}px` }}
+          >
+            {ticks.map((tick) => (
+              <span
+                key={tick.pct}
+                className="absolute -translate-x-1/2 text-[10px] text-muted-foreground font-mono"
+                style={{ left: `${tick.pct}%` }}
+              >
+                {tick.label}
+              </span>
+            ))}
           </div>
         </div>
       </CardContent>
