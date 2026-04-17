@@ -5,7 +5,6 @@ import { EmotionalArcChart } from "@/components/video/emotional-arc-chart";
 import { PacingCurve } from "@/components/video/pacing-curve";
 import { PlatformFitCard } from "@/components/video/platform-fit-card";
 import { SwipeRiskCurve } from "@/components/video/swipe-risk-curve";
-import { EventsTimeline } from "@/components/video/v2/events-timeline";
 import { HookDissectionV2Card } from "@/components/video/v2/hook-dissection-v2-card";
 import { InsightsRichCard } from "@/components/video/v2/insights-rich-card";
 import { OverallScorecard } from "@/components/video/v2/overall-scorecard";
@@ -77,18 +76,9 @@ async function PerVideoBody({
 
   return (
     <div className="space-y-6">
-      {/* Batch 2: client wrapper owns VideoWithOverlay + all timeline/seek components */}
+      {/* Batch 2: client wrapper owns VideoWithOverlay + all timeline/seek components
+          (including EventsTimeline which needs onSeek) */}
       <PerVideoClient fullPayload={fullPayload} video={v} />
-
-      {/* Timed events overview (interrupts + trust signals + micro-moments) */}
-      {fullPayload && (
-        <EventsTimeline
-          patternInterrupts={fullPayload.extended?.patternInterrupts}
-          trustSignals={fullPayload.extended?.trustSignals}
-          microMoments={fullPayload.extended?.microMoments}
-          totalDuration={Number(v.durationSec ?? 0)}
-        />
-      )}
 
       {/* Overall scorecard */}
       {fullPayload && <OverallScorecard analysis={fullPayload} />}
