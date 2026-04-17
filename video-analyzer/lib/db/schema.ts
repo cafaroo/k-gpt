@@ -231,6 +231,20 @@ export const analysis = pgTable("Analysis", {
   scenes: jsonb("scenes"),
   ruleCompliance: jsonb("ruleCompliance"),
   researchMeta: jsonb("researchMeta"),
+
+  // Batch 4 hot fields
+  peopleCountMax: integer("peopleCountMax"),
+  eyeContactScore: numeric("eyeContactScore", { precision: 4, scale: 2 }),
+  scriptAngle: text("scriptAngle"),
+  primaryGender: text("primaryGender"),
+  socioeconomic: text("socioeconomic"),
+
+  // Batch 4 jsonb columns
+  audienceProfile: jsonb("audienceProfile"),
+  peopleAnalysis: jsonb("peopleAnalysis"),
+  cutsMap: jsonb("cutsMap"),
+  scriptMeta: jsonb("scriptMeta"),
+  eyeContact: jsonb("eyeContact"),
 });
 
 export type Analysis = InferSelectModel<typeof analysis>;
