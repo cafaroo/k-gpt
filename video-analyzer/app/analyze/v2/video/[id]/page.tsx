@@ -9,7 +9,12 @@ import { PatternInterruptsCard } from "@/components/video/pattern-interrupts-car
 import { PlatformFitCard } from "@/components/video/platform-fit-card";
 import { SwipeRiskCurve } from "@/components/video/swipe-risk-curve";
 import { TrustSignalsCard } from "@/components/video/trust-signals-card";
-import { ResearchRow } from "@/components/video/v2/research-row";
+import { InsightsRichCard } from "@/components/video/v2/insights-rich-card";
+import { OverallScorecard } from "@/components/video/v2/overall-scorecard";
+import { PlatformFitRadar } from "@/components/video/v2/platform-fit-radar";
+import { RuleComplianceRadar } from "@/components/video/v2/rule-compliance-radar";
+import { VideoWithOverlay } from "@/components/video/v2/video-with-overlay";
+import { VisualCharacterRadar } from "@/components/video/v2/visual-character-radar";
 import { getAnalysisById } from "@/lib/db/queries";
 
 export default async function PerVideoPage({
@@ -47,32 +52,25 @@ export default async function PerVideoPage({
 
   return (
     <div className="space-y-6">
-      <div className="grid md:grid-cols-[2fr_3fr] gap-6">
-        <div className="aspect-[9/16] bg-muted rounded-lg overflow-hidden">
-          {/* biome-ignore lint/a11y/useMediaCaption: no caption for POC */}
-          <video
-            className="h-full w-full object-contain"
-            controls
-            src={v.blobUrl}
-          />
-        </div>
-        <div className="space-y-3">
-          <h1 className="text-xl font-semibold">{v.filename}</h1>
-          <div className="text-sm text-muted-foreground">
-            {fullPayload?.overall?.tagline ?? "—"}
-          </div>
-          <div className="text-sm">{fullPayload?.overall?.summary ?? ""}</div>
-        </div>
-      </div>
+      {/* Video player with live overlay */}
+      <VideoWithOverlay video={v} fullPayload={fullPayload} />
 
-      <ResearchRow
-        authenticityBand={a.authenticityBand}
-        colloquiality={a.colloquialityScore ? Number(a.colloquialityScore) : 0}
-        ecr={a.ecr ? Number(a.ecr) : 0}
-        ecrRationale={fullPayload?.researchMeta?.ecr?.rationale}
-        nawp={a.nawp ? Number(a.nawp) : 0}
-        nawpRationale={fullPayload?.researchMeta?.nawp?.rationale}
-      />
+      {/* Overall scorecard */}
+      {fullPayload && <OverallScorecard analysis={fullPayload} />}
+
+      {/* Rich insights */}
+      {fullPayload?.insights && (
+        <InsightsRichCard insights={fullPayload.insights} />
+      )}
+
+      {/* Three-way radar grid */}
+      {fullPayload && (
+        <div className="grid md:grid-cols-3 gap-4">
+          <RuleComplianceRadar rules={fullPayload.ruleCompliance ?? []} />
+          <VisualCharacterRadar payload={fullPayload} />
+          <PlatformFitRadar platformFit={fullPayload.extended?.platformFit} />
+        </div>
+      )}
 
       {fullPayload && (
         <>
