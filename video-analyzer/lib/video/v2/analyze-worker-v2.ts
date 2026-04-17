@@ -295,6 +295,38 @@ export async function runAnalysisV2(input: AnalyzeV2Input): Promise<void> {
         scenes: hydratedBase.scenes ?? [],
         ruleCompliance: hydratedBase.ruleCompliance ?? [],
         researchMeta,
+
+        // Batch 4 hot fields (base pass)
+        primaryGender: String(
+          (hydratedBase as any).audienceProfile?.primaryGender ?? ""
+        ) || null,
+        socioeconomic: String(
+          (hydratedBase as any).audienceProfile?.socioeconomic ?? ""
+        ) || null,
+        audienceProfile: ((hydratedBase as any).audienceProfile ?? null) as any,
+
+        // Batch 4 hot fields (extended pass)
+        peopleCountMax:
+          (extendedPayload as any)?.peopleAnalysis?.countMax != null
+            ? Math.round(Number((extendedPayload as any).peopleAnalysis.countMax))
+            : null,
+        eyeContactScore:
+          (extendedPayload as any)?.eyeContact?.overallScore != null
+            ? String((extendedPayload as any).eyeContact.overallScore)
+            : null,
+        scriptAngle:
+          String((extendedPayload as any)?.scriptAngle?.angle ?? "") || null,
+
+        // Batch 4 jsonb columns
+        peopleAnalysis: ((extendedPayload as any)?.peopleAnalysis ?? null) as any,
+        cutsMap: ((extendedPayload as any)?.cutsMap ?? null) as any,
+        eyeContact: ((extendedPayload as any)?.eyeContact ?? null) as any,
+        scriptMeta: (extendedPayload as any)?.scriptAngle
+          ? (() => {
+              const { angle: _angle, ...rest } = (extendedPayload as any).scriptAngle;
+              return rest;
+            })()
+          : null,
       })
       .where(eq(analysisTable.id, analysisId));
   } catch (err) {
