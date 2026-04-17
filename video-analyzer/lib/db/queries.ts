@@ -10,6 +10,8 @@ import {
   gte,
   inArray,
   lt,
+  lte,
+  sql,
   type SQL,
 } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
@@ -19,6 +21,7 @@ import type { VisibilityType } from "@/components/chat/visibility-selector";
 import { ChatbotError } from "../errors";
 import { generateUUID } from "../utils";
 import {
+  analysis,
   type Chat,
   chat,
   type DBMessage,
@@ -29,6 +32,7 @@ import {
   suggestion,
   type User,
   user,
+  video,
   vote,
 } from "./schema";
 import { generateHashedPassword } from "./utils";
@@ -629,4 +633,77 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
       "Failed to get stream ids by chat id"
     );
   }
+}
+
+// ─── /analyze/v2 POC ────────────────────────────────────────────────────
+
+export type AnalysisFilters = {
+  userId: string;
+  ecrGte?: number;
+  ecrLte?: number;
+  authenticityBandIn?: ("low" | "moderate" | "high")[];
+  nicheIn?: string[];
+  platformBestFitIn?: string[];
+  limit?: number;
+  offset?: number;
+  sortField?: "createdAt" | "ecr" | "overallScore" | "colloquialityScore";
+  sortDir?: "asc" | "desc";
+};
+
+export async function listAnalyses(f: AnalysisFilters) {
+  const conditions = [eq(analysis.userId, f.userId), eq(analysis.status, "done")];
+  if (typeof f.ecrGte === "number") conditions.push(gte(analysis.ecr, String(f.ecrGte)));
+  if (typeof f.ecrLte === "number") conditions.push(lte(analysis.ecr, String(f.ecrLte)));
+  if (f.authenticityBandIn?.length)
+    conditions.push(inArray(analysis.authenticityBand, f.authenticityBandIn));
+  if (f.nicheIn?.length) conditions.push(inArray(analysis.niche, f.nicheIn));
+  if (f.platformBestFitIn?.length)
+    conditions.push(inArray(analysis.platformBestFit, f.platformBestFitIn));
+
+  const sortCol = {
+    createdAt: analysis.createdAt,
+    ecr: analysis.ecr,
+    overallScore: analysis.overallScore,
+    colloquialityScore: analysis.colloquialityScore,
+  }[f.sortField ?? "createdAt"];
+
+  const rows = await db
+    .select({
+      id: analysis.id,
+      videoId: analysis.videoId,
+      createdAt: analysis.createdAt,
+      overallScore: analysis.overallScore,
+      ecr: analysis.ecr,
+      nawp: analysis.nawp,
+      colloquialityScore: analysis.colloquialityScore,
+      authenticityBand: analysis.authenticityBand,
+      niche: analysis.niche,
+      platformBestFit: analysis.platformBestFit,
+      filename: video.filename,
+      thumbnailUrl: video.thumbnailUrl,
+      durationSec: video.durationSec,
+    })
+    .from(analysis)
+    .innerJoin(video, eq(video.id, analysis.videoId))
+    .where(and(...conditions))
+    .orderBy(f.sortDir === "asc" ? sortCol : desc(sortCol))
+    .limit(f.limit ?? 50)
+    .offset(f.offset ?? 0);
+
+  const [{ total }] = await db
+    .select({ total: sql<number>`count(*)::int` })
+    .from(analysis)
+    .where(and(...conditions));
+
+  return { rows, total };
+}
+
+export async function getAnalysisById(id: string, userId: string) {
+  const [row] = await db
+    .select()
+    .from(analysis)
+    .innerJoin(video, eq(video.id, analysis.videoId))
+    .where(and(eq(analysis.id, id), eq(analysis.userId, userId)))
+    .limit(1);
+  return row ?? null;
 }
