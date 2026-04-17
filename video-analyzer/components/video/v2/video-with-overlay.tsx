@@ -464,73 +464,126 @@ export function VideoWithOverlay({ video, fullPayload }: Props) {
         </div>
       </div>
 
-      {/* Timeline bar */}
+      {/* Multi-lane timeline */}
       {duration > 0 && ticks.length > 0 && (
-        <div className="space-y-1">
+        <div className="space-y-2">
+          {/* Legend */}
           <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-            <span>0:00</span>
+            <span className="font-mono">0:00</span>
             <span className="flex gap-3">
               {Object.entries(TICK_TYPE_COLOR).map(([type, color]) => (
                 <span className="flex items-center gap-1" key={type}>
                   <span
-                    className="h-2 w-2 rounded-full inline-block"
+                    className="h-2 w-2 rounded-sm inline-block"
                     style={{ background: color }}
                   />
                   {type}
                 </span>
               ))}
             </span>
-            <span>{fmt(duration)}</span>
+            <span className="font-mono">{fmt(duration)}</span>
           </div>
 
-          {/* Relative timeline */}
-          <div className="relative h-8 rounded-md bg-muted overflow-visible">
-            {/* Playhead */}
+          {/* Track container with playhead + 2 lanes */}
+          <div className="relative rounded-md border bg-muted/20 overflow-visible">
+            {/* Playhead spans all lanes */}
             <div
-              className="absolute top-0 h-full w-0.5 bg-white/60 z-10 pointer-events-none"
+              className="pointer-events-none absolute inset-y-0 z-10 w-0.5 bg-white/70"
               style={{ left: `${(currentTime / duration) * 100}%` }}
             />
 
-            {/* Ticks */}
-            {ticks.map((tick, i) => {
-              const pct = (tick.time / duration) * 100;
-              const color = TICK_TYPE_COLOR[tick.type];
-              return (
-                <button
-                  className="absolute top-0 h-full w-2 -translate-x-1 group"
-                  key={`tick-${tick.type}-${i}-${tick.time}`}
-                  onClick={() => seekTo(tick.time)}
-                  onMouseEnter={() => {
-                    setHoveredTick(tick);
-                    setHoveredTickPct(pct);
-                  }}
-                  onMouseLeave={() => setHoveredTick(null)}
-                  style={{ left: `${pct}%` }}
-                  title={`${fmt(tick.time)} · ${tick.label}`}
-                  type="button"
-                >
-                  <div
-                    className="mx-auto h-full w-1 rounded-full opacity-70 group-hover:opacity-100"
-                    style={{ background: color }}
+            {/* Lane 1: Beats as proportional bars */}
+            <div
+              className="relative border-b border-border/30"
+              style={{ height: "20px" }}
+            >
+              <div className="absolute top-1/2 left-2 -translate-y-1/2 text-[9px] uppercase tracking-wide text-muted-foreground/60 font-medium pointer-events-none z-[1]">
+                Beats
+              </div>
+              {beatMap.map((b, i) => {
+                const leftPct = (b.start / duration) * 100;
+                const widthPct = Math.max(
+                  0.4,
+                  ((b.end - b.start) / duration) * 100
+                );
+                const color = TICK_TYPE_COLOR.beat;
+                return (
+                  <button
+                    className="absolute top-1/2 -translate-y-1/2 h-3 rounded-[2px] cursor-pointer transition-all hover:brightness-125 hover:h-3.5 focus:outline-none"
+                    key={`beat-bar-${i}-${b.start}`}
+                    onClick={() => seekTo(b.start)}
+                    onMouseEnter={() => {
+                      setHoveredTick({
+                        time: b.start,
+                        type: "beat",
+                        label: b.type,
+                        description: b.description,
+                      });
+                      setHoveredTickPct(leftPct + widthPct / 2);
+                    }}
+                    onMouseLeave={() => setHoveredTick(null)}
+                    style={{
+                      left: `${leftPct}%`,
+                      width: `${widthPct}%`,
+                      background: color,
+                      opacity: 0.85,
+                      minWidth: "2px",
+                    }}
+                    title={`${fmt(b.start)} · ${b.type}`}
+                    type="button"
                   />
-                </button>
-              );
-            })}
+                );
+              })}
+            </div>
+
+            {/* Lane 2: Events (interrupts + trust + moments) as dots */}
+            <div className="relative" style={{ height: "20px" }}>
+              <div className="absolute top-1/2 left-2 -translate-y-1/2 text-[9px] uppercase tracking-wide text-muted-foreground/60 font-medium pointer-events-none z-[1]">
+                Events
+              </div>
+              {ticks
+                .filter((t) => t.type !== "beat")
+                .map((tick, i) => {
+                  const pct = (tick.time / duration) * 100;
+                  const color = TICK_TYPE_COLOR[tick.type];
+                  return (
+                    <button
+                      className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-3 w-3 rounded-full cursor-pointer transition-all hover:scale-125 focus:outline-none"
+                      key={`event-${tick.type}-${i}-${tick.time}`}
+                      onClick={() => seekTo(tick.time)}
+                      onMouseEnter={() => {
+                        setHoveredTick(tick);
+                        setHoveredTickPct(pct);
+                      }}
+                      onMouseLeave={() => setHoveredTick(null)}
+                      style={{
+                        left: `${pct}%`,
+                        background: color,
+                        boxShadow: `0 0 0 2px ${color}33`,
+                      }}
+                      title={`${fmt(tick.time)} · ${tick.label}`}
+                      type="button"
+                    />
+                  );
+                })}
+            </div>
 
             {/* Hover tooltip */}
             {hoveredTick && (
               <div
                 className="absolute bottom-full mb-2 z-20 pointer-events-none"
                 style={{
-                  left: `clamp(8px, ${hoveredTickPct}%, calc(100% - 150px))`,
+                  left: `clamp(8px, ${hoveredTickPct}%, calc(100% - 180px))`,
                   transform: "translateX(-50%)",
                 }}
               >
-                <div className="rounded-lg border bg-popover px-2.5 py-1.5 text-xs shadow-md max-w-[200px]">
+                <div className="rounded-lg border bg-popover px-2.5 py-1.5 text-xs shadow-xl max-w-[220px]">
                   <div className="font-mono text-[10px] text-muted-foreground mb-0.5">
-                    {fmt(hoveredTick.time)}
+                    {fmt(hoveredTick.time)} · {hoveredTick.type}
                   </div>
-                  <div className="font-semibold">{hoveredTick.label}</div>
+                  <div className="font-semibold capitalize">
+                    {hoveredTick.label}
+                  </div>
                   <div className="text-muted-foreground leading-snug line-clamp-2">
                     {hoveredTick.description}
                   </div>
