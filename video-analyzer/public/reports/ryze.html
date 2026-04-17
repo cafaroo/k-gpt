@@ -1,0 +1,958 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Ryze · Creative × Performance Analysis</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #09090b;
+    --panel: #111113;
+    --border: #27272a;
+    --fg: #fafafa;
+    --muted: #71717a;
+    --accent: #3b82f6;
+    --emerald: #10b981;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --purple: #a855f7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .container { max-width: 1240px; margin: 0 auto; padding: 32px 20px; }
+  h1 { font-size: 28px; margin: 0 0 4px; font-weight: 600; letter-spacing: -0.02em; }
+  h2 { font-size: 18px; margin: 40px 0 12px; font-weight: 600; letter-spacing: -0.01em; }
+  h3 { font-size: 14px; margin: 20px 0 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+  p { color: var(--muted); margin: 0 0 12px; }
+  a { color: var(--accent); text-decoration: none; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .kpi { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .kpi .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  .kpi .value { font-size: 22px; font-weight: 600; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 600; background: var(--bg); position: sticky; top: 0; }
+  td { vertical-align: top; }
+  tr:hover td { background: #151518; }
+  .tabular { font-variant-numeric: tabular-nums; }
+  .pill { display: inline-block; padding: 2px 6px; border-radius: 10px; font-size: 11px; font-weight: 500; }
+  .pill-good { background: rgba(16,185,129,0.15); color: var(--emerald); }
+  .pill-warn { background: rgba(245,158,11,0.15); color: var(--amber); }
+  .pill-bad { background: rgba(239,68,68,0.15); color: var(--red); }
+  .pill-neutral { background: rgba(113,113,122,0.15); color: var(--muted); }
+  .chart-wrap { position: relative; height: 300px; }
+  .insight { border-left: 3px solid var(--accent); padding: 8px 12px; margin: 6px 0; background: #111113; border-radius: 4px; }
+  .insight strong { color: var(--fg); }
+  .foot { margin-top: 40px; color: var(--muted); font-size: 11px; border-top: 1px solid var(--border); padding-top: 14px; }
+  .mono { font-family: "SF Mono", Menlo, monospace; font-size: 11px; color: var(--muted); }
+  .truncate { max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: middle; }
+</style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Ryze · Creative × Performance</h1>
+      <p>Qualitative creative analysis (36 video ads via Gemini / video-analyzer v2) joined to Meta Ads performance rows (88 rows → 26 ads with matched creatives). Generated 2026-04-17 17:32 UTC.</p>
+    </header>
+
+    <section class="kpis">
+      <div class="kpi"><div class="label">Creatives analysed</div><div class="value">36</div></div>
+      <div class="kpi"><div class="label">Creatives w/ perf data</div><div class="value">26</div></div>
+      <div class="kpi"><div class="label">Total spend</div><div class="value">$346,318</div></div>
+      <div class="kpi"><div class="label">Total orders</div><div class="value">2 881,278</div></div>
+      <div class="kpi"><div class="label">Median ROAS</div><div class="value">0.15</div></div>
+      <div class="kpi"><div class="label">Median overall score</div><div class="value">88</div></div>
+      <div class="kpi"><div class="label">Median ECR (predicted)</div><div class="value">0.99</div></div>
+      <div class="kpi"><div class="label">Median Colloquiality</div><div class="value">8.0</div></div>
+    </section>
+
+    <h2>Key findings</h2>
+    <div class="card">
+      <div class="insight"><strong>Best-performing script angle: comparison</strong> — Avg ROAS 0.24 across 2 creatives, $738 total spend.</div><div class="insight"><strong>14.6× ROAS spread between best and worst creative</strong> — Top: "IT_MA_32_D_INT-UGC_(16)_D6_compressed.mp4" at ROAS 0.35. Worst (with spend &gt;$100): "MC_45_A_M-UGC_(5) d7_compressed.mp4" at ROAS 0.02.</div><div class="insight"><strong>Predicted ECR vs observed ECR correlation: r=0.16</strong> — n=25 creatives. No significant predictive signal in this cohort.</div>
+    </div>
+
+    <h2>Creative metric × ROAS correlation</h2>
+    <p>Pearson r between each analysed creative attribute and the ad's weighted ROAS. |r| &gt; 0.4 is notable at this sample size.</p>
+    <div class="card">
+      <table>
+        <thead><tr><th>Metric</th><th>r vs ROAS</th><th>Direction</th><th class="tabular">n</th></tr></thead>
+        <tbody>
+          
+              <tr>
+                <td>Eye contact score</td>
+                <td class="tabular">0.378</td>
+                <td><span class="pill pill-warn">+moderate</span></td>
+                <td class="tabular">23</td>
+              </tr>
+              <tr>
+                <td>ECR predicted</td>
+                <td class="tabular">0.277</td>
+                <td><span class="pill pill-warn">+moderate</span></td>
+                <td class="tabular">25</td>
+              </tr>
+              <tr>
+                <td>Cuts/min</td>
+                <td class="tabular">0.202</td>
+                <td><span class="pill pill-warn">+moderate</span></td>
+                <td class="tabular">25</td>
+              </tr>
+              <tr>
+                <td>VO cadence</td>
+                <td class="tabular">0.182</td>
+                <td><span class="pill pill-neutral">weak</span></td>
+                <td class="tabular">23</td>
+              </tr>
+              <tr>
+                <td>NAWP predicted</td>
+                <td class="tabular">-0.144</td>
+                <td><span class="pill pill-neutral">weak</span></td>
+                <td class="tabular">25</td>
+              </tr>
+              <tr>
+                <td>Pacing score</td>
+                <td class="tabular">0.127</td>
+                <td><span class="pill pill-neutral">weak</span></td>
+                <td class="tabular">25</td>
+              </tr>
+              <tr>
+                <td>Colloquiality</td>
+                <td class="tabular">-0.116</td>
+                <td><span class="pill pill-neutral">weak</span></td>
+                <td class="tabular">23</td>
+              </tr>
+              <tr>
+                <td>Hook score</td>
+                <td class="tabular">0.113</td>
+                <td><span class="pill pill-neutral">weak</span></td>
+                <td class="tabular">25</td>
+              </tr>
+              <tr>
+                <td>Overall score</td>
+                <td class="tabular">0.106</td>
+                <td><span class="pill pill-neutral">weak</span></td>
+                <td class="tabular">25</td>
+              </tr>
+              <tr>
+                <td>People count max</td>
+                <td class="tabular">-0.094</td>
+                <td><span class="pill pill-neutral">weak</span></td>
+                <td class="tabular">23</td>
+              </tr>
+              <tr>
+                <td>Stop power</td>
+                <td class="tabular">0.073</td>
+                <td><span class="pill pill-neutral">weak</span></td>
+                <td class="tabular">23</td>
+              </tr>
+              <tr>
+                <td>Duration (s)</td>
+                <td class="tabular">-0.019</td>
+                <td><span class="pill pill-neutral">weak</span></td>
+                <td class="tabular">25</td>
+              </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>ROAS by creative dimension</h2>
+    <div class="grid-2">
+      <div class="card">
+    <h3>Authenticity band</h3>
+    <table>
+      <thead><tr><th>Authenticity band</th><th class="tabular">n</th><th class="tabular">Avg ROAS</th><th class="tabular">Avg overall</th><th class="tabular">Spend</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>unset</td>
+          <td class="tabular">2</td>
+          <td class="tabular">0.25</td>
+          <td class="tabular">83</td>
+          <td class="tabular">$59,144</td>
+        </tr><tr>
+          <td>high</td>
+          <td class="tabular">23</td>
+          <td class="tabular">0.16</td>
+          <td class="tabular">86</td>
+          <td class="tabular">$286,375</td>
+        </tr><tr>
+          <td>moderate</td>
+          <td class="tabular">1</td>
+          <td class="tabular">0.04</td>
+          <td class="tabular">88</td>
+          <td class="tabular">$799</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+      <div class="card">
+    <h3>Script angle</h3>
+    <table>
+      <thead><tr><th>Script angle</th><th class="tabular">n</th><th class="tabular">Avg ROAS</th><th class="tabular">Avg overall</th><th class="tabular">Spend</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>other</td>
+          <td class="tabular">1</td>
+          <td class="tabular">0.31</td>
+          <td class="tabular">78</td>
+          <td class="tabular">$33</td>
+        </tr><tr>
+          <td>unset</td>
+          <td class="tabular">2</td>
+          <td class="tabular">0.25</td>
+          <td class="tabular">83</td>
+          <td class="tabular">$59,144</td>
+        </tr><tr>
+          <td>comparison</td>
+          <td class="tabular">2</td>
+          <td class="tabular">0.24</td>
+          <td class="tabular">88</td>
+          <td class="tabular">$738</td>
+        </tr><tr>
+          <td>listicle</td>
+          <td class="tabular">1</td>
+          <td class="tabular">0.19</td>
+          <td class="tabular">88</td>
+          <td class="tabular">$263</td>
+        </tr><tr>
+          <td>ugc-reaction</td>
+          <td class="tabular">2</td>
+          <td class="tabular">0.18</td>
+          <td class="tabular">88</td>
+          <td class="tabular">$247,192</td>
+        </tr><tr>
+          <td>problem-solution</td>
+          <td class="tabular">16</td>
+          <td class="tabular">0.13</td>
+          <td class="tabular">87</td>
+          <td class="tabular">$38,362</td>
+        </tr><tr>
+          <td>storytime</td>
+          <td class="tabular">2</td>
+          <td class="tabular">0.05</td>
+          <td class="tabular">80</td>
+          <td class="tabular">$586</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+      <div class="card">
+    <h3>Narrative style</h3>
+    <table>
+      <thead><tr><th>Narrative style</th><th class="tabular">n</th><th class="tabular">Avg ROAS</th><th class="tabular">Avg overall</th><th class="tabular">Spend</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>unset</td>
+          <td class="tabular">2</td>
+          <td class="tabular">0.25</td>
+          <td class="tabular">83</td>
+          <td class="tabular">$59,144</td>
+        </tr><tr>
+          <td>first-person</td>
+          <td class="tabular">20</td>
+          <td class="tabular">0.17</td>
+          <td class="tabular">86</td>
+          <td class="tabular">$279,198</td>
+        </tr><tr>
+          <td>second-person</td>
+          <td class="tabular">1</td>
+          <td class="tabular">0.15</td>
+          <td class="tabular">88</td>
+          <td class="tabular">$5,682</td>
+        </tr><tr>
+          <td>narration</td>
+          <td class="tabular">3</td>
+          <td class="tabular">0.06</td>
+          <td class="tabular">88</td>
+          <td class="tabular">$2,294</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+      <div class="card">
+    <h3>Hook type</h3>
+    <table>
+      <thead><tr><th>Hook type</th><th class="tabular">n</th><th class="tabular">Avg ROAS</th><th class="tabular">Avg overall</th><th class="tabular">Spend</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>emotional-hook</td>
+          <td class="tabular">1</td>
+          <td class="tabular">0.33</td>
+          <td class="tabular">88</td>
+          <td class="tabular">$246,845</td>
+        </tr><tr>
+          <td>unset</td>
+          <td class="tabular">2</td>
+          <td class="tabular">0.25</td>
+          <td class="tabular">83</td>
+          <td class="tabular">$59,144</td>
+        </tr><tr>
+          <td>bold-claim</td>
+          <td class="tabular">9</td>
+          <td class="tabular">0.19</td>
+          <td class="tabular">84</td>
+          <td class="tabular">$21,678</td>
+        </tr><tr>
+          <td>visual-reveal</td>
+          <td class="tabular">5</td>
+          <td class="tabular">0.15</td>
+          <td class="tabular">88</td>
+          <td class="tabular">$6,927</td>
+        </tr><tr>
+          <td>pattern-interrupt</td>
+          <td class="tabular">4</td>
+          <td class="tabular">0.15</td>
+          <td class="tabular">87</td>
+          <td class="tabular">$8,695</td>
+        </tr><tr>
+          <td>story-tease</td>
+          <td class="tabular">3</td>
+          <td class="tabular">0.06</td>
+          <td class="tabular">88</td>
+          <td class="tabular">$2,336</td>
+        </tr><tr>
+          <td>question</td>
+          <td class="tabular">2</td>
+          <td class="tabular">0.06</td>
+          <td class="tabular">89</td>
+          <td class="tabular">$693</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+      <div class="card">
+    <h3>People count</h3>
+    <table>
+      <thead><tr><th>People count</th><th class="tabular">n</th><th class="tabular">Avg ROAS</th><th class="tabular">Avg overall</th><th class="tabular">Spend</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>unset</td>
+          <td class="tabular">2</td>
+          <td class="tabular">0.25</td>
+          <td class="tabular">83</td>
+          <td class="tabular">$59,144</td>
+        </tr><tr>
+          <td>2</td>
+          <td class="tabular">4</td>
+          <td class="tabular">0.20</td>
+          <td class="tabular">88</td>
+          <td class="tabular">$260,190</td>
+        </tr><tr>
+          <td>1</td>
+          <td class="tabular">18</td>
+          <td class="tabular">0.15</td>
+          <td class="tabular">86</td>
+          <td class="tabular">$22,223</td>
+        </tr><tr>
+          <td>3+</td>
+          <td class="tabular">2</td>
+          <td class="tabular">0.10</td>
+          <td class="tabular">88</td>
+          <td class="tabular">$4,761</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+      <div class="card">
+    <h3>Brand heritage salience</h3>
+    <table>
+      <thead><tr><th>Brand heritage salience</th><th class="tabular">n</th><th class="tabular">Avg ROAS</th><th class="tabular">Avg overall</th><th class="tabular">Spend</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>moderate</td>
+          <td class="tabular">1</td>
+          <td class="tabular">0.26</td>
+          <td class="tabular">88</td>
+          <td class="tabular">$383</td>
+        </tr><tr>
+          <td>unset</td>
+          <td class="tabular">2</td>
+          <td class="tabular">0.25</td>
+          <td class="tabular">83</td>
+          <td class="tabular">$59,144</td>
+        </tr><tr>
+          <td>absent</td>
+          <td class="tabular">22</td>
+          <td class="tabular">0.15</td>
+          <td class="tabular">87</td>
+          <td class="tabular">$286,377</td>
+        </tr><tr>
+          <td>high</td>
+          <td class="tabular">1</td>
+          <td class="tabular">0.05</td>
+          <td class="tabular">72</td>
+          <td class="tabular">$414</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+    </div>
+
+    <h2>Overall score vs ROAS</h2>
+    <div class="card"><div class="chart-wrap"><canvas id="scatter-overall"></canvas></div></div>
+
+    <h2>Colloquiality vs ROAS</h2>
+    <div class="card"><div class="chart-wrap"><canvas id="scatter-colloq"></canvas></div></div>
+
+    <h2>Predicted ECR vs observed ECR (ecr_new)</h2>
+    <p>Sanity check: how well does the model-predicted ECR track the engagement-continuation rate the ads platform reports?</p>
+    <div class="card"><div class="chart-wrap"><canvas id="scatter-ecr"></canvas></div></div>
+
+    <h2>Top 5 creatives by ROAS</h2>
+    <div class="card"><table>
+    <thead><tr><th>Filename</th><th>Angle</th><th>Auth</th><th class="tabular">Overall</th><th class="tabular">Spend</th><th class="tabular">Orders</th><th class="tabular">ROAS</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><span class="truncate mono" title="IT_MA_32_D_INT-UGC_(16)_D6_compressed.mp4">IT_MA_32_D_INT-UGC_(16)_D6_compressed.mp4</span></td>
+        <td><span class="pill pill-neutral">problem-solution</span></td>
+        <td><span class="pill pill-good">high</span></td>
+        <td class="tabular">88</td>
+        <td class="tabular">$957</td>
+        <td class="tabular">6,333</td>
+        <td class="tabular">0.35</td>
+      </tr><tr>
+        <td><span class="truncate mono" title="IT_MC_32_B_INT-UGC_(21)_D6_compressed.mp4">IT_MC_32_B_INT-UGC_(21)_D6_compressed.mp4</span></td>
+        <td><span class="pill pill-neutral">ugc-reaction</span></td>
+        <td><span class="pill pill-good">high</span></td>
+        <td class="tabular">88</td>
+        <td class="tabular">$246,845</td>
+        <td class="tabular">2 184,594</td>
+        <td class="tabular">0.33</td>
+      </tr><tr>
+        <td><span class="truncate mono" title="IT_MC_32_B_INT-UGC_(22)_d9_compressed.mp4">IT_MC_32_B_INT-UGC_(22)_d9_compressed.mp4</span></td>
+        <td><span class="pill pill-neutral">—</span></td>
+        <td><span class="pill pill-neutral">—</span></td>
+        <td class="tabular">88</td>
+        <td class="tabular">$58,645</td>
+        <td class="tabular">536,049</td>
+        <td class="tabular">0.33</td>
+      </tr><tr>
+        <td><span class="truncate mono" title="MC_47_D_DR-UGC_(14)_3rd-Party_MED_D6_compressed.mp4">MC_47_D_DR-UGC_(14)_3rd-Party_MED_D6_compressed.mp4</span></td>
+        <td><span class="pill pill-neutral">other</span></td>
+        <td><span class="pill pill-good">high</span></td>
+        <td class="tabular">78</td>
+        <td class="tabular">$33</td>
+        <td class="tabular">0,2</td>
+        <td class="tabular">0.31</td>
+      </tr><tr>
+        <td><span class="truncate mono" title="MC_46_D_DR-UGC_(10)_LOW_Benefit_Bombing_D9_compressed.mp4">MC_46_D_DR-UGC_(10)_LOW_Benefit_Bombing_D9_compressed.mp4</span></td>
+        <td><span class="pill pill-neutral">comparison</span></td>
+        <td><span class="pill pill-good">high</span></td>
+        <td class="tabular">88</td>
+        <td class="tabular">$383</td>
+        <td class="tabular">1,833</td>
+        <td class="tabular">0.26</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+    <h2>Bottom 5 creatives by ROAS (spend &gt; $100)</h2>
+    <div class="card"><table>
+    <thead><tr><th>Filename</th><th>Angle</th><th>Auth</th><th class="tabular">Overall</th><th class="tabular">Spend</th><th class="tabular">Orders</th><th class="tabular">ROAS</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><span class="truncate mono" title="MC_45_A_M-UGC_(5) d7_compressed.mp4">MC_45_A_M-UGC_(5) d7_compressed.mp4</span></td>
+        <td><span class="pill pill-neutral">ugc-reaction</span></td>
+        <td><span class="pill pill-good">high</span></td>
+        <td class="tabular">88</td>
+        <td class="tabular">$347</td>
+        <td class="tabular">0,143</td>
+        <td class="tabular">0.02</td>
+      </tr><tr>
+        <td><span class="truncate mono" title="MA_32_B_INT-UGC_(11)_D6_compressed.mp4">MA_32_B_INT-UGC_(11)_D6_compressed.mp4</span></td>
+        <td><span class="pill pill-neutral">problem-solution</span></td>
+        <td><span class="pill pill-good">high</span></td>
+        <td class="tabular">88</td>
+        <td class="tabular">$311</td>
+        <td class="tabular">0,267</td>
+        <td class="tabular">0.04</td>
+      </tr><tr>
+        <td><span class="truncate mono" title="IT_MC_33_A_DR-UGC_(19)_CR1_compressed.mp4">IT_MC_33_A_DR-UGC_(19)_CR1_compressed.mp4</span></td>
+        <td><span class="pill pill-neutral">problem-solution</span></td>
+        <td><span class="pill pill-warn">moderate</span></td>
+        <td class="tabular">88</td>
+        <td class="tabular">$799</td>
+        <td class="tabular">1,019</td>
+        <td class="tabular">0.04</td>
+      </tr><tr>
+        <td><span class="truncate mono" title="IT_MA_32_B_DR-UGC_(13)v2_compressed.mp4">IT_MA_32_B_DR-UGC_(13)v2_compressed.mp4</span></td>
+        <td><span class="pill pill-neutral">problem-solution</span></td>
+        <td><span class="pill pill-good">high</span></td>
+        <td class="tabular">88</td>
+        <td class="tabular">$305</td>
+        <td class="tabular">0,25</td>
+        <td class="tabular">0.05</td>
+      </tr><tr>
+        <td><span class="truncate mono" title="MC_44_D_MF-UGC_(9)_MED_Liver-d7_compressed.mp4">MC_44_D_MF-UGC_(9)_MED_Liver-d7_compressed.mp4</span></td>
+        <td><span class="pill pill-neutral">storytime</span></td>
+        <td><span class="pill pill-good">high</span></td>
+        <td class="tabular">72</td>
+        <td class="tabular">$414</td>
+        <td class="tabular">0,751</td>
+        <td class="tabular">0.05</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+    <h2>All creatives — leaderboard</h2>
+    <div class="card" style="overflow: auto; max-height: 520px;">
+      <table>
+        <thead><tr>
+          <th>Filename</th>
+          <th>Angle</th>
+          <th>Auth</th>
+          <th class="tabular">Overall</th>
+          <th class="tabular">ECR pred</th>
+          <th class="tabular">Colloq</th>
+          <th class="tabular">People</th>
+          <th class="tabular">Spend</th>
+          <th class="tabular">Orders</th>
+          <th class="tabular">ROAS</th>
+          <th class="tabular">CPO</th>
+        </tr></thead>
+        <tbody>
+          
+            <tr>
+              <td><span class="truncate mono" title="IT_MC_32_B_INT-UGC_(21)_D6_compressed.mp4">IT_MC_32_B_INT-UGC_(21)_D6_compressed.mp4</span></td>
+              <td><span class="pill pill-neutral">ugc-reaction</span></td>
+              <td><span class="pill pill-good">high</span></td>
+              <td class="tabular">88</td>
+              <td class="tabular">0.99</td>
+              <td class="tabular">8.0</td>
+              <td class="tabular">2</td>
+              <td class="tabular">$246,845</td>
+              <td class="tabular">2 184,594</td>
+              <td class="tabular">0.33</td>
+              <td class="tabular">$152</td>
+            </tr>
+            <tr>
+              <td><span class="truncate mono" title="IT_MC_32_B_INT-UGC_(22)_d9_compressed.mp4">IT_MC_32_B_INT-UGC_(22)_d9_compressed.mp4</span></td>
+              <td><span class="pill pill-neutral">—</span></td>
+              <td><span class="pill pill-neutral">—</span></td>
+              <td class="tabular">88</td>
+              <td class="tabular">0.98</td>
+              <td class="tabular">—</td>
+              <td class="tabular">—</td>
+              <td class="tabular">$58,645</td>
+              <td class="tabular">536,049</td>
+              <td class="tabular">0.33</td>
+              <td class="tabular">$160</td>
+            </tr>
+            <tr>
+              <td><span class="truncate mono" title="MC_45_C_DR-UGC_(14)_MED_Liver_D7_compressed.mp4">MC_45_C_DR-UGC_(14)_MED_Liver_D7_compressed.mp4</span></td>
+              <td><span class="pill pill-neutral">problem-solution</span></td>
+              <td><span class="pill pill-good">high</span></td>
+              <td class="tabular">88</td>
+              <td class="tabular">0.99</td>
+              <td class="tabular">9.0</td>
+              <td class="tabular">1</td>
+              <td class="tabular">$8,592</td>
+              <td class="tabular">44,053</td>
+              <td class="tabular">0.20</td>
+              <td class="tabular">$270</td>
+            </tr>
+            <tr>
+              <td><span class="truncate mono" title="MC_45_C_DR-UGC_(9)_LOW____D3_compressed.mp4">MC_45_C_DR-UGC_(9)_LOW____D3_compressed.mp4</span></td>
+              <td><span class="pill pill-neutral">problem-solution</span></td>
+              <td><span class="pill pill-good">high</span></td>
+              <td class="tabular">92</td>
+              <td class="tabular">1.00</td>
+              <td class="tabular">9.0</td>
+              <td class="tabular">2</td>
+              <td class="tabular">$7,184</td>
+              <td class="tabular">18,249</td>
+              <td class="tabular">0.11</td>
+              <td class="tabular">$613</td>
+            </tr>
+            <tr>
+              <td><span class="truncate mono" title="IT_MC_32_C_INT-UGC_(21)_D6_compressed.mp4">IT_MC_32_C_INT-UGC_(21)_D6_compressed.mp4</span></td>
+              <td><span class="pill pill-neutral">problem-solution</span></td>
+              <td><span class="pill pill-good">high</span></td>
+              <td class="tabular">88</td>
+              <td class="tabular">0.99</td>
+              <td class="tabular">8.0</td>
+              <td class="tabular">2</td>
+              <td class="tabular">$5,782</td>
+              <td class="tabular">33,497</td>
+              <td class="tabular">0.22</td>
+              <td class="tabular">$209</td>
+            </tr>
+            <tr>
+              <td><span class="truncate mono" title="MC_44_C_DR-UGC_(9) d4_compressed.mp4">MC_44_C_DR-UGC_(9) d4_compressed.mp4</span></td>
+              <td><span class="pill pill-neutral">problem-solution</span></td>
+              <td><span class="pill pill-good">high</span></td>
+              <td class="tabular">88</td>
+              <td class="tabular">0.99</td>
+              <td class="tabular">8.0</td>
+              <td class="tabular">1</td>
+              <td class="tabular">$5,682</td>
+              <td class="tabular">20,075</td>
+              <td class="tabular">0.15</td>
+              <td class="tabular">$1,538</td>
+            </tr>
+            <tr>
+              <td><span class="truncate mono" title="MC_45_B_INT-UGC_(10)_LOW_Cortisol_d4_compressed.mp4">MC_45_B_INT-UGC_(10)_LOW_Cortisol_d4_compressed.mp4</span></td>
+              <td><span class="pill pill-neutral">problem-solution</span></td>
+              <td><span class="pill pill-good">high</span></td>
+              <td class="tabular">88</td>
+              <td class="tabular">0.99</td>
+              <td class="tabular">9.0</td>
+              <td class="tabular">6</td>
+              <td class="tabular">$4,456</td>
+              <td class="tabular">18,659</td>
+              <td class="tabular">0.16</td>
+              <td class="tabular">$274</td>
+            </tr>
+            <tr>
+              <td><span class="truncate mono" title="MC_45_B_M-UGC_(6)_LOW_Bloating_D4_compressed.mp4">MC_45_B_M-UGC_(6)_LOW_Bloating_D4_compressed.mp4</span></td>
+              <td><span class="pill pill-neutral">problem-solution</span></td>
+              <td><span class="pill pill-good">high</span></td>
+              <td class="tabular">88</td>
+              <td class="tabular">0.93</td>
+              <td class="tabular">8.0</td>
+              <td class="tabular">1</td>
+              <td class="tabular">$1,189</td>
+              <td class="tabular">3,278</td>
+              <td class="tabular">0.10</td>
+              <td class="tabular">$237</td>
+            </tr>
+            <tr>
+              <td><span class="truncate mono" title="IT_MA_32_D_INT-UGC_(16)_D6_compressed.mp4">IT_MA_32_D_INT-UGC_(16)_D6_compressed.mp4</span></td>
+              <td><span class="pill pill-neutral">problem-solution</span></td>
+              <td><span class="pill pill-good">high</span></td>
+              <td class="tabular">88</td>
+              <td class="tabular">0.99</td>
+              <td class="tabular">8.0</td>
+              <td class="tabular">1</td>
+              <td class="tabular">$957</td>
+              <td class="tabular">6,333</td>
+              <td class="tabular">0.35</td>
+              <td class="tabular">$151</td>
+            </tr>
+            <tr>
+              <td><span class="truncate mono" title="IT_MC_33_A_DR-UGC_(19)_CR1_compressed.mp4">IT_MC_33_A_DR-UGC_(19)_CR1_compressed.mp4</span></td>
+              <td><span class="pill pill-neutral">problem-solution</span></td>
+              <td><span class="pill pill-warn">moderate</span></td>
+              <td class="tabular">88</td>
+              <td class="tabular">0.99</td>
+              <td class="tabular">8.0</td>
+              <td class="tabular">1</td>
+              <td class="tabular">$799</td>
+              <td class="tabular">1,019</td>
+              <td class="tabular">0.04</td>
+              <td class="tabular">$785</td>
+            </tr>
+            <tr>
+              <td><span class="truncate mono" title="MC_45_B_M-UGC_(5)_LOW_Cortisol_D3_compressed.mp4">MC_45_B_M-UGC_(5)_LOW_Cortisol_D3_compressed.mp4</span></td>
+              <td><span class="pill pill-neutral">problem-solution</span></td>
+              <td><span class="pill pill-good">high</span></td>
+              <td class="tabular">72</td>
+              <td class="tabular">0.98</td>
+              <td class="tabular">8.0</td>
+              <td class="tabular">1</td>
+              <td class="tabular">$763</td>
+              <td class="tabular">1,943</td>
+              <td class="tabular">0.11</td>
+              <td class="tabular">$421</td>
+            </tr>
+            <tr>
+              <td><span class="truncate mono" title="IT_MC_33_B_DR-UGC_(18)_D5_compressed.mp4">IT_MC_33_B_DR-UGC_(18)_D5_compressed.mp4</span></td>
+              <td><span class="pill pill-neutral">problem-solution</span></td>
+              <td><span class="pill pill-good">high</span></td>
+              <td class="tabular">82</td>
+              <td class="tabular">0.92</td>
+              <td class="tabular">9.0</td>
+              <td class="tabular">1</td>
+              <td class="tabular">$750</td>
+              <td class="tabular">1,69</td>
+              <td class="tabular">0.09</td>
+              <td class="tabular">$443</td>
+            </tr>
+            <tr>
+              <td><span class="truncate mono" title="MC_45_C_M-UGC_(5)_LOW_Free_Gift_D3_compressed.mp4">MC_45_C_M-UGC_(5)_LOW_Free_Gift_D3_compressed.mp4</span></td>
+              <td><span class="pill pill-neutral">—</span></td>
+              <td><span class="pill pill-neutral">—</span></td>
+              <td class="tabular">78</td>
+              <td class="tabular">0.90</td>
+              <td class="tabular">—</td>
+              <td class="tabular">—</td>
+              <td class="tabular">$499</td>
+              <td class="tabular">1,587</td>
+              <td class="tabular">0.16</td>
+              <td class="tabular">$314</td>
+            </tr>
+            <tr>
+              <td><span class="truncate mono" title="CR_33_B_DR-UGC_(13)_D7_compressed.mp4">CR_33_B_DR-UGC_(13)_D7_compressed.mp4</span></td>
+              <td><span class="pill pill-neutral">problem-solution</span></td>
+              <td><span class="pill pill-good">high</span></td>
+              <td class="tabular">88</td>
+              <td class="tabular">0.98</td>
+              <td class="tabular">9.0</td>
+              <td class="tabular">1</td>
+              <td class="tabular">$456</td>
+              <td class="tabular">0,596</td>
+              <td class="tabular">0.06</td>
+              <td class="tabular">$261</td>
+            </tr>
+            <tr>
+              <td><span class="truncate mono" title="MC_44_D_MF-UGC_(9)_MED_Liver-d7_compressed.mp4">MC_44_D_MF-UGC_(9)_MED_Liver-d7_compressed.mp4</span></td>
+              <td><span class="pill pill-neutral">storytime</span></td>
+              <td><span class="pill pill-good">high</span></td>
+              <td class="tabular">72</td>
+              <td class="tabular">0.92</td>
+              <td class="tabular">8.0</td>
+              <td class="tabular">1</td>
+              <td class="tabular">$414</td>
+              <td class="tabular">0,751</td>
+              <td class="tabular">0.05</td>
+              <td class="tabular">$552</td>
+            </tr>
+            <tr>
+              <td><span class="truncate mono" title="MC_46_D_DR-UGC_(10)_LOW_Benefit_Bombing_D9_compressed.mp4">MC_46_D_DR-UGC_(10)_LOW_Benefit_Bombing_D9_compressed.mp4</span></td>
+              <td><span class="pill pill-neutral">comparison</span></td>
+              <td><span class="pill pill-good">high</span></td>
+              <td class="tabular">88</td>
+              <td class="tabular">0.99</td>
+              <td class="tabular">8.0</td>
+              <td class="tabular">1</td>
+              <td class="tabular">$383</td>
+              <td class="tabular">1,833</td>
+              <td class="tabular">0.26</td>
+              <td class="tabular">$209</td>
+            </tr>
+            <tr>
+              <td><span class="truncate mono" title="MC_45_D_DR-UGC_(8)_LOW_Benefit_Bombing_d6_compressed.mp4">MC_45_D_DR-UGC_(8)_LOW_Benefit_Bombing_d6_compressed.mp4</span></td>
+              <td><span class="pill pill-neutral">problem-solution</span></td>
+              <td><span class="pill pill-good">high</span></td>
+              <td class="tabular">89</td>
+              <td class="tabular">0.99</td>
+              <td class="tabular">8.0</td>
+              <td class="tabular">1</td>
+              <td class="tabular">$381</td>
+              <td class="tabular">0,933</td>
+              <td class="tabular">0.07</td>
+              <td class="tabular">$409</td>
+            </tr>
+            <tr>
+              <td><span class="truncate mono" title="MC_46_B_DR-UGC_(5)_LOW_Gut_Health_D4_compressed.mp4">MC_46_B_DR-UGC_(5)_LOW_Gut_Health_D4_compressed.mp4</span></td>
+              <td><span class="pill pill-neutral">problem-solution</span></td>
+              <td><span class="pill pill-good">high</span></td>
+              <td class="tabular">85</td>
+              <td class="tabular">0.99</td>
+              <td class="tabular">9.0</td>
+              <td class="tabular">2</td>
+              <td class="tabular">$379</td>
+              <td class="tabular">1,513</td>
+              <td class="tabular">0.15</td>
+              <td class="tabular">$250</td>
+            </tr>
+            <tr>
+              <td><span class="truncate mono" title="MC_47_B_INT-UGC_(9)d8_compressed.mp4">MC_47_B_INT-UGC_(9)d8_compressed.mp4</span></td>
+              <td><span class="pill pill-neutral">problem-solution</span></td>
+              <td><span class="pill pill-good">high</span></td>
+              <td class="tabular">92</td>
+              <td class="tabular">0.99</td>
+              <td class="tabular">8.0</td>
+              <td class="tabular">1</td>
+              <td class="tabular">$376</td>
+              <td class="tabular">1,333</td>
+              <td class="tabular">0.22</td>
+              <td class="tabular">$282</td>
+            </tr>
+            <tr>
+              <td><span class="truncate mono" title="MC_46_B_DR-UGC_(8)_LOW_Cortisol_Reshoot _CR1[v5]_compressed.mp4">MC_46_B_DR-UGC_(8)_LOW_Cortisol_Reshoot _CR1[v5]_compressed.mp4</span></td>
+              <td><span class="pill pill-neutral">comparison</span></td>
+              <td><span class="pill pill-good">high</span></td>
+              <td class="tabular">88</td>
+              <td class="tabular">0.97</td>
+              <td class="tabular">8.0</td>
+              <td class="tabular">1</td>
+              <td class="tabular">$354</td>
+              <td class="tabular">1,433</td>
+              <td class="tabular">0.22</td>
+              <td class="tabular">$247</td>
+            </tr>
+            <tr>
+              <td><span class="truncate mono" title="MC_45_A_M-UGC_(5) d7_compressed.mp4">MC_45_A_M-UGC_(5) d7_compressed.mp4</span></td>
+              <td><span class="pill pill-neutral">ugc-reaction</span></td>
+              <td><span class="pill pill-good">high</span></td>
+              <td class="tabular">88</td>
+              <td class="tabular">0.95</td>
+              <td class="tabular">9.0</td>
+              <td class="tabular">1</td>
+              <td class="tabular">$347</td>
+              <td class="tabular">0,143</td>
+              <td class="tabular">0.02</td>
+              <td class="tabular">$2,430</td>
+            </tr>
+            <tr>
+              <td><span class="truncate mono" title="MA_32_B_INT-UGC_(11)_D6_compressed.mp4">MA_32_B_INT-UGC_(11)_D6_compressed.mp4</span></td>
+              <td><span class="pill pill-neutral">problem-solution</span></td>
+              <td><span class="pill pill-good">high</span></td>
+              <td class="tabular">88</td>
+              <td class="tabular">0.99</td>
+              <td class="tabular">8.0</td>
+              <td class="tabular">1</td>
+              <td class="tabular">$311</td>
+              <td class="tabular">0,267</td>
+              <td class="tabular">0.04</td>
+              <td class="tabular">$1,167</td>
+            </tr>
+            <tr>
+              <td><span class="truncate mono" title="IT_MA_32_B_DR-UGC_(13)v2_compressed.mp4">IT_MA_32_B_DR-UGC_(13)v2_compressed.mp4</span></td>
+              <td><span class="pill pill-neutral">problem-solution</span></td>
+              <td><span class="pill pill-good">high</span></td>
+              <td class="tabular">88</td>
+              <td class="tabular">0.98</td>
+              <td class="tabular">8.0</td>
+              <td class="tabular">6</td>
+              <td class="tabular">$305</td>
+              <td class="tabular">0,25</td>
+              <td class="tabular">0.05</td>
+              <td class="tabular">$1,221</td>
+            </tr>
+            <tr>
+              <td><span class="truncate mono" title="CR_32_A_DR-UGC_(8)_BLOOD_SUGAR d6_compressed.mp4">CR_32_A_DR-UGC_(8)_BLOOD_SUGAR d6_compressed.mp4</span></td>
+              <td><span class="pill pill-neutral">listicle</span></td>
+              <td><span class="pill pill-good">high</span></td>
+              <td class="tabular">88</td>
+              <td class="tabular">0.99</td>
+              <td class="tabular">8.0</td>
+              <td class="tabular">1</td>
+              <td class="tabular">$263</td>
+              <td class="tabular">1</td>
+              <td class="tabular">0.19</td>
+              <td class="tabular">$263</td>
+            </tr>
+            <tr>
+              <td><span class="truncate mono" title="CR_32_C_DR-UGC_(9)_D5_compressed.mp4">CR_32_C_DR-UGC_(9)_D5_compressed.mp4</span></td>
+              <td><span class="pill pill-neutral">storytime</span></td>
+              <td><span class="pill pill-good">high</span></td>
+              <td class="tabular">88</td>
+              <td class="tabular">0.99</td>
+              <td class="tabular">8.0</td>
+              <td class="tabular">1</td>
+              <td class="tabular">$171</td>
+              <td class="tabular">0</td>
+              <td class="tabular">—</td>
+              <td class="tabular">—</td>
+            </tr>
+            <tr>
+              <td><span class="truncate mono" title="MC_47_D_DR-UGC_(14)_3rd-Party_MED_D6_compressed.mp4">MC_47_D_DR-UGC_(14)_3rd-Party_MED_D6_compressed.mp4</span></td>
+              <td><span class="pill pill-neutral">other</span></td>
+              <td><span class="pill pill-good">high</span></td>
+              <td class="tabular">78</td>
+              <td class="tabular">0.98</td>
+              <td class="tabular">9.0</td>
+              <td class="tabular">1</td>
+              <td class="tabular">$33</td>
+              <td class="tabular">0,2</td>
+              <td class="tabular">0.31</td>
+              <td class="tabular">$159</td>
+            </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Creatives analysed without performance match</h2>
+    <p>These creatives have an analysis in the ZIP but no joined row in matched_rows.csv (ad set naming may differ, or they weren't launched in the measured window).</p>
+    <div class="card" style="overflow: auto; max-height: 320px;">
+      <table>
+        <thead><tr><th>Filename</th><th>Angle</th><th>Auth</th><th class="tabular">Overall</th><th class="tabular">Colloq</th></tr></thead>
+        <tbody>
+          
+            <tr>
+              <td><span class="truncate mono" title="MC_45_C_INT-UGC_(15)_MED_Alcohol_D5_compressed.mp4">MC_45_C_INT-UGC_(15)_MED_Alcohol_D5_compressed.mp4</span></td>
+              <td><span class="pill pill-neutral">problem-solution</span></td>
+              <td><span class="pill pill-good">high</span></td>
+              <td class="tabular">84</td>
+              <td class="tabular">9.0</td>
+            </tr>
+            <tr>
+              <td><span class="truncate mono" title="MC_46_B_DR-UGC_(4) d6_compressed.mp4">MC_46_B_DR-UGC_(4) d6_compressed.mp4</span></td>
+              <td><span class="pill pill-neutral">problem-solution</span></td>
+              <td><span class="pill pill-good">high</span></td>
+              <td class="tabular">88</td>
+              <td class="tabular">8.0</td>
+            </tr>
+            <tr>
+              <td><span class="truncate mono" title="MC_46_D_DR-UGC_(11)_LOW_Benefit_Bombing_D3_compressed.mp4">MC_46_D_DR-UGC_(11)_LOW_Benefit_Bombing_D3_compressed.mp4</span></td>
+              <td><span class="pill pill-neutral">before-after</span></td>
+              <td><span class="pill pill-good">high</span></td>
+              <td class="tabular">82</td>
+              <td class="tabular">7.0</td>
+            </tr>
+            <tr>
+              <td><span class="truncate mono" title="MC_47_C_DR-UGC_(5) d6_compressed.mp4">MC_47_C_DR-UGC_(5) d6_compressed.mp4</span></td>
+              <td><span class="pill pill-neutral">comparison</span></td>
+              <td><span class="pill pill-good">high</span></td>
+              <td class="tabular">82</td>
+              <td class="tabular">7.0</td>
+            </tr>
+            <tr>
+              <td><span class="truncate mono" title="MC_47_C_DR-UGC_(6)_LOW_Benefit_Bombing-d5_compressed.mp4">MC_47_C_DR-UGC_(6)_LOW_Benefit_Bombing-d5_compressed.mp4</span></td>
+              <td><span class="pill pill-neutral">problem-solution</span></td>
+              <td><span class="pill pill-good">low</span></td>
+              <td class="tabular">88</td>
+              <td class="tabular">7.0</td>
+            </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="foot">
+      Data sources: matched_rows.csv (performance), analyses-v2-2026-04-17T16-35-29 (creative analysis via video-analyzer v2, Gemini temperature 0.15 seed 42).
+      Correlations are exploratory: n is modest and the creative metrics are AI-inferred. Use for hypothesis generation, not causal claims.
+    </div>
+  </div>
+
+<script>
+const DATA = {"scatterOverall":[{"x":88,"y":0.33174856424310634,"label":"IT_MC_32_B_INT-UGC_(21)_D6_compressed.mp4"},{"x":88,"y":0.3305462695625628,"label":"IT_MC_32_B_INT-UGC_(22)_d9_compressed.mp4"},{"x":88,"y":0.19576842350192103,"label":"MC_45_C_DR-UGC_(14)_MED_Liver_D7_compressed.mp4"},{"x":92,"y":0.10745763799392467,"label":"MC_45_C_DR-UGC_(9)_LOW____D3_compressed.mp4"},{"x":88,"y":0.2188903173460584,"label":"IT_MC_32_C_INT-UGC_(21)_D6_compressed.mp4"},{"x":88,"y":0.14558391233266219,"label":"MC_44_C_DR-UGC_(9) d4_compressed.mp4"},{"x":88,"y":0.1558881825051917,"label":"MC_45_B_INT-UGC_(10)_LOW_Cortisol_d4_compressed.mp4"},{"x":88,"y":0.09834292525551405,"label":"MC_45_B_M-UGC_(6)_LOW_Bloating_D4_compressed.mp4"},{"x":88,"y":0.3499831011041773,"label":"IT_MA_32_D_INT-UGC_(16)_D6_compressed.mp4"},{"x":88,"y":0.04428930664892767,"label":"IT_MC_33_A_DR-UGC_(19)_CR1_compressed.mp4"},{"x":72,"y":0.10693560742989751,"label":"MC_45_B_M-UGC_(5)_LOW_Cortisol_D3_compressed.mp4"},{"x":82,"y":0.09308443724387687,"label":"IT_MC_33_B_DR-UGC_(18)_D5_compressed.mp4"},{"x":78,"y":0.1614883176515682,"label":"MC_45_C_M-UGC_(5)_LOW_Free_Gift_D3_compressed.mp4"},{"x":88,"y":0.055337910794872505,"label":"CR_33_B_DR-UGC_(13)_D7_compressed.mp4"},{"x":72,"y":0.053135003167590615,"label":"MC_44_D_MF-UGC_(9)_MED_Liver-d7_compressed.mp4"},{"x":88,"y":0.25918630034527446,"label":"MC_46_D_DR-UGC_(10)_LOW_Benefit_Bombing_D9_compressed.mp4"},{"x":89,"y":0.06703910614525141,"label":"MC_45_D_DR-UGC_(8)_LOW_Benefit_Bombing_d6_compressed.mp4"},{"x":85,"y":0.1467797729073145,"label":"MC_46_B_DR-UGC_(5)_LOW_Gut_Health_D4_compressed.mp4"},{"x":92,"y":0.22450118228433275,"label":"MC_47_B_INT-UGC_(9)d8_compressed.mp4"},{"x":88,"y":0.21891136883094897,"label":"MC_46_B_DR-UGC_(8)_LOW_Cortisol_Reshoot _CR1[v5]_compressed.mp4"},{"x":88,"y":0.023937779195954367,"label":"MC_45_A_M-UGC_(5) d7_compressed.mp4"},{"x":88,"y":0.043556469227804186,"label":"MA_32_B_INT-UGC_(11)_D6_compressed.mp4"},{"x":88,"y":0.04963144995663522,"label":"IT_MA_32_B_DR-UGC_(13)v2_compressed.mp4"},{"x":88,"y":0.18838483787486682,"label":"CR_32_A_DR-UGC_(8)_BLOOD_SUGAR d6_compressed.mp4"},{"x":78,"y":0.3138713745271123,"label":"MC_47_D_DR-UGC_(14)_3rd-Party_MED_D6_compressed.mp4"}],"scatterColloq":[{"x":8,"y":0.33174856424310634,"label":"IT_MC_32_B_INT-UGC_(21)_D6_compressed.mp4"},{"x":9,"y":0.19576842350192103,"label":"MC_45_C_DR-UGC_(14)_MED_Liver_D7_compressed.mp4"},{"x":9,"y":0.10745763799392467,"label":"MC_45_C_DR-UGC_(9)_LOW____D3_compressed.mp4"},{"x":8,"y":0.2188903173460584,"label":"IT_MC_32_C_INT-UGC_(21)_D6_compressed.mp4"},{"x":8,"y":0.14558391233266219,"label":"MC_44_C_DR-UGC_(9) d4_compressed.mp4"},{"x":9,"y":0.1558881825051917,"label":"MC_45_B_INT-UGC_(10)_LOW_Cortisol_d4_compressed.mp4"},{"x":8,"y":0.09834292525551405,"label":"MC_45_B_M-UGC_(6)_LOW_Bloating_D4_compressed.mp4"},{"x":8,"y":0.3499831011041773,"label":"IT_MA_32_D_INT-UGC_(16)_D6_compressed.mp4"},{"x":8,"y":0.04428930664892767,"label":"IT_MC_33_A_DR-UGC_(19)_CR1_compressed.mp4"},{"x":8,"y":0.10693560742989751,"label":"MC_45_B_M-UGC_(5)_LOW_Cortisol_D3_compressed.mp4"},{"x":9,"y":0.09308443724387687,"label":"IT_MC_33_B_DR-UGC_(18)_D5_compressed.mp4"},{"x":9,"y":0.055337910794872505,"label":"CR_33_B_DR-UGC_(13)_D7_compressed.mp4"},{"x":8,"y":0.053135003167590615,"label":"MC_44_D_MF-UGC_(9)_MED_Liver-d7_compressed.mp4"},{"x":8,"y":0.25918630034527446,"label":"MC_46_D_DR-UGC_(10)_LOW_Benefit_Bombing_D9_compressed.mp4"},{"x":8,"y":0.06703910614525141,"label":"MC_45_D_DR-UGC_(8)_LOW_Benefit_Bombing_d6_compressed.mp4"},{"x":9,"y":0.1467797729073145,"label":"MC_46_B_DR-UGC_(5)_LOW_Gut_Health_D4_compressed.mp4"},{"x":8,"y":0.22450118228433275,"label":"MC_47_B_INT-UGC_(9)d8_compressed.mp4"},{"x":8,"y":0.21891136883094897,"label":"MC_46_B_DR-UGC_(8)_LOW_Cortisol_Reshoot _CR1[v5]_compressed.mp4"},{"x":9,"y":0.023937779195954367,"label":"MC_45_A_M-UGC_(5) d7_compressed.mp4"},{"x":8,"y":0.043556469227804186,"label":"MA_32_B_INT-UGC_(11)_D6_compressed.mp4"},{"x":8,"y":0.04963144995663522,"label":"IT_MA_32_B_DR-UGC_(13)v2_compressed.mp4"},{"x":8,"y":0.18838483787486682,"label":"CR_32_A_DR-UGC_(8)_BLOOD_SUGAR d6_compressed.mp4"},{"x":9,"y":0.3138713745271123,"label":"MC_47_D_DR-UGC_(14)_3rd-Party_MED_D6_compressed.mp4"}],"scatterEcr":[{"x":0.994,"y":0.07493643463047547,"label":"IT_MC_32_B_INT-UGC_(21)_D6_compressed.mp4"},{"x":0.976,"y":0.023586888491943882,"label":"IT_MC_32_B_INT-UGC_(22)_d9_compressed.mp4"},{"x":0.995,"y":0.014590530347145591,"label":"MC_45_C_DR-UGC_(14)_MED_Liver_D7_compressed.mp4"},{"x":0.996,"y":0.001107880023406144,"label":"MC_45_C_DR-UGC_(9)_LOW____D3_compressed.mp4"},{"x":0.991,"y":0.01508222595466745,"label":"IT_MC_32_C_INT-UGC_(21)_D6_compressed.mp4"},{"x":0.993,"y":0.005556491770699563,"label":"MC_44_C_DR-UGC_(9) d4_compressed.mp4"},{"x":0.993,"y":0.01681261345888726,"label":"MC_45_B_INT-UGC_(10)_LOW_Cortisol_d4_compressed.mp4"},{"x":0.931,"y":0.02483164983164983,"label":"MC_45_B_M-UGC_(6)_LOW_Bloating_D4_compressed.mp4"},{"x":0.991,"y":0.028400597907324365,"label":"IT_MA_32_D_INT-UGC_(16)_D6_compressed.mp4"},{"x":0.987,"y":0.007659299764562924,"label":"IT_MC_33_A_DR-UGC_(19)_CR1_compressed.mp4"},{"x":0.98,"y":0.008828437917222964,"label":"MC_45_B_M-UGC_(5)_LOW_Cortisol_D3_compressed.mp4"},{"x":0.922,"y":0.009285605267748125,"label":"IT_MC_33_B_DR-UGC_(18)_D5_compressed.mp4"},{"x":0.9,"y":0.0095047999239616,"label":"MC_45_C_M-UGC_(5)_LOW_Free_Gift_D3_compressed.mp4"},{"x":0.984,"y":0.019883040935672513,"label":"CR_33_B_DR-UGC_(13)_D7_compressed.mp4"},{"x":0.921,"y":0.004941878297141454,"label":"MC_44_D_MF-UGC_(9)_MED_Liver-d7_compressed.mp4"},{"x":0.992,"y":0.014322916666666666,"label":"MC_46_D_DR-UGC_(10)_LOW_Benefit_Bombing_D9_compressed.mp4"},{"x":0.992,"y":0.0071246819338422395,"label":"MC_45_D_DR-UGC_(8)_LOW_Benefit_Bombing_d6_compressed.mp4"},{"x":0.986,"y":0.016263440860215053,"label":"MC_46_B_DR-UGC_(5)_LOW_Gut_Health_D4_compressed.mp4"},{"x":0.988,"y":0.013333333333333332,"label":"MC_47_B_INT-UGC_(9)d8_compressed.mp4"},{"x":0.97,"y":0.018143459915611816,"label":"MC_46_B_DR-UGC_(8)_LOW_Cortisol_Reshoot _CR1[v5]_compressed.mp4"},{"x":0.953,"y":0.0008403361344537815,"label":"MC_45_A_M-UGC_(5) d7_compressed.mp4"},{"x":0.991,"y":0.0020050125313283208,"label":"MA_32_B_INT-UGC_(11)_D6_compressed.mp4"},{"x":0.984,"y":0.004901960784313725,"label":"IT_MA_32_B_DR-UGC_(13)v2_compressed.mp4"},{"x":0.989,"y":0.011494252873563218,"label":"CR_32_A_DR-UGC_(8)_BLOOD_SUGAR d6_compressed.mp4"},{"x":0.983,"y":0.03333333333333333,"label":"MC_47_D_DR-UGC_(14)_3rd-Party_MED_D6_compressed.mp4"}]};
+
+const COMMON = {
+  maintainAspectRatio: false,
+  responsive: true,
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      callbacks: {
+        label: (ctx) => {
+          const p = ctx.raw;
+          return `${p.label} — x=${p.x?.toFixed ? p.x.toFixed(2) : p.x}, y=${p.y?.toFixed ? p.y.toFixed(2) : p.y}`;
+        },
+      },
+    },
+  },
+  scales: {
+    x: { grid: { color: "#222" }, ticks: { color: "#71717a" } },
+    y: { grid: { color: "#222" }, ticks: { color: "#71717a" } },
+  },
+};
+
+new Chart(document.getElementById("scatter-overall"), {
+  type: "scatter",
+  data: { datasets: [{ label: "Ads", data: DATA.scatterOverall, backgroundColor: "#3b82f6" }] },
+  options: { ...COMMON, scales: { x: { ...COMMON.scales.x, title: { display: true, text: "Overall score (0-100)", color: "#71717a" } }, y: { ...COMMON.scales.y, title: { display: true, text: "ROAS (weighted)", color: "#71717a" } } } },
+});
+new Chart(document.getElementById("scatter-colloq"), {
+  type: "scatter",
+  data: { datasets: [{ label: "Ads", data: DATA.scatterColloq, backgroundColor: "#f59e0b" }] },
+  options: { ...COMMON, scales: { x: { ...COMMON.scales.x, title: { display: true, text: "Colloquiality (0-10)", color: "#71717a" } }, y: { ...COMMON.scales.y, title: { display: true, text: "ROAS (weighted)", color: "#71717a" } } } },
+});
+new Chart(document.getElementById("scatter-ecr"), {
+  type: "scatter",
+  data: { datasets: [{ label: "Ads", data: DATA.scatterEcr, backgroundColor: "#a855f7" }] },
+  options: { ...COMMON, scales: { x: { ...COMMON.scales.x, title: { display: true, text: "Predicted ECR (0-1)", color: "#71717a" } }, y: { ...COMMON.scales.y, title: { display: true, text: "Observed ECR (ecr_new)", color: "#71717a" } } } },
+});
+</script>
+</body>
+</html>
