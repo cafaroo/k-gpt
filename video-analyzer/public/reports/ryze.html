@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Ryze Creative Decoded — Why some ads 7× outperform others</title>
+<title>Ryze Q1 2025 vs Q1 2026 — What changed, why it hurts, where the wins live</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
   :root {
@@ -22,6 +22,10 @@
     --lose-br: rgba(239,68,68,.35);
     --accent: #3b82f6;
     --gold: #f59e0b;
+    --year25: #3b82f6;
+    --year26: #a855f7;
+    --y25bg: rgba(59,130,246,.12);
+    --y26bg: rgba(168,85,247,.12);
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
@@ -31,9 +35,8 @@
     font-family: -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
     font-size: 15px;
     line-height: 1.6;
-    font-feature-settings: "ss01", "cv05";
   }
-  .wrap { max-width: 1120px; margin: 0 auto; padding: 40px 24px 80px; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 40px 24px 80px; }
   .eyebrow {
     font-size: 11px;
     text-transform: uppercase;
@@ -42,70 +45,144 @@
     font-weight: 600;
     margin-bottom: 8px;
   }
-  h1 { font-size: 48px; line-height: 1.1; margin: 0 0 24px; font-weight: 700; letter-spacing: -0.03em; }
+  h1 { font-size: 48px; line-height: 1.08; margin: 0 0 20px; font-weight: 700; letter-spacing: -0.03em; }
+  h1 .y25 { color: var(--year25); }
+  h1 .y26 { color: var(--year26); }
   h1 em { font-style: normal; color: var(--gold); }
-  h2 { font-size: 32px; line-height: 1.2; margin: 64px 0 12px; font-weight: 700; letter-spacing: -0.02em; }
+  h2 { font-size: 30px; line-height: 1.15; margin: 72px 0 10px; font-weight: 700; letter-spacing: -0.02em; }
+  h2 .sub { display: block; font-size: 14px; font-weight: 500; color: var(--muted); margin-top: 6px; letter-spacing: 0; text-transform: none; }
   h3 { font-size: 20px; line-height: 1.3; margin: 32px 0 10px; font-weight: 600; letter-spacing: -0.01em; }
-  h4 { font-size: 14px; margin: 16px 0 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  h4 { font-size: 13px; margin: 16px 0 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
   p { color: #d4d4d8; margin: 0 0 14px; }
-  .lead { font-size: 20px; line-height: 1.55; color: #e4e4e7; font-weight: 400; margin-bottom: 24px; max-width: 800px; }
-  .hero {
-    background: linear-gradient(135deg, #111114 0%, #17171b 100%);
+  .lead { font-size: 19px; line-height: 1.55; color: #e4e4e7; font-weight: 400; margin-bottom: 24px; max-width: 820px; }
+  .fg { color: var(--fg); font-weight: 600; }
+
+  .yoy-hero {
+    background: linear-gradient(135deg, rgba(59,130,246,.08) 0%, rgba(168,85,247,.08) 100%);
     border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 40px 36px;
-    margin-bottom: 40px;
+    border-radius: 18px;
+    padding: 36px;
+    margin-bottom: 24px;
     position: relative;
     overflow: hidden;
   }
-  .hero::before {
+  .yoy-hero::before, .yoy-hero::after {
     content: "";
-    position: absolute;
-    top: -50%;
-    right: -10%;
-    width: 600px;
-    height: 600px;
-    background: radial-gradient(circle, rgba(245,158,11,0.08) 0%, transparent 70%);
+    position: absolute; top: -40%;
+    width: 520px; height: 520px;
     pointer-events: none;
   }
-  .hero-kpi {
+  .yoy-hero::before { left: -15%; background: radial-gradient(circle, rgba(59,130,246,.10) 0%, transparent 70%); }
+  .yoy-hero::after { right: -15%; background: radial-gradient(circle, rgba(168,85,247,.10) 0%, transparent 70%); }
+  .yoy-hero-kpis {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-    margin-top: 32px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 18px;
+    margin-top: 28px;
     position: relative;
   }
-  .hero-kpi .k-val { font-size: 36px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
-  .hero-kpi .k-val.win { color: var(--win); }
-  .hero-kpi .k-val.lose { color: var(--lose); }
-  .hero-kpi .k-val.gold { color: var(--gold); }
-  .hero-kpi .k-lbl { font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 6px; }
-  .hero-kpi .k-sub { font-size: 12px; color: var(--dim); margin-top: 4px; }
+  .yoy-hero-kpi { position: relative; }
+  .yoy-hero-kpi .k-lbl { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 6px; }
+  .yoy-hero-kpi .k-val { font-size: 38px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .yoy-hero-kpi .k-val.bad { color: var(--lose); }
+  .yoy-hero-kpi .k-val.good { color: var(--win); }
+  .yoy-hero-kpi .k-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
 
-  .divide {
+  .compare {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
     margin: 20px 0 40px;
   }
-  @media (max-width: 760px) { .divide, .hero-split, .bigcards { grid-template-columns: 1fr !important; } }
-
-  .vs-card {
+  @media (max-width: 900px) {
+    .compare, .two-col, .headline-grid, .finding-grid, .ad-grid { grid-template-columns: 1fr !important; }
+  }
+  .year-card {
     border-radius: 14px;
-    padding: 24px;
+    padding: 26px;
     position: relative;
   }
+  .year-card.y25 { background: var(--y25bg); border: 1px solid rgba(59,130,246,.3); }
+  .year-card.y26 { background: var(--y26bg); border: 1px solid rgba(168,85,247,.3); }
+  .year-card .yr-badge {
+    display: inline-block; padding: 3px 10px; border-radius: 999px;
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
+    margin-bottom: 14px;
+  }
+  .year-card.y25 .yr-badge { background: var(--year25); color: #052344; }
+  .year-card.y26 .yr-badge { background: var(--year26); color: #2d0c48; }
+  .year-card h3 { margin: 0 0 4px; font-size: 24px; }
+  .year-card .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 14px 20px; margin-top: 18px; }
+  .year-card .m-lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .year-card .m-val { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .year-card.y25 .m-val { color: var(--year25); }
+  .year-card.y26 .m-val { color: var(--year26); }
+
+  .chart-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin: 12px 0 24px; }
+  .chart-card h3 { margin: 0 0 4px; }
+  .chart-card p.sub { margin: 0 0 14px; font-size: 13px; color: var(--muted); }
+  .chart-wrap { position: relative; height: 340px; }
+  .chart-wrap.small { height: 240px; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 12px 0 32px; }
+
+  .finding-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 12px 0 30px; }
+  .finding {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 24px;
+    border-left-width: 4px;
+  }
+  .finding.bad { border-left-color: var(--lose); }
+  .finding.good { border-left-color: var(--win); }
+  .finding.neutral { border-left-color: var(--accent); }
+  .finding h4 { margin: 0 0 4px; text-transform: none; letter-spacing: 0; font-size: 12px; font-weight: 700; }
+  .finding.bad h4 { color: var(--lose); }
+  .finding.good h4 { color: var(--win); }
+  .finding.neutral h4 { color: var(--accent); }
+  .finding h3 { margin: 0 0 10px; font-size: 20px; line-height: 1.3; }
+  .finding .big { font-size: 36px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; margin: 2px 0 10px; }
+  .finding .big.bad { color: var(--lose); }
+  .finding .big.good { color: var(--win); }
+  .finding .big.neutral { color: var(--fg); }
+  .finding p { font-size: 14px; margin: 0 0 6px; color: #d4d4d8; }
+
+  .headline-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 12px 0 30px; }
+  .ad-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .ad-card.y25 { border-top: 3px solid var(--year25); }
+  .ad-card.y26 { border-top: 3px solid var(--year26); }
+  .ad-card .ad-title { font-size: 14px; font-weight: 500; line-height: 1.4; }
+  .ad-card .ad-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-top: 8px; font-variant-numeric: tabular-nums; }
+  .ad-card .ad-stats { display: flex; gap: 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .ad-card .ad-stat .s-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .ad-card .ad-stat .s-val { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .ad-card .ad-stat .s-val.y25 { color: var(--year25); }
+  .ad-card .ad-stat .s-val.y26 { color: var(--year26); }
+
+  .table-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin: 12px 0 32px; }
+  .table-card.scroll { overflow: auto; max-height: 600px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; background: var(--bg); position: sticky; top: 0; z-index: 1; }
+  td.tabular, th.tabular { font-variant-numeric: tabular-nums; }
+  tr:hover td { background: rgba(255,255,255,0.03); }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 500; }
+  .pill-win { background: var(--win-bg); color: var(--win); }
+  .pill-lose { background: var(--lose-bg); color: var(--lose); }
+  .pill-n { background: rgba(255,255,255,0.06); color: var(--muted); }
+  .pill-y25 { background: rgba(59,130,246,.15); color: var(--year25); }
+  .pill-y26 { background: rgba(168,85,247,.15); color: var(--year26); }
+  .pill-both { background: rgba(245,158,11,.15); color: var(--gold); }
+  .mono { font-family: "SF Mono", Menlo, monospace; font-size: 12px; color: var(--muted); }
+  .tr { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: middle; }
+
+  .vs-card { border-radius: 14px; padding: 24px; position: relative; }
   .vs-card.winners { background: var(--win-bg); border: 1px solid var(--win-br); }
   .vs-card.losers { background: var(--lose-bg); border: 1px solid var(--lose-br); }
   .vs-card .badge {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 999px;
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-bottom: 12px;
+    display: inline-block; padding: 3px 10px; border-radius: 999px;
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px;
   }
   .vs-card.winners .badge { background: var(--win); color: #052e1f; }
   .vs-card.losers .badge { background: var(--lose); color: #3a0808; }
@@ -114,51 +191,13 @@
   .vs-card.winners .stat { color: var(--win); }
   .vs-card.losers .stat { color: var(--lose); }
   .vs-card .stat-lbl { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
-  .vs-card ul { list-style: none; margin: 16px 0 0; padding: 0; }
-  .vs-card li { padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; gap: 12px; font-size: 13px; }
-  .vs-card li:last-child { border-bottom: 0; }
-  .vs-card li .l-label { color: var(--muted); }
-  .vs-card li .l-val { font-variant-numeric: tabular-nums; font-weight: 600; }
 
-  .deltas {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 12px;
-    margin-bottom: 40px;
-  }
-  .delta {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 18px 20px;
-  }
-  .delta .d-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
-  .delta .d-values { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; }
-  .delta .d-win { font-size: 24px; font-weight: 700; color: var(--win); font-variant-numeric: tabular-nums; }
-  .delta .d-lose { font-size: 16px; color: var(--muted); text-decoration: line-through; font-variant-numeric: tabular-nums; }
-  .delta .d-lift {
-    display: inline-block;
-    font-size: 12px;
-    font-weight: 700;
-    padding: 3px 8px;
-    border-radius: 999px;
-    margin-bottom: 6px;
-  }
-  .delta .d-lift.up { background: var(--win-bg); color: var(--win); }
-  .delta .d-lift.down { background: var(--lose-bg); color: var(--lose); }
-  .delta .d-hint { font-size: 12px; color: var(--muted); line-height: 1.5; margin-top: 6px; }
-
-  .bigcards {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin: 20px 0 40px;
-  }
+  .bigcards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0 40px; }
   .pattern-card {
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 12px;
-    padding: 24px;
+    padding: 22px;
     border-left-width: 4px;
   }
   .pattern-card.win { border-left-color: var(--win); }
@@ -166,69 +205,8 @@
   .pattern-card h4 { margin: 0 0 4px; color: var(--fg); text-transform: none; letter-spacing: 0; font-size: 12px; font-weight: 700; }
   .pattern-card h4.win { color: var(--win); }
   .pattern-card h4.lose { color: var(--lose); }
-  .pattern-card h3 { margin: 0 0 10px; font-size: 22px; }
-  .pattern-card .prf { font-size: 32px; font-weight: 700; color: var(--fg); letter-spacing: -0.02em; margin: 2px 0 14px; font-variant-numeric: tabular-nums; }
-  .pattern-card .quote {
-    border-left: 2px solid var(--border);
-    padding: 6px 12px;
-    margin: 14px 0 0;
-    font-size: 13px;
-    color: var(--muted);
-    font-style: italic;
-  }
-  .pattern-card .quote cite { display: block; font-style: normal; font-size: 11px; color: var(--dim); margin-top: 4px; font-family: "SF Mono", Menlo, monospace; }
-
-  .anatomy {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 28px;
-    margin: 16px 0 32px;
-  }
-  .anatomy.win { border-top: 3px solid var(--win); }
-  .anatomy.lose { border-top: 3px solid var(--lose); }
-  .anatomy .title-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; flex-wrap: wrap; margin-bottom: 16px; }
-  .anatomy h3 { margin: 0; font-size: 20px; }
-  .anatomy .mname { font-family: "SF Mono", Menlo, monospace; font-size: 13px; color: var(--muted); word-break: break-all; }
-  .anatomy .bignum {
-    display: flex; gap: 24px; flex-wrap: wrap;
-    padding: 14px 0; margin: 10px 0 18px;
-    border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
-  }
-  .anatomy .bignum .bn-val { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
-  .anatomy .bignum .bn-val.win { color: var(--win); }
-  .anatomy .bignum .bn-val.lose { color: var(--lose); }
-  .anatomy .bignum .bn-lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
-  .anatomy .attrs { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 14px; margin-bottom: 14px; }
-  .anatomy .attr .a-lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
-  .anatomy .attr .a-val { font-size: 14px; margin-top: 2px; color: var(--fg); font-weight: 500; }
-
-  .pattern-grid {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; margin: 14px 0 28px;
-  }
-  .pgcard {
-    padding: 14px 16px;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    background: var(--panel);
-    display: flex;
-    flex-direction: column;
-  }
-  .pgcard.win { border-color: var(--win-br); background: var(--win-bg); }
-  .pgcard.lose { border-color: var(--lose-br); background: var(--lose-bg); }
-  .pgcard .pg-label { font-size: 13px; font-weight: 600; }
-  .pgcard .pg-bars { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
-  .pgcard .pg-bar { flex: 1; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; position: relative; }
-  .pgcard .pg-bar .fill { height: 100%; border-radius: 3px; }
-  .pgcard .pg-bar.winbar .fill { background: var(--win); }
-  .pgcard .pg-bar.losebar .fill { background: var(--lose); }
-  .pgcard .pg-row { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 6px; }
-  .pgcard .pg-verdict { margin-top: 10px; font-size: 12px; color: var(--muted); }
-  .pgcard .pg-verdict strong { color: var(--fg); }
-
-  .chart-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin: 12px 0 32px; }
-  .chart-card h3 { margin: 0 0 10px; }
-  .chart-wrap { position: relative; height: 360px; }
+  .pattern-card h3 { margin: 0 0 10px; font-size: 20px; }
+  .pattern-card .prf { font-size: 30px; font-weight: 700; color: var(--fg); letter-spacing: -0.02em; margin: 2px 0 14px; font-variant-numeric: tabular-nums; }
 
   .playbook { background: linear-gradient(180deg, var(--panel) 0%, var(--panel-alt) 100%); border: 1px solid var(--border); border-radius: 14px; padding: 28px; margin: 24px 0 40px; }
   .playbook h3 { margin-top: 0; }
@@ -240,419 +218,489 @@
   .playbook .rule .body h4 { margin: 4px 0 6px; text-transform: none; letter-spacing: 0; font-size: 16px; color: var(--fg); font-weight: 600; }
   .playbook .rule .body p { margin: 0; color: var(--muted); font-size: 13px; }
 
-  .lbtable { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; overflow: auto; max-height: 640px; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
-  th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; background: var(--bg); position: sticky; top: 0; z-index: 1; }
-  td.tabular, th.tabular { font-variant-numeric: tabular-nums; }
-  tr:hover td { background: rgba(255,255,255,0.025); }
-  .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 500; }
-  .pill-win { background: var(--win-bg); color: var(--win); }
-  .pill-lose { background: var(--lose-bg); color: var(--lose); }
-  .pill-n { background: rgba(255,255,255,0.06); color: var(--muted); }
-  .mono { font-family: "SF Mono", Menlo, monospace; font-size: 12px; color: var(--muted); }
-  .tr { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: middle; }
-
   details { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; margin: 8px 0; }
   details summary { cursor: pointer; font-weight: 600; font-size: 14px; }
-  details summary:hover { color: var(--accent); }
   details[open] { padding-bottom: 24px; }
+  details summary:hover { color: var(--accent); }
 
   .foot { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); }
-  .foot .fg { color: var(--fg); }
+
+  .toc { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px 20px; margin: 0 0 36px; display: flex; gap: 20px; flex-wrap: wrap; font-size: 13px; }
+  .toc a { color: var(--muted); text-decoration: none; }
+  .toc a:hover { color: var(--accent); }
+  .toc span { color: var(--dim); }
 </style>
 </head>
 <body>
   <div class="wrap">
 
     <header>
-      <div class="eyebrow">Ryze · Creative × Performance · 36 videos analysed · 26 with spend data</div>
-      <h1>One ad earned a <em>6.1×</em> higher ROAS<br>than another. Here's what separates them.</h1>
+      <div class="eyebrow">Ryze · Q1 year-over-year teardown · 972 ad rows · 36 creatives decoded</div>
+      <h1>
+        <span class="y25">Q1 2025</span> printed money.<br>
+        <span class="y26">Q1 2026</span> is bleeding attention.<br>
+        Here's exactly what changed.
+      </h1>
       <p class="lead">
-        Across 24 Ryze video ads with spend above $50 and a total of
-        <b class="fg">$346,318</b> in media and
-        <b class="fg">2,881</b> orders, we reverse-engineered the creative DNA of the top
-        6 vs bottom 6 performers using Gemini-scored scene and script analysis.
-        The numbers point to a surprisingly specific recipe.
+        Q1 2025 delivered <b class="fg">$929,587</b> in spend and <b class="fg">6,323</b> orders at a weighted ROAS of <b class="fg">0.27</b>. Q1 2026 has spent <b class="fg">$326,145</b> for <b class="fg">1,619</b> orders at <b class="fg">0.25</b>. ROAS looks close — but the mechanism underneath collapsed. ECR is down <b class="fg">45%</b>, CPO is up <b class="fg">19%</b>, and the portfolio lost its hero creative.
       </p>
     </header>
 
-    <section class="hero">
-      <div class="eyebrow">Top vs bottom cohorts (ranked by weighted ROAS, min $50 spend)</div>
-      <div class="hero-kpi">
-        <div>
-          <div class="k-lbl">Top 6 avg ROAS</div>
-          <div class="k-val win">0.29</div>
-          <div class="k-sub">$307,561 spend · 2,732 orders</div>
+    <div class="toc">
+      <span>Jump to:</span>
+      <a href="#portfolio">Portfolio YoY</a>
+      <a href="#trajectory">Phase trajectory</a>
+      <a href="#format">Format shift</a>
+      <a href="#themes">Theme shift</a>
+      <a href="#hero">Hero creatives</a>
+      <a href="#findings">Why 2026 hurts</a>
+      <a href="#creative-decode">Creative decode</a>
+      <a href="#playbook">Playbook</a>
+    </div>
+
+    <section id="portfolio" class="yoy-hero">
+      <div class="eyebrow">Portfolio snapshot</div>
+      <h3 style="margin:4px 0 0; font-size: 24px">2025 vs 2026 — the four numbers that matter</h3>
+      <div class="yoy-hero-kpis">
+        <div class="yoy-hero-kpi">
+          <div class="k-lbl">ECR change</div>
+          <div class="k-val bad">-45%</div>
+          <div class="k-sub">2.22% → 1.22% engagement-continuation</div>
         </div>
-        <div>
-          <div class="k-lbl">Bottom 6 avg ROAS</div>
-          <div class="k-val lose">0.05</div>
-          <div class="k-sub">$2,559 spend · 3 orders</div>
+        <div class="yoy-hero-kpi">
+          <div class="k-lbl">CPO change</div>
+          <div class="k-val bad">+19%</div>
+          <div class="k-sub">$345 → $412 per order</div>
         </div>
-        <div>
-          <div class="k-lbl">Performance gap</div>
-          <div class="k-val gold">6.1×</div>
-          <div class="k-sub">From same brand, same niche, same era</div>
+        <div class="yoy-hero-kpi">
+          <div class="k-lbl">ROAS change</div>
+          <div class="k-val bad">-7%</div>
+          <div class="k-sub">0.27 → 0.25 (weighted)</div>
         </div>
-        <div>
-          <div class="k-lbl">Median ROAS</div>
-          <div class="k-val">0.15</div>
-          <div class="k-sub">Across all 24 credible ads</div>
+        <div class="yoy-hero-kpi">
+          <div class="k-lbl">Orders change</div>
+          <div class="k-val bad">-74%</div>
+          <div class="k-sub">6,323 → 1,619 total orders</div>
         </div>
       </div>
     </section>
 
-    <h2>The three losing patterns</h2>
-    <p class="lead">When we compared the 6 worst ads to the 6 best, three sins repeat.</p>
-
-    <div class="bigcards">
-      <div class="pattern-card lose">
-        <h4 class="lose">Loser pattern #1</h4>
-        <h3>Question hooks don't close the sale</h3>
-        <div class="prf">2 of 6</div>
-        <p>Bottom-cohort ads opened with a <b class="fg">question</b> (33% of losers) while <b class="fg">zero winners</b> did. Questions invite thinking. The feed doesn't reward thinking — it rewards stopping.</p>
-        <div class="quote">"The ad uses 'problem bombing', listing 6 distinct issues in the first 17 seconds."<cite>— Gemini insight, loser cohort</cite></div>
-      </div>
-      <div class="pattern-card lose">
-        <h4 class="lose">Loser pattern #2</h4>
-        <h3>Storytime narration delays the reveal</h3>
-        <div class="prf">2 of 6</div>
-        <p>Losers used <b class="fg">3rd-person narration</b> (33% vs ~0% in winners) and one waited until <b class="fg">87% of the video</b> to even reveal the product. First-person ownership of the problem converts; detached storytelling does not.</p>
-        <div class="quote">"Each mushroom is paired with a specific benefit and a corresponding lifestyle visual."<cite>— Gemini insight, loser cohort</cite></div>
-      </div>
-      <div class="pattern-card lose">
-        <h4 class="lose">Loser pattern #3</h4>
-        <h3>Scarcity CTA without a clear next step</h3>
-        <div class="prf">no reversal</div>
-        <p>Worst performers leaned on <b class="fg">urgency</b> ("sale ending", "free gifts") without pairing it with a risk-reversal like a guarantee. Scarcity without safety reads as pressure — and pressure bounces.</p>
-        <div class="quote">"Urgency is manufactured at the end by mentioning a sale ending and high demand."<cite>— Gemini insight, loser cohort</cite></div>
-      </div>
-      <div class="pattern-card lose">
-        <h4 class="lose">Loser pattern #4</h4>
-        <h3>Too many faces in frame</h3>
-        <div class="prf">-32%</div>
-        <p>Losers had <b class="fg">1.8 people</b> on screen at max, vs <b class="fg">1.2</b> for winners. The winning format is intimate: one creator, looking into the camera, talking to <em>you</em>.</p>
-      </div>
-    </div>
-
-    <h2>The three winning patterns</h2>
-    <p class="lead">What the top 6 did that the others didn't.</p>
-
-    <div class="bigcards">
-      <div class="pattern-card win">
-        <h4 class="win">Winner pattern #1</h4>
-        <h3>22% more cuts per minute</h3>
-        <div class="prf">35 cuts/min</div>
-        <p>Winners cut every <b class="fg">1.7 seconds</b> on average (35/min vs 27/min for losers). Anatomical animations, b-roll inserts, and text overlays acted as <b class="fg">pattern interrupts</b> that reset attention before boredom set in.</p>
-        <div class="quote">"High visual variety with 38 cuts per minute prevents viewer fatigue in a long-form ad."<cite>— Gemini insight, winner cohort</cite></div>
-      </div>
-      <div class="pattern-card win">
-        <h4 class="win">Winner pattern #2</h4>
-        <h3>Risk-reversal, not urgency</h3>
-        <div class="prf">money-back</div>
-        <p>Every top-performer closed with a <b class="fg">30-day money-back guarantee</b> framed as "Risk-Free". Winners make buying <em>safe</em>; losers make it <em>scary</em>. Both reduce friction — but safety converts.</p>
-        <div class="quote">"The final 15 seconds are dedicated to risk reversal (money-back guarantee)."<cite>— Gemini insight, winner cohort</cite></div>
-      </div>
-      <div class="pattern-card win">
-        <h4 class="win">Winner pattern #3</h4>
-        <h3>"Learn from my mistakes" framing</h3>
-        <div class="prf">peer, not pitch</div>
-        <p>Top ads pivoted at ~8 seconds from <em>"here's a problem"</em> to <em>"here's what I got wrong"</em>. A debunking beat + failed-solutions list positions the creator as a peer — not a salesperson. It dismantles defences before the product reveal.</p>
-        <div class="quote">"The ad uses a 'debunking' beat to build trust before introducing the product."<cite>— Gemini insight, winner cohort</cite></div>
-      </div>
-      <div class="pattern-card win">
-        <h4 class="win">Winner pattern #4</h4>
-        <h3>Bold claims beat curiosity gaps</h3>
-        <div class="prf">0 questions</div>
-        <p>Winners led with <b class="fg">bold claims</b>, <b class="fg">pattern interrupts</b>, and <b class="fg">visual reveals</b>. None used question hooks. In a vertical feed, certainty is a differentiator — doubt is a swipe.</p>
-      </div>
-    </div>
-
-    <h2>The numbers that matter</h2>
-    <p class="lead">Ranked by size of the gap between winner and loser cohorts.</p>
-
-    <div class="deltas">
-      <div class="delta">
-            <div class="d-label">People in frame</div>
-            <div class="d-lift down">-35%</div>
-            <div class="d-values">
-              <div class="d-win">1.2</div>
-              <div class="d-lose">1.8</div>
-            </div>
-            <div class="d-hint">Max number of people visible at once</div>
-          </div><div class="delta">
-            <div class="d-label">Cuts per minute</div>
-            <div class="d-lift up">+31%</div>
-            <div class="d-values">
-              <div class="d-win">35.4</div>
-              <div class="d-lose">27.1</div>
-            </div>
-            <div class="d-hint">How frequently the video cuts to a new shot — higher = more pattern interrupts</div>
-          </div><div class="delta">
-            <div class="d-label">Hook duration</div>
-            <div class="d-lift down">-30%</div>
-            <div class="d-values">
-              <div class="d-win">4.6s</div>
-              <div class="d-lose">6.6s</div>
-            </div>
-            <div class="d-hint">How long before the hook resolves into the main narrative</div>
-          </div><div class="delta">
-            <div class="d-label">Eye contact score</div>
-            <div class="d-lift up">+14%</div>
-            <div class="d-values">
-              <div class="d-win">7.6/10</div>
-              <div class="d-lose">6.7/10</div>
-            </div>
-            <div class="d-hint">How often the creator looks directly at camera</div>
-          </div>
-    </div>
-
-    <h2>Categorical fingerprint</h2>
-    <p class="lead">Which creative choices show up more often in winners vs losers?</p>
-
-    <div class="pattern-grid">
-      <div class="pgcard ">
-            <div class="pg-label">Hook type: <b>bold-claim</b></div>
-            <div class="pg-bars">
-              <div class="pg-bar winbar"><div class="fill" style="width:33.33333333333333%"></div></div>
-              <div class="pg-bar losebar"><div class="fill" style="width:33.33333333333333%"></div></div>
-            </div>
-            <div class="pg-row"><span>Winners: 2/6</span><span>Losers: 2/6</span></div>
-            <div class="pg-verdict">Appears in both cohorts.</div>
-          </div><div class="pgcard lose">
-            <div class="pg-label">Hook type: <b>question</b></div>
-            <div class="pg-bars">
-              <div class="pg-bar winbar"><div class="fill" style="width:0%"></div></div>
-              <div class="pg-bar losebar"><div class="fill" style="width:33.33333333333333%"></div></div>
-            </div>
-            <div class="pg-row"><span>Winners: 0/6</span><span>Losers: 2/6</span></div>
-            <div class="pg-verdict">Losers use this <strong>2× more</strong> often.</div>
-          </div><div class="pgcard lose">
-            <div class="pg-label">Hook type: <b>story-tease</b></div>
-            <div class="pg-bars">
-              <div class="pg-bar winbar"><div class="fill" style="width:0%"></div></div>
-              <div class="pg-bar losebar"><div class="fill" style="width:33.33333333333333%"></div></div>
-            </div>
-            <div class="pg-row"><span>Winners: 0/6</span><span>Losers: 2/6</span></div>
-            <div class="pg-verdict">Losers use this <strong>2× more</strong> often.</div>
-          </div><div class="pgcard win">
-            <div class="pg-label">Narrative style: <b>first-person</b></div>
-            <div class="pg-bars">
-              <div class="pg-bar winbar"><div class="fill" style="width:83.33333333333334%"></div></div>
-              <div class="pg-bar losebar"><div class="fill" style="width:66.66666666666666%"></div></div>
-            </div>
-            <div class="pg-row"><span>Winners: 5/6</span><span>Losers: 4/6</span></div>
-            <div class="pg-verdict">Appears in both cohorts.</div>
-          </div><div class="pgcard lose">
-            <div class="pg-label">Narrative style: <b>narration</b></div>
-            <div class="pg-bars">
-              <div class="pg-bar winbar"><div class="fill" style="width:0%"></div></div>
-              <div class="pg-bar losebar"><div class="fill" style="width:33.33333333333333%"></div></div>
-            </div>
-            <div class="pg-row"><span>Winners: 0/6</span><span>Losers: 2/6</span></div>
-            <div class="pg-verdict">Losers use this <strong>2× more</strong> often.</div>
-          </div><div class="pgcard win">
-            <div class="pg-label">Script angle: <b>comparison</b></div>
-            <div class="pg-bars">
-              <div class="pg-bar winbar"><div class="fill" style="width:33.33333333333333%"></div></div>
-              <div class="pg-bar losebar"><div class="fill" style="width:0%"></div></div>
-            </div>
-            <div class="pg-row"><span>Winners: 2/6</span><span>Losers: 0/6</span></div>
-            <div class="pg-verdict">Winners use this <strong>2× more</strong> often.</div>
-          </div><div class="pgcard ">
-            <div class="pg-label">Script angle: <b>ugc-reaction</b></div>
-            <div class="pg-bars">
-              <div class="pg-bar winbar"><div class="fill" style="width:16.666666666666664%"></div></div>
-              <div class="pg-bar losebar"><div class="fill" style="width:16.666666666666664%"></div></div>
-            </div>
-            <div class="pg-row"><span>Winners: 1/6</span><span>Losers: 1/6</span></div>
-            <div class="pg-verdict">Appears in both cohorts.</div>
-          </div><div class="pgcard lose">
-            <div class="pg-label">Script angle: <b>problem-solution</b></div>
-            <div class="pg-bars">
-              <div class="pg-bar winbar"><div class="fill" style="width:33.33333333333333%"></div></div>
-              <div class="pg-bar losebar"><div class="fill" style="width:66.66666666666666%"></div></div>
-            </div>
-            <div class="pg-row"><span>Winners: 2/6</span><span>Losers: 4/6</span></div>
-            <div class="pg-verdict">Losers use this <strong>2× more</strong> often.</div>
-          </div><div class="pgcard ">
-            <div class="pg-label">Hook style: <b>curiosity-gap</b></div>
-            <div class="pg-bars">
-              <div class="pg-bar winbar"><div class="fill" style="width:16.666666666666664%"></div></div>
-              <div class="pg-bar losebar"><div class="fill" style="width:16.666666666666664%"></div></div>
-            </div>
-            <div class="pg-row"><span>Winners: 1/6</span><span>Losers: 1/6</span></div>
-            <div class="pg-verdict">Appears in both cohorts.</div>
-          </div><div class="pgcard ">
-            <div class="pg-label">Hook style: <b>result-tease</b></div>
-            <div class="pg-bars">
-              <div class="pg-bar winbar"><div class="fill" style="width:16.666666666666664%"></div></div>
-              <div class="pg-bar losebar"><div class="fill" style="width:16.666666666666664%"></div></div>
-            </div>
-            <div class="pg-row"><span>Winners: 1/6</span><span>Losers: 1/6</span></div>
-            <div class="pg-verdict">Appears in both cohorts.</div>
-          </div><div class="pgcard ">
-            <div class="pg-label">Hook style: <b>problem-first</b></div>
-            <div class="pg-bars">
-              <div class="pg-bar winbar"><div class="fill" style="width:50%"></div></div>
-              <div class="pg-bar losebar"><div class="fill" style="width:50%"></div></div>
-            </div>
-            <div class="pg-row"><span>Winners: 3/6</span><span>Losers: 3/6</span></div>
-            <div class="pg-verdict">Appears in both cohorts.</div>
-          </div><div class="pgcard lose">
-            <div class="pg-label">Brand heritage: <b>absent</b></div>
-            <div class="pg-bars">
-              <div class="pg-bar winbar"><div class="fill" style="width:66.66666666666666%"></div></div>
-              <div class="pg-bar losebar"><div class="fill" style="width:83.33333333333334%"></div></div>
-            </div>
-            <div class="pg-row"><span>Winners: 4/6</span><span>Losers: 5/6</span></div>
-            <div class="pg-verdict">Appears in both cohorts.</div>
-          </div>
-    </div>
-
-    <h2>Anatomy of the #1 ad</h2>
-    
-    <div class="anatomy win">
-      <div class="title-row">
-        <div>
-          <h4 class="win" style="color: var(--win); text-transform: uppercase; letter-spacing: 0.08em;">Top performer</h4>
-          <h3>High-energy reaction hook with strong educational pivot and risk-reversal CTA.</h3>
-          <div class="mname">IT_MC_32_B_INT-UGC_(21)_D6_compressed.mp4</div>
+    <div class="compare">
+      <div class="year-card y25">
+        <span class="yr-badge">2025 · P30–P34</span>
+        <h3>$929,587 spend</h3>
+        <p style="margin:4px 0 0; color: var(--muted)">6,323 orders · 157,217 visits · 658 ad rows</p>
+        <div class="metrics">
+          <div><div class="m-lbl">ROAS (weighted)</div><div class="m-val">0.27</div></div>
+          <div><div class="m-lbl">CPO</div><div class="m-val">$345</div></div>
+          <div><div class="m-lbl">ECR</div><div class="m-val">2.22%</div></div>
+          <div><div class="m-lbl">CPM</div><div class="m-val">$34.26</div></div>
+          <div><div class="m-lbl">AOV</div><div class="m-val">$40</div></div>
+          <div><div class="m-lbl">nROAS</div><div class="m-val">26.7</div></div>
         </div>
       </div>
-      <div class="bignum">
-        <div><div class="bn-val win">0.33</div><div class="bn-lbl">ROAS</div></div>
-        <div><div class="bn-val">$246,845</div><div class="bn-lbl">Spend</div></div>
-        <div><div class="bn-val">2,185</div><div class="bn-lbl">Orders</div></div>
-        <div><div class="bn-val">46/min</div><div class="bn-lbl">Cut density</div></div>
-        <div><div class="bn-val">63s</div><div class="bn-lbl">Duration</div></div>
-      </div>
-      <div class="attrs">
-        <div class="attr"><div class="a-lbl">Script angle</div><div class="a-val">ugc-reaction</div></div>
-        <div class="attr"><div class="a-lbl">Narrative</div><div class="a-val">first-person</div></div>
-        <div class="attr"><div class="a-lbl">Hook type</div><div class="a-val">emotional-hook</div></div>
-        <div class="attr"><div class="a-lbl">Authenticity</div><div class="a-val">high</div></div>
-        <div class="attr"><div class="a-lbl">Colloquiality</div><div class="a-val">8.0/10</div></div>
-        <div class="attr"><div class="a-lbl">Eye contact</div><div class="a-val">7.0/10</div></div>
-      </div>
-      <p style="margin-top:8px"><b class="fg">What it's about:</b> RYZE Mushroom Coffee is the secret solution to bloating and poor gut health as seen in viral videos.</p>
-      <h4>Why it worked</h4><ul style="padding-left:18px; margin:0;"><li style="margin-bottom:6px"><b class="fg" style="text-transform:capitalize">hook:</b> Uses a 'storytime' reaction format which is highly native to TikTok/Reels.</li><li style="margin-bottom:6px"><b class="fg" style="text-transform:capitalize">visual:</b> Visual variety is exceptionally high with cuts every ~1.3 seconds.</li><li style="margin-bottom:6px"><b class="fg" style="text-transform:capitalize">structure:</b> The '3 times a day' bathroom fact acts as a strong educational pattern interrupt.</li><li style="margin-bottom:6px"><b class="fg" style="text-transform:capitalize">retention:</b> Use of anatomical animations provides 'scientific' authority to the claims.</li></ul>
-    </div>
-
-    <h2>Anatomy of the worst ad</h2>
-    
-    <div class="anatomy lose">
-      <div class="title-row">
-        <div>
-          <h4 class="lose" style="color: var(--lose); text-transform: uppercase; letter-spacing: 0.08em;">Bottom performer (spend &gt; $100)</h4>
-          <h3>Highly native reaction-style ad leveraging relatable social proof.</h3>
-          <div class="mname">MC_45_A_M-UGC_(5) d7_compressed.mp4</div>
+      <div class="year-card y26">
+        <span class="yr-badge">2026 · P45–P48</span>
+        <h3>$326,145 spend</h3>
+        <p style="margin:4px 0 0; color: var(--muted)">1,619 orders · 68,427 visits · 314 ad rows</p>
+        <div class="metrics">
+          <div><div class="m-lbl">ROAS (weighted)</div><div class="m-val">0.25</div></div>
+          <div><div class="m-lbl">CPO</div><div class="m-val">$412</div></div>
+          <div><div class="m-lbl">ECR</div><div class="m-val">1.22%</div></div>
+          <div><div class="m-lbl">CPM</div><div class="m-val">$30.88</div></div>
+          <div><div class="m-lbl">AOV</div><div class="m-val">$47</div></div>
+          <div><div class="m-lbl">nROAS</div><div class="m-val">25.0</div></div>
         </div>
       </div>
-      <div class="bignum">
-        <div><div class="bn-val lose">0.02</div><div class="bn-lbl">ROAS</div></div>
-        <div><div class="bn-val">$347</div><div class="bn-lbl">Spend</div></div>
-        <div><div class="bn-val">0</div><div class="bn-lbl">Orders</div></div>
-        <div><div class="bn-val">0/min</div><div class="bn-lbl">Cut density</div></div>
-        <div><div class="bn-val">28s</div><div class="bn-lbl">Duration</div></div>
-      </div>
-      <div class="attrs">
-        <div class="attr"><div class="a-lbl">Script angle</div><div class="a-val">ugc-reaction</div></div>
-        <div class="attr"><div class="a-lbl">Narrative</div><div class="a-val">first-person</div></div>
-        <div class="attr"><div class="a-lbl">Hook type</div><div class="a-val">story-tease</div></div>
-        <div class="attr"><div class="a-lbl">Authenticity</div><div class="a-val">high</div></div>
-        <div class="attr"><div class="a-lbl">Colloquiality</div><div class="a-val">9.0/10</div></div>
-        <div class="attr"><div class="a-lbl">Eye contact</div><div class="a-val">3.0/10</div></div>
-      </div>
-      <p style="margin-top:8px"><b class="fg">What it tried:</b> RYZE's holiday sale is so good that even the creator's mom is frantically ordering free gifts for the whole family.</p>
-      <h4>What went wrong</h4><ul style="padding-left:18px; margin:0;"><li style="margin-bottom:6px"><b class="fg" style="text-transform:capitalize">hook:</b> The ad opens with a high-energy, relatable reaction shot in a car.</li><li style="margin-bottom:6px"><b class="fg" style="text-transform:capitalize">structure:</b> Uses a secondary character (the mom) to deliver the sales pitch.</li><li style="margin-bottom:6px"><b class="fg" style="text-transform:capitalize">visual:</b> Single-take UGC style maintains authenticity throughout.</li><li style="margin-bottom:6px"><b class="fg" style="text-transform:capitalize">copy:</b> Specific naming of free products increases the perceived value of the sale.</li></ul>
     </div>
 
-    <h2>Does more cuts actually mean more ROAS?</h2>
-    <p class="lead">Each dot is one ad. Green = winner cohort, red = loser cohort, size = spend.</p>
+    <h2 id="trajectory">Phase-by-phase trajectory<span class="sub">ROAS and ECR across P30–P48</span></h2>
     <div class="chart-card">
-      <h3>Cuts per minute vs weighted ROAS</h3>
+      <h3>ROAS per phase · 2025 vs 2026</h3>
+      <p class="sub">P32 was the all-time peak (ROAS 0.30). P45 was the all-time trough (0.14). P46 showed 2026 can still hit heights — but hasn't sustained them.</p>
+      <div class="chart-wrap"><canvas id="phase-roas"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>ECR per phase · 2025 vs 2026</h3>
+      <p class="sub">The attention gap. 2025 phases hover at 1.8–2.4% engagement-continuation. 2026 phases barely cross 1.4%. This is where the bleeding starts.</p>
+      <div class="chart-wrap"><canvas id="phase-ecr"></canvas></div>
+    </div>
+
+    <h2 id="format">The format shift<span class="sub">INT-UGC used to carry the portfolio. It doesn't anymore.</span></h2>
+    <div class="two-col">
+      <div class="chart-card" style="margin:0">
+        <h3>Spend by UGC format</h3>
+        <p class="sub">INT-UGC went from 48% of spend in 2025 to 22% in 2026. DR-UGC overtook it. M-UGC grew from 2% to 23%.</p>
+        <div class="chart-wrap small"><canvas id="ugc-spend"></canvas></div>
+      </div>
+      <div class="chart-card" style="margin:0">
+        <h3>ROAS by UGC format</h3>
+        <p class="sub">INT-UGC ROAS fell from 0.30 to 0.15 (−51%). M-UGC is the 2026 star at 0.38.</p>
+        <div class="chart-wrap small"><canvas id="ugc-roas"></canvas></div>
+      </div>
+    </div>
+
+    <h2 id="themes">The theme shift<span class="sub">The content angles that carried 2025 are nearly absent from 2026</span></h2>
+    <div class="table-card">
+      <table>
+        <thead><tr>
+          <th>Angle / theme</th>
+          <th class="tabular">2025 spend</th>
+          <th class="tabular">2025 ROAS</th>
+          <th class="tabular">2026 spend</th>
+          <th class="tabular">2026 ROAS</th>
+          <th class="tabular">ΔROAS</th>
+          <th>Verdict</th>
+        </tr></thead>
+        <tbody>
+        <tr>
+              <td>sale/discount</td>
+              <td class="tabular">$8,000</td>
+              <td class="tabular">0.14</td>
+              <td class="tabular">$130,397</td>
+              <td class="tabular">0.39</td>
+              <td class="tabular">+0.25</td>
+              <td><span class="pill pill-win">Improving</span></td>
+            </tr><tr>
+              <td>liver</td>
+              <td class="tabular">$111,329</td>
+              <td class="tabular">0.27</td>
+              <td class="tabular">$8,998</td>
+              <td class="tabular">0.19</td>
+              <td class="tabular">-0.07</td>
+              <td><span class="pill pill-lose">Degrading</span></td>
+            </tr><tr>
+              <td>blood_sugar</td>
+              <td class="tabular">$105,061</td>
+              <td class="tabular">0.27</td>
+              <td class="tabular">$0</td>
+              <td class="tabular">—</td>
+              <td class="tabular">—</td>
+              <td><span class="pill pill-lose">Killed off</span></td>
+            </tr><tr>
+              <td>gut/bloat</td>
+              <td class="tabular">$46,450</td>
+              <td class="tabular">0.20</td>
+              <td class="tabular">$44,914</td>
+              <td class="tabular">0.16</td>
+              <td class="tabular">-0.04</td>
+              <td><span class="pill pill-n">—</span></td>
+            </tr><tr>
+              <td>cortisol</td>
+              <td class="tabular">$18,111</td>
+              <td class="tabular">0.33</td>
+              <td class="tabular">$62,989</td>
+              <td class="tabular">0.13</td>
+              <td class="tabular">-0.20</td>
+              <td><span class="pill pill-lose">Degrading</span></td>
+            </tr><tr>
+              <td>constipation</td>
+              <td class="tabular">$31,086</td>
+              <td class="tabular">0.17</td>
+              <td class="tabular">$12,288</td>
+              <td class="tabular">0.18</td>
+              <td class="tabular">+0.01</td>
+              <td><span class="pill pill-n">—</span></td>
+            </tr><tr>
+              <td>benefit_bombing</td>
+              <td class="tabular">$16,544</td>
+              <td class="tabular">0.17</td>
+              <td class="tabular">$18,999</td>
+              <td class="tabular">0.25</td>
+              <td class="tabular">+0.08</td>
+              <td><span class="pill pill-win">Improving</span></td>
+            </tr><tr>
+              <td>weight</td>
+              <td class="tabular">$7,847</td>
+              <td class="tabular">0.16</td>
+              <td class="tabular">$11,996</td>
+              <td class="tabular">0.13</td>
+              <td class="tabular">-0.03</td>
+              <td><span class="pill pill-n">—</span></td>
+            </tr><tr>
+              <td>energy</td>
+              <td class="tabular">$19,123</td>
+              <td class="tabular">0.17</td>
+              <td class="tabular">$375</td>
+              <td class="tabular">0.05</td>
+              <td class="tabular">-0.12</td>
+              <td><span class="pill pill-lose">Killed off</span></td>
+            </tr><tr>
+              <td>anxiety</td>
+              <td class="tabular">$7,243</td>
+              <td class="tabular">0.11</td>
+              <td class="tabular">$3,150</td>
+              <td class="tabular">0.06</td>
+              <td class="tabular">-0.05</td>
+              <td><span class="pill pill-n">—</span></td>
+            </tr><tr>
+              <td>mucus</td>
+              <td class="tabular">$4,290</td>
+              <td class="tabular">0.25</td>
+              <td class="tabular">$0</td>
+              <td class="tabular">—</td>
+              <td class="tabular">—</td>
+              <td><span class="pill pill-n">—</span></td>
+            </tr><tr>
+              <td>new_year</td>
+              <td class="tabular">$269</td>
+              <td class="tabular">0.00</td>
+              <td class="tabular">$434</td>
+              <td class="tabular">0.04</td>
+              <td class="tabular">+0.04</td>
+              <td><span class="pill pill-n">—</span></td>
+            </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="hero">Where are the heroes?<span class="sub">Q1 2025 had a $239k breakout. Q1 2026's biggest creative is $28k.</span></h2>
+    <div class="headline-grid">
+      <div>
+        <h4 style="color: var(--year25)">2025 top ad-names by spend</h4>
+        <div class="ad-card y25" style="margin-bottom:10px">
+              <div class="ad-title">Viscap P32 | IT_MC_32_B_INT-UGC_(21)_Silver_wells-Did-you-guys-see-that-video-of-one-girl-crying-because-she-took-adaptogenic-mushrooms | V2</div>
+              <div class="ad-meta"><span>INT-UGC · Silver · 4 ad-rows</span></div>
+              <div class="ad-stats">
+                <div class="ad-stat"><div class="s-lbl">Spend</div><div class="s-val y25">$238,935</div></div>
+                <div class="ad-stat"><div class="s-lbl">Orders</div><div class="s-val">2,124</div></div>
+                <div class="ad-stat"><div class="s-lbl">ROAS</div><div class="s-val y25">0.33</div></div>
+                <div class="ad-stat"><div class="s-lbl">ECR</div><div class="s-val">2.60%</div></div>
+              </div>
+            </div><div class="ad-card y25" style="margin-bottom:10px">
+              <div class="ad-title">Viscap P30 | MC_30A_(20)_IT_Kari_Deike_If-you-have-never-ending-mucus-your-liver-might-be-the-answer | V2 | 12.04 - Copy</div>
+              <div class="ad-meta"><span>—-UGC · unknown creator · 1 ad-rows</span></div>
+              <div class="ad-stats">
+                <div class="ad-stat"><div class="s-lbl">Spend</div><div class="s-val y25">$95,333</div></div>
+                <div class="ad-stat"><div class="s-lbl">Orders</div><div class="s-val">678</div></div>
+                <div class="ad-stat"><div class="s-lbl">ROAS</div><div class="s-val y25">0.28</div></div>
+                <div class="ad-stat"><div class="s-lbl">ECR</div><div class="s-val">2.16%</div></div>
+              </div>
+            </div><div class="ad-card y25" style="margin-bottom:10px">
+              <div class="ad-title">Viscap P32 | IT_MC_32_B_INT-UGC_(22)_Silver_Wells-I-lost-14-pounds-in-three-weeks-by-fixing-my-chronically-high-blood-sugar-levels | V3 | 02</div>
+              <div class="ad-meta"><span>INT-UGC · Wells · 6 ad-rows</span></div>
+              <div class="ad-stats">
+                <div class="ad-stat"><div class="s-lbl">Spend</div><div class="s-val y25">$53,523</div></div>
+                <div class="ad-stat"><div class="s-lbl">Orders</div><div class="s-val">501</div></div>
+                <div class="ad-stat"><div class="s-lbl">ROAS</div><div class="s-val y25">0.34</div></div>
+                <div class="ad-stat"><div class="s-lbl">ECR</div><div class="s-val">2.45%</div></div>
+              </div>
+            </div><div class="ad-card y25" style="margin-bottom:10px">
+              <div class="ad-title">Viscap P32 | MC_32_C_DR-UGC_(2)_FUTURE_PACING_SMOKING_All_Viscap_Shots-This-is-what-would-happen-to-your-smokers-lungs-if-you-drank-one-cup-</div>
+              <div class="ad-meta"><span>DR-UGC · PACING SMOKING · 5 ad-rows</span></div>
+              <div class="ad-stats">
+                <div class="ad-stat"><div class="s-lbl">Spend</div><div class="s-val y25">$38,195</div></div>
+                <div class="ad-stat"><div class="s-lbl">Orders</div><div class="s-val">437</div></div>
+                <div class="ad-stat"><div class="s-lbl">ROAS</div><div class="s-val y25">0.48</div></div>
+                <div class="ad-stat"><div class="s-lbl">ECR</div><div class="s-val">2.95%</div></div>
+              </div>
+            </div>
+      </div>
+      <div>
+        <h4 style="color: var(--year26)">2026 top ad-names by spend</h4>
+        <div class="ad-card y26" style="margin-bottom:10px">
+              <div class="ad-title">Viscap 46 |  IT_MC_46_B_M-UGC_(17)_LOW_Price_Jordan_How-much-does-all-of-this-cost? | V1 | 01.21.26 [Scaled]</div>
+              <div class="ad-meta"><span>M-UGC · Jordan How · 1 ad-rows</span></div>
+              <div class="ad-stats">
+                <div class="ad-stat"><div class="s-lbl">Spend</div><div class="s-val y26">$27,819</div></div>
+                <div class="ad-stat"><div class="s-lbl">Orders</div><div class="s-val">240</div></div>
+                <div class="ad-stat"><div class="s-lbl">ROAS</div><div class="s-val y26">0.54</div></div>
+                <div class="ad-stat"><div class="s-lbl">ECR</div><div class="s-val">1.14%</div></div>
+              </div>
+            </div><div class="ad-card y26" style="margin-bottom:10px">
+              <div class="ad-title">IT_RSK_46_C_DR-UGC_(18)_LOW_Price_Stuart_love-RYZE-but-it's-so-expensive-can-you-lower-the-price? | 02.10.26</div>
+              <div class="ad-meta"><span>DR-UGC · Stuart · 4 ad-rows</span></div>
+              <div class="ad-stats">
+                <div class="ad-stat"><div class="s-lbl">Spend</div><div class="s-val y26">$16,325</div></div>
+                <div class="ad-stat"><div class="s-lbl">Orders</div><div class="s-val">179</div></div>
+                <div class="ad-stat"><div class="s-lbl">ROAS</div><div class="s-val y26">0.59</div></div>
+                <div class="ad-stat"><div class="s-lbl">ECR</div><div class="s-val">2.00%</div></div>
+              </div>
+            </div><div class="ad-card y26" style="margin-bottom:10px">
+              <div class="ad-title">Viscap 47 | MC_47_B_INT-UGC_(11)_LOW_Stuck Poop_Sarah-If-your-poop-is-coming-out-in-pebbles-you're-constipated-and-your-gut-bacteria-are-out</div>
+              <div class="ad-meta"><span>INT-UGC · LOW · 1 ad-rows</span></div>
+              <div class="ad-stats">
+                <div class="ad-stat"><div class="s-lbl">Spend</div><div class="s-val y26">$9,555</div></div>
+                <div class="ad-stat"><div class="s-lbl">Orders</div><div class="s-val">43</div></div>
+                <div class="ad-stat"><div class="s-lbl">ROAS</div><div class="s-val y26">0.17</div></div>
+                <div class="ad-stat"><div class="s-lbl">ECR</div><div class="s-val">0.96%</div></div>
+              </div>
+            </div><div class="ad-card y26" style="margin-bottom:10px">
+              <div class="ad-title">Viscap 46 |  IT_MC_46_B_M-UGC_(17)_LOW_Price_Jordan_How-much-does-all-of-this-cost? | V1 | 01.29.26</div>
+              <div class="ad-meta"><span>M-UGC · Jordan How · 4 ad-rows</span></div>
+              <div class="ad-stats">
+                <div class="ad-stat"><div class="s-lbl">Spend</div><div class="s-val y26">$9,245</div></div>
+                <div class="ad-stat"><div class="s-lbl">Orders</div><div class="s-val">80</div></div>
+                <div class="ad-stat"><div class="s-lbl">ROAS</div><div class="s-val y26">0.57</div></div>
+                <div class="ad-stat"><div class="s-lbl">ECR</div><div class="s-val">1.33%</div></div>
+              </div>
+            </div>
+      </div>
+    </div>
+
+    <h2 id="findings">Why 2026 is softer — six observations<span class="sub">Root-cause hypothesis after decomposing 972 ad rows</span></h2>
+
+    <div class="finding-grid">
+      <div class="finding bad">
+        <h4>OBSERVATION #1 · Attention gap</h4>
+        <h3>ECR collapsed 45% year-over-year</h3>
+        <div class="big bad">2.22% → 1.22%</div>
+        <p>Engagement-continuation — the share of impressions that didn't swipe away — dropped from <b class="fg">2.22%</b> in 2025 to <b class="fg">1.22%</b> in 2026. This is <em>not</em> a ROAS problem yet — it's the input signal for the whole funnel. Less continuation → fewer visits → fewer orders per $ spent. Every downstream number flows from this.</p>
+      </div>
+
+      <div class="finding bad">
+        <h4>OBSERVATION #2 · Format collapse</h4>
+        <h3>INT-UGC lost 51% of its ROAS</h3>
+        <div class="big bad">0.30 → 0.15</div>
+        <p>Interactive UGC — talking-head creators with high visual variety — was the 2025 workhorse at <b class="fg">$443,414</b> spend and ROAS 0.30. In 2026 the same format drew only $73,091 and ROAS 0.15. ECR on INT fell from 2.37% to 0.97%. Audiences have seen this format a thousand times.</p>
+      </div>
+
+      <div class="finding bad">
+        <h4>OBSERVATION #3 · Hero-creative drought</h4>
+        <h3>No 2026 creative approaches 2025's breakout</h3>
+        <div class="big bad">$239k → $28k</div>
+        <p>The top 2025 ad (<b class="fg">IT_MC_32_B Silver Wells — "Did you guys see that video of one girl crying"</b>) spent $238,935 at 0.33 ROAS — <b class="fg">26% of all 2025 spend</b> on a single creative. 2025's top 3 ads took 42% of budget. 2026's biggest creative is $27,819. The portfolio is spread thin across many mid-performers instead of concentrated behind a hero.</p>
+      </div>
+
+      <div class="finding bad">
+        <h4>OBSERVATION #4 · Pillar theme abandoned</h4>
+        <h3>Liver + blood-sugar went from $216,390 to $8,998</h3>
+        <div class="big bad">$207,392 of proven angles lost</div>
+        <p>2025's two anchor pain-points — <b class="fg">liver</b> ($111,329, 0.27 ROAS) and <b class="fg">blood sugar</b> ($105,061, 0.27 ROAS) — were replaced by cortisol ($62,989, <b class="fg">0.13 ROAS</b>) as the dominant health angle. Cortisol pays less than half. The pivot away from what worked wasn't matched by a same-efficacy replacement.</p>
+      </div>
+
+      <div class="finding good">
+        <h4>OBSERVATION #5 · One bright spot</h4>
+        <h3>Sale/price angle is 2026's saviour</h3>
+        <div class="big good">0.39 ROAS</div>
+        <p>The sale/discount angle was marginal in 2025 ($8,000 spend, 0.14 ROAS) but became <b class="fg">40% of 2026 spend</b> ($130,397) at ROAS 0.39 — the highest of any theme either year. The top two 2026 ads are both sale-angle creatives. This is a rare upside: price-sensitivity messaging is working when health-problem messaging isn't.</p>
+      </div>
+
+      <div class="finding good">
+        <h4>OBSERVATION #6 · Format to double down on</h4>
+        <h3>M-UGC emerged as a scalable winner</h3>
+        <div class="big good">0.20 → 0.38 ROAS</div>
+        <p>Mobile/motion UGC was a rounding error in 2025 (30 rows, $20,524 at ROAS 0.20). In 2026 it grew 4× in spend to <b class="fg">$75,741</b> and nearly doubled ROAS to <b class="fg">0.38</b> — the best UGC format of either year. The top 2026 ad (Jordan "How much does this cost?") is M-UGC. This is the format to scale, not INT-UGC.</p>
+      </div>
+    </div>
+
+    <h2 id="creative-decode">Creative decode — deep dive into 24 analysed videos<span class="sub">What separates the 5 top-ROAS ads from the 5 bottom-ROAS ads</span></h2>
+
+    <div class="compare">
+      <div class="vs-card winners">
+        <span class="badge">Winners · Top 5 by ROAS</span>
+        <h3>High-octane problem-solution</h3>
+        <div class="stat">0.30</div>
+        <div class="stat-lbl">Avg ROAS · $307,206 spend</div>
+        <p style="margin-top:14px">Cut density <b class="fg">38/min</b> · Hook fires in <b class="fg">4.7s</b> · Eye contact <b class="fg">7.8/10</b> · 1.3 people avg in frame</p>
+      </div>
+      <div class="vs-card losers">
+        <span class="badge">Losers · Bottom 5 by ROAS</span>
+        <h3>Story-told, solution delayed</h3>
+        <div class="stat">0.05</div>
+        <div class="stat-lbl">Avg ROAS · $2,144 spend</div>
+        <p style="margin-top:14px">Cut density <b class="fg">31/min</b> · Hook fires in <b class="fg">5.5s</b> · Eye contact <b class="fg">6.4/10</b> · 2.0 people avg in frame</p>
+      </div>
+    </div>
+
+    <h3>Three things the losers did that the winners didn't</h3>
+    <div class="bigcards">
+      <div class="pattern-card lose">
+        <h4 class="lose">Loser pattern · Hook</h4>
+        <h3>Question hooks invite thinking — the feed punishes thinking</h3>
+        <div class="prf">2 of 5</div>
+        <p>Loser cohort opened with a question 40% of the time. Winners: zero. Swap questions for bold claims.</p>
+      </div>
+      <div class="pattern-card lose">
+        <h4 class="lose">Loser pattern · Narrative</h4>
+        <h3>Third-person narration feels like a podcast intro</h3>
+        <div class="prf">2 of 5</div>
+        <p>Losers used 3rd-person narration; every winner used first-person. One loser didn't reveal the product until <b class="fg">87% through the video</b>. First-person or don't ship.</p>
+      </div>
+      <div class="pattern-card win">
+        <h4 class="win">Winner pattern · Pacing</h4>
+        <h3>Cut every 1.7 seconds — don't let them breathe</h3>
+        <div class="prf">38 cuts/min</div>
+        <p>Winners averaged 38/min vs 31 for losers. Anatomical animations, b-roll inserts, text overlays — reset attention before boredom sets in.</p>
+      </div>
+      <div class="pattern-card win">
+        <h4 class="win">Winner pattern · CTA</h4>
+        <h3>Risk-reversal converts. Urgency bounces.</h3>
+        <div class="prf">money-back</div>
+        <p>Every winning creative closed with a 30-day money-back guarantee framed "Risk-Free". Losers leaned on scarcity + countdown language. Safety converts; pressure pushes back.</p>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h3>Cuts per minute vs ROAS</h3>
+      <p class="sub">Each dot = one analysed creative. Green = winner cohort, red = loser cohort, dot size = spend.</p>
       <div class="chart-wrap"><canvas id="scatter-cuts"></canvas></div>
     </div>
 
-    <h2>The Ryze playbook</h2>
+    <h2 id="playbook">The Ryze playbook<span class="sub">What to ship next week based on everything above</span></h2>
     <div class="playbook">
-      <h3>What to do more of</h3>
+      <h3>Do more of this</h3>
       <div class="rule">
         <div class="num">1</div>
         <div class="body">
-          <h4>Open with certainty, not curiosity</h4>
-          <p>Bold claim, visual reveal, or pattern interrupt in the first 5 seconds. No question hooks. No "wait for it".</p>
+          <h4>Double down on M-UGC + price/sale angles</h4>
+          <p>2026's top two creatives are M-UGC sale-angle ads at ROAS 0.55+. That's the repeatable formula this year. Budget-shift INT-UGC test money here.</p>
         </div>
       </div>
       <div class="rule">
         <div class="num">2</div>
         <div class="body">
-          <h4>Cut every ~1.7 seconds</h4>
-          <p>Target 35+ cuts per minute. Use anatomical animations, text overlays, b-roll inserts — anything that resets attention without changing the voice.</p>
+          <h4>Rebuild a blood-sugar + liver pain-point bench</h4>
+          <p>These angles carried 2025 at 0.27 ROAS. Reissue variants with fresh 2026 creators (Jordan, Stuart, Sally) instead of burnt-out Silver Wells recuts.</p>
         </div>
       </div>
       <div class="rule">
         <div class="num">3</div>
         <div class="body">
-          <h4>First-person, one face</h4>
-          <p>A single creator looking straight into the camera, narrating their own experience. Two people on screen is already too many.</p>
+          <h4>Hunt for the 2026 hero</h4>
+          <p>2025 had Silver Wells ($239k on one ad). 2026 needs one bet to scale past $50k. Pick the two M-UGC sale creatives already at ROAS 0.55 and pour budget.</p>
         </div>
       </div>
       <div class="rule">
         <div class="num">4</div>
         <div class="body">
-          <h4>Pivot to peer at ~8 seconds</h4>
-          <p>After the hook: "I used to think X too" or "Here's what I got wrong". Turn off the selling, turn on the teaching.</p>
-        </div>
-      </div>
-      <div class="rule">
-        <div class="num">5</div>
-        <div class="body">
-          <h4>Close with risk reversal, not urgency</h4>
-          <p>30-day money-back guarantee, framed as "Risk-Free". Skip the countdown timers and stock-running-out language.</p>
+          <h4>Open with certainty, cut every 1.7 sec, close with guarantee</h4>
+          <p>Bold claim or visual reveal in first 5s. Target 35+ cuts/min. 30-day money-back in the last beat. Skip questions, skip 3rd-person narration, skip pure urgency.</p>
         </div>
       </div>
     </div>
 
     <div class="playbook" style="background: linear-gradient(180deg, rgba(239,68,68,0.04), transparent);">
-      <h3>What to cut from the queue</h3>
+      <h3>Stop shipping this</h3>
       <div class="rule avoid">
         <div class="num">✕</div>
         <div class="body">
-          <h4>Question hooks</h4>
-          <p>"Why does your stomach feel bloated?" invites the viewer to think — and then swipe. Swap to a bold claim.</p>
+          <h4>More INT-UGC talking-head clones</h4>
+          <p>The format is saturated. ECR on INT fell from 2.37% to 0.97%. Audiences are blind to it. Don't add another one.</p>
         </div>
       </div>
       <div class="rule avoid">
         <div class="num">✕</div>
         <div class="body">
-          <h4>3rd-person narration</h4>
-          <p>"Ancient healers believed…" is a podcast intro, not an ad. First-person or nothing.</p>
+          <h4>Cortisol-focused pain points</h4>
+          <p>$63k spent at 0.13 ROAS in 2026 — the worst risk-adjusted theme. Either find a fresher cortisol frame (not "signs you're stressed") or park it.</p>
         </div>
       </div>
       <div class="rule avoid">
         <div class="num">✕</div>
         <div class="body">
-          <h4>Storytime with delayed product reveal</h4>
-          <p>If the product doesn't appear until the second half, you've already lost 70% of viewers. Tease the payoff in the first 10 seconds.</p>
-        </div>
-      </div>
-      <div class="rule avoid">
-        <div class="num">✕</div>
-        <div class="body">
-          <h4>Pure scarcity CTAs</h4>
-          <p>"Sale ends tonight" without a safety net reads as pressure. Pair urgency with a guarantee or drop it.</p>
+          <h4>Question hooks + 3rd-person narration</h4>
+          <p>Zero winners use these. The feed rewards certainty, not curiosity. Swap "Is your stomach bloated?" for "Your stomach is bloated because…".</p>
         </div>
       </div>
     </div>
 
-    <h2>All credible creatives — ranked</h2>
-    <div class="lbtable">
+    <h2>All 22 credible creatives — ranked</h2>
+    <div class="table-card scroll">
       <table>
         <thead><tr>
           <th>Creative</th>
+          <th>Period</th>
           <th>Cohort</th>
           <th>Angle</th>
           <th>Hook type</th>
@@ -660,375 +708,380 @@
           <th class="tabular">Spend</th>
           <th class="tabular">Orders</th>
           <th class="tabular">Cuts/min</th>
-          <th class="tabular">Duration</th>
         </tr></thead>
         <tbody>
-          <tr>
-                <td><span class="tr mono" title="IT_MA_32_D_INT-UGC_(16)_D6_compressed.mp4">IT MA 32 D INT-UGC (16) D6</span></td>
-                <td><span class="pill pill-win">Winner</span></td>
-                <td>problem-solution</td>
-                <td>bold-claim</td>
-                <td class="tabular">0.35</td>
-                <td class="tabular">$957</td>
-                <td class="tabular">6</td>
-                <td class="tabular">38</td>
-                <td class="tabular">99s</td>
-              </tr><tr>
-                <td><span class="tr mono" title="IT_MC_32_B_INT-UGC_(21)_D6_compressed.mp4">IT MC 32 B INT-UGC (21) D6</span></td>
-                <td><span class="pill pill-win">Winner</span></td>
-                <td>ugc-reaction</td>
-                <td>emotional-hook</td>
-                <td class="tabular">0.33</td>
-                <td class="tabular">$246,845</td>
-                <td class="tabular">2,185</td>
-                <td class="tabular">46</td>
-                <td class="tabular">63s</td>
-              </tr><tr>
-                <td><span class="tr mono" title="IT_MC_32_B_INT-UGC_(22)_d9_compressed.mp4">IT MC 32 B INT-UGC (22) d9</span></td>
-                <td><span class="pill pill-win">Winner</span></td>
-                <td>—</td>
-                <td>—</td>
-                <td class="tabular">0.33</td>
-                <td class="tabular">$58,645</td>
-                <td class="tabular">536</td>
-                <td class="tabular">24</td>
-                <td class="tabular">132s</td>
-              </tr><tr>
-                <td><span class="tr mono" title="MC_46_D_DR-UGC_(10)_LOW_Benefit_Bombing_D9_compressed.mp4">MC 46 D DR-UGC (10) LOW Benefit Bombing D9</span></td>
-                <td><span class="pill pill-win">Winner</span></td>
-                <td>comparison</td>
-                <td>pattern-interrupt</td>
-                <td class="tabular">0.26</td>
-                <td class="tabular">$383</td>
-                <td class="tabular">2</td>
-                <td class="tabular">42</td>
-                <td class="tabular">36s</td>
-              </tr><tr>
-                <td><span class="tr mono" title="MC_47_B_INT-UGC_(9)d8_compressed.mp4">MC 47 B INT-UGC (9)d8</span></td>
-                <td><span class="pill pill-win">Winner</span></td>
-                <td>problem-solution</td>
-                <td>bold-claim</td>
-                <td class="tabular">0.22</td>
-                <td class="tabular">$376</td>
-                <td class="tabular">1</td>
-                <td class="tabular">38</td>
-                <td class="tabular">82s</td>
-              </tr><tr>
-                <td><span class="tr mono" title="MC_46_B_DR-UGC_(8)_LOW_Cortisol_Reshoot _CR1[v5]_compressed.mp4">MC 46 B DR-UGC (8) LOW Cortisol Reshoot CR1[v5]</span></td>
-                <td><span class="pill pill-win">Winner</span></td>
-                <td>comparison</td>
-                <td>visual-reveal</td>
-                <td class="tabular">0.22</td>
-                <td class="tabular">$354</td>
-                <td class="tabular">1</td>
-                <td class="tabular">24</td>
-                <td class="tabular">49s</td>
-              </tr><tr>
-                <td><span class="tr mono" title="IT_MC_32_C_INT-UGC_(21)_D6_compressed.mp4">IT MC 32 C INT-UGC (21) D6</span></td>
-                <td><span class="pill pill-n">—</span></td>
-                <td>problem-solution</td>
-                <td>bold-claim</td>
-                <td class="tabular">0.22</td>
-                <td class="tabular">$5,782</td>
-                <td class="tabular">33</td>
-                <td class="tabular">27</td>
-                <td class="tabular">62s</td>
-              </tr><tr>
-                <td><span class="tr mono" title="MC_45_C_DR-UGC_(14)_MED_Liver_D7_compressed.mp4">MC 45 C DR-UGC (14) MED Liver D7</span></td>
-                <td><span class="pill pill-n">—</span></td>
-                <td>problem-solution</td>
-                <td>bold-claim</td>
-                <td class="tabular">0.20</td>
-                <td class="tabular">$8,592</td>
-                <td class="tabular">44</td>
-                <td class="tabular">32</td>
-                <td class="tabular">69s</td>
-              </tr><tr>
-                <td><span class="tr mono" title="CR_32_A_DR-UGC_(8)_BLOOD_SUGAR d6_compressed.mp4">CR 32 A DR-UGC (8) BLOOD SUGAR d6</span></td>
-                <td><span class="pill pill-n">—</span></td>
-                <td>listicle</td>
-                <td>visual-reveal</td>
-                <td class="tabular">0.19</td>
-                <td class="tabular">$263</td>
-                <td class="tabular">1</td>
-                <td class="tabular">42</td>
-                <td class="tabular">57s</td>
-              </tr><tr>
-                <td><span class="tr mono" title="CR_33_B_DR-UGC_(13)_D7_compressed.mp4">CR 33 B DR-UGC (13) D7</span></td>
-                <td><span class="pill pill-n">—</span></td>
-                <td>problem-solution</td>
-                <td>visual-reveal</td>
-                <td class="tabular">0.16</td>
-                <td class="tabular">$456</td>
-                <td class="tabular">1</td>
-                <td class="tabular">25</td>
-                <td class="tabular">52s</td>
-              </tr><tr>
-                <td><span class="tr mono" title="MC_45_C_M-UGC_(5)_LOW_Free_Gift_D3_compressed.mp4">MC 45 C M-UGC (5) LOW Free Gift D3</span></td>
-                <td><span class="pill pill-n">—</span></td>
-                <td>—</td>
-                <td>—</td>
-                <td class="tabular">0.16</td>
-                <td class="tabular">$499</td>
-                <td class="tabular">2</td>
-                <td class="tabular">17</td>
-                <td class="tabular">14s</td>
-              </tr><tr>
-                <td><span class="tr mono" title="MC_45_B_INT-UGC_(10)_LOW_Cortisol_d4_compressed.mp4">MC 45 B INT-UGC (10) LOW Cortisol d4</span></td>
-                <td><span class="pill pill-n">—</span></td>
-                <td>problem-solution</td>
-                <td>bold-claim</td>
-                <td class="tabular">0.16</td>
-                <td class="tabular">$4,456</td>
-                <td class="tabular">19</td>
-                <td class="tabular">28</td>
-                <td class="tabular">82s</td>
-              </tr><tr>
-                <td><span class="tr mono" title="MC_45_B_M-UGC_(6)_LOW_Bloating_D4_compressed.mp4">MC 45 B M-UGC (6) LOW Bloating D4</span></td>
-                <td><span class="pill pill-n">—</span></td>
-                <td>problem-solution</td>
-                <td>story-tease</td>
-                <td class="tabular">0.15</td>
-                <td class="tabular">$1,189</td>
-                <td class="tabular">3</td>
-                <td class="tabular">15</td>
-                <td class="tabular">25s</td>
-              </tr><tr>
-                <td><span class="tr mono" title="MC_46_B_DR-UGC_(5)_LOW_Gut_Health_D4_compressed.mp4">MC 46 B DR-UGC (5) LOW Gut Health D4</span></td>
-                <td><span class="pill pill-n">—</span></td>
-                <td>problem-solution</td>
-                <td>pattern-interrupt</td>
-                <td class="tabular">0.15</td>
-                <td class="tabular">$379</td>
-                <td class="tabular">2</td>
-                <td class="tabular">17</td>
-                <td class="tabular">56s</td>
-              </tr><tr>
-                <td><span class="tr mono" title="MC_44_C_DR-UGC_(9) d4_compressed.mp4">MC 44 C DR-UGC (9) d4</span></td>
-                <td><span class="pill pill-n">—</span></td>
-                <td>problem-solution</td>
-                <td>visual-reveal</td>
-                <td class="tabular">0.15</td>
-                <td class="tabular">$5,682</td>
-                <td class="tabular">20</td>
-                <td class="tabular">28</td>
-                <td class="tabular">49s</td>
-              </tr><tr>
-                <td><span class="tr mono" title="MC_45_C_DR-UGC_(9)_LOW____D3_compressed.mp4">MC 45 C DR-UGC (9) LOW D3</span></td>
-                <td><span class="pill pill-n">—</span></td>
-                <td>problem-solution</td>
-                <td>pattern-interrupt</td>
-                <td class="tabular">0.11</td>
-                <td class="tabular">$7,184</td>
-                <td class="tabular">18</td>
-                <td class="tabular">28</td>
-                <td class="tabular">53s</td>
-              </tr><tr>
-                <td><span class="tr mono" title="MC_45_B_M-UGC_(5)_LOW_Cortisol_D3_compressed.mp4">MC 45 B M-UGC (5) LOW Cortisol D3</span></td>
-                <td><span class="pill pill-n">—</span></td>
-                <td>problem-solution</td>
-                <td>bold-claim</td>
-                <td class="tabular">0.11</td>
-                <td class="tabular">$763</td>
-                <td class="tabular">2</td>
-                <td class="tabular">40</td>
-                <td class="tabular">11s</td>
-              </tr><tr>
-                <td><span class="tr mono" title="IT_MC_33_B_DR-UGC_(18)_D5_compressed.mp4">IT MC 33 B DR-UGC (18) D5</span></td>
-                <td><span class="pill pill-n">—</span></td>
-                <td>problem-solution</td>
-                <td>pattern-interrupt</td>
-                <td class="tabular">0.09</td>
-                <td class="tabular">$750</td>
-                <td class="tabular">2</td>
-                <td class="tabular">21</td>
-                <td class="tabular">46s</td>
-              </tr><tr>
-                <td><span class="tr mono" title="MC_45_D_DR-UGC_(8)_LOW_Benefit_Bombing_d6_compressed.mp4">MC 45 D DR-UGC (8) LOW Benefit Bombing d6</span></td>
-                <td><span class="pill pill-lose">Loser</span></td>
-                <td>problem-solution</td>
-                <td>question</td>
-                <td class="tabular">0.07</td>
-                <td class="tabular">$381</td>
-                <td class="tabular">1</td>
-                <td class="tabular">42</td>
-                <td class="tabular">60s</td>
-              </tr><tr>
-                <td><span class="tr mono" title="MC_44_D_MF-UGC_(9)_MED_Liver-d7_compressed.mp4">MC 44 D MF-UGC (9) MED Liver-d7</span></td>
-                <td><span class="pill pill-lose">Loser</span></td>
-                <td>storytime</td>
-                <td>bold-claim</td>
-                <td class="tabular">0.05</td>
-                <td class="tabular">$414</td>
-                <td class="tabular">1</td>
-                <td class="tabular">9</td>
-                <td class="tabular">185s</td>
-              </tr><tr>
-                <td><span class="tr mono" title="IT_MA_32_B_DR-UGC_(13)v2_compressed.mp4">IT MA 32 B DR-UGC (13)v2</span></td>
-                <td><span class="pill pill-lose">Loser</span></td>
-                <td>problem-solution</td>
-                <td>bold-claim</td>
-                <td class="tabular">0.05</td>
-                <td class="tabular">$305</td>
-                <td class="tabular">0</td>
-                <td class="tabular">42</td>
-                <td class="tabular">51s</td>
-              </tr><tr>
-                <td><span class="tr mono" title="IT_MC_33_A_DR-UGC_(19)_CR1_compressed.mp4">IT MC 33 A DR-UGC (19) CR1</span></td>
-                <td><span class="pill pill-lose">Loser</span></td>
-                <td>problem-solution</td>
-                <td>story-tease</td>
-                <td class="tabular">0.04</td>
-                <td class="tabular">$799</td>
-                <td class="tabular">1</td>
-                <td class="tabular">28</td>
-                <td class="tabular">49s</td>
-              </tr><tr>
-                <td><span class="tr mono" title="MA_32_B_INT-UGC_(11)_D6_compressed.mp4">MA 32 B INT-UGC (11) D6</span></td>
-                <td><span class="pill pill-lose">Loser</span></td>
-                <td>problem-solution</td>
-                <td>question</td>
-                <td class="tabular">0.04</td>
-                <td class="tabular">$311</td>
-                <td class="tabular">0</td>
-                <td class="tabular">42</td>
-                <td class="tabular">99s</td>
-              </tr><tr>
-                <td><span class="tr mono" title="MC_45_A_M-UGC_(5) d7_compressed.mp4">MC 45 A M-UGC (5) d7</span></td>
-                <td><span class="pill pill-lose">Loser</span></td>
-                <td>ugc-reaction</td>
-                <td>story-tease</td>
-                <td class="tabular">0.02</td>
-                <td class="tabular">$347</td>
-                <td class="tabular">0</td>
-                <td class="tabular">0</td>
-                <td class="tabular">28s</td>
-              </tr>
+        <tr>
+              <td><span class="tr mono" title="IT_MA_32_D_INT-UGC_(16)_D6_compressed.mp4">IT MA 32 D INT-UGC (16) D6</span></td>
+              <td><span class="pill pill-y25">2025</span></td>
+              <td><span class="pill pill-win">Winner</span></td>
+              <td>problem-solution</td>
+              <td>bold-claim</td>
+              <td class="tabular">0.35</td>
+              <td class="tabular">$957</td>
+              <td class="tabular">6</td>
+              <td class="tabular">38</td>
+            </tr><tr>
+              <td><span class="tr mono" title="IT_MC_32_B_INT-UGC_(21)_D6_compressed.mp4">IT MC 32 B INT-UGC (21) D6</span></td>
+              <td><span class="pill pill-y25">2025</span></td>
+              <td><span class="pill pill-win">Winner</span></td>
+              <td>ugc-reaction</td>
+              <td>emotional-hook</td>
+              <td class="tabular">0.33</td>
+              <td class="tabular">$246,845</td>
+              <td class="tabular">2,184</td>
+              <td class="tabular">46</td>
+            </tr><tr>
+              <td><span class="tr mono" title="IT_MC_32_B_INT-UGC_(22)_d9_compressed.mp4">IT MC 32 B INT-UGC (22) d9</span></td>
+              <td><span class="pill pill-y25">2025</span></td>
+              <td><span class="pill pill-win">Winner</span></td>
+              <td>—</td>
+              <td>—</td>
+              <td class="tabular">0.33</td>
+              <td class="tabular">$58,645</td>
+              <td class="tabular">536</td>
+              <td class="tabular">24</td>
+            </tr><tr>
+              <td><span class="tr mono" title="MC_46_D_DR-UGC_(10)_LOW_Benefit_Bombing_D9_compressed.mp4">MC 46 D DR-UGC (10) LOW Benefit Bombing D9</span></td>
+              <td><span class="pill pill-y26">2026</span></td>
+              <td><span class="pill pill-win">Winner</span></td>
+              <td>comparison</td>
+              <td>pattern-interrupt</td>
+              <td class="tabular">0.26</td>
+              <td class="tabular">$383</td>
+              <td class="tabular">2</td>
+              <td class="tabular">42</td>
+            </tr><tr>
+              <td><span class="tr mono" title="MC_47_B_INT-UGC_(9)d8_compressed.mp4">MC 47 B INT-UGC (9)d8</span></td>
+              <td><span class="pill pill-y26">2026</span></td>
+              <td><span class="pill pill-win">Winner</span></td>
+              <td>problem-solution</td>
+              <td>bold-claim</td>
+              <td class="tabular">0.22</td>
+              <td class="tabular">$376</td>
+              <td class="tabular">1</td>
+              <td class="tabular">38</td>
+            </tr><tr>
+              <td><span class="tr mono" title="MC_46_B_DR-UGC_(8)_LOW_Cortisol_Reshoot _CR1[v5]_compressed.mp4">MC 46 B DR-UGC (8) LOW Cortisol Reshoot CR1[v5]</span></td>
+              <td><span class="pill pill-y26">2026</span></td>
+              <td><span class="pill pill-n">—</span></td>
+              <td>comparison</td>
+              <td>visual-reveal</td>
+              <td class="tabular">0.22</td>
+              <td class="tabular">$354</td>
+              <td class="tabular">1</td>
+              <td class="tabular">24</td>
+            </tr><tr>
+              <td><span class="tr mono" title="IT_MC_32_C_INT-UGC_(21)_D6_compressed.mp4">IT MC 32 C INT-UGC (21) D6</span></td>
+              <td><span class="pill pill-y25">2025</span></td>
+              <td><span class="pill pill-n">—</span></td>
+              <td>problem-solution</td>
+              <td>bold-claim</td>
+              <td class="tabular">0.22</td>
+              <td class="tabular">$5,782</td>
+              <td class="tabular">33</td>
+              <td class="tabular">27</td>
+            </tr><tr>
+              <td><span class="tr mono" title="MC_45_C_DR-UGC_(14)_MED_Liver_D7_compressed.mp4">MC 45 C DR-UGC (14) MED Liver D7</span></td>
+              <td><span class="pill pill-y26">2026</span></td>
+              <td><span class="pill pill-n">—</span></td>
+              <td>problem-solution</td>
+              <td>bold-claim</td>
+              <td class="tabular">0.20</td>
+              <td class="tabular">$8,592</td>
+              <td class="tabular">44</td>
+              <td class="tabular">32</td>
+            </tr><tr>
+              <td><span class="tr mono" title="CR_32_A_DR-UGC_(8)_BLOOD_SUGAR d6_compressed.mp4">CR 32 A DR-UGC (8) BLOOD SUGAR d6</span></td>
+              <td><span class="pill pill-y25">2025</span></td>
+              <td><span class="pill pill-n">—</span></td>
+              <td>listicle</td>
+              <td>visual-reveal</td>
+              <td class="tabular">0.19</td>
+              <td class="tabular">$263</td>
+              <td class="tabular">1</td>
+              <td class="tabular">42</td>
+            </tr><tr>
+              <td><span class="tr mono" title="CR_33_B_DR-UGC_(13)_D7_compressed.mp4">CR 33 B DR-UGC (13) D7</span></td>
+              <td><span class="pill pill-y25">2025</span></td>
+              <td><span class="pill pill-n">—</span></td>
+              <td>problem-solution</td>
+              <td>visual-reveal</td>
+              <td class="tabular">0.16</td>
+              <td class="tabular">$456</td>
+              <td class="tabular">1</td>
+              <td class="tabular">25</td>
+            </tr><tr>
+              <td><span class="tr mono" title="MC_45_C_M-UGC_(5)_LOW_Free_Gift_D3_compressed.mp4">MC 45 C M-UGC (5) LOW Free Gift D3</span></td>
+              <td><span class="pill pill-y26">2026</span></td>
+              <td><span class="pill pill-n">—</span></td>
+              <td>—</td>
+              <td>—</td>
+              <td class="tabular">0.16</td>
+              <td class="tabular">$499</td>
+              <td class="tabular">2</td>
+              <td class="tabular">17</td>
+            </tr><tr>
+              <td><span class="tr mono" title="MC_45_B_INT-UGC_(10)_LOW_Cortisol_d4_compressed.mp4">MC 45 B INT-UGC (10) LOW Cortisol d4</span></td>
+              <td><span class="pill pill-y26">2026</span></td>
+              <td><span class="pill pill-n">—</span></td>
+              <td>problem-solution</td>
+              <td>bold-claim</td>
+              <td class="tabular">0.16</td>
+              <td class="tabular">$4,456</td>
+              <td class="tabular">19</td>
+              <td class="tabular">28</td>
+            </tr><tr>
+              <td><span class="tr mono" title="MC_45_B_M-UGC_(6)_LOW_Bloating_D4_compressed.mp4">MC 45 B M-UGC (6) LOW Bloating D4</span></td>
+              <td><span class="pill pill-y26">2026</span></td>
+              <td><span class="pill pill-n">—</span></td>
+              <td>problem-solution</td>
+              <td>story-tease</td>
+              <td class="tabular">0.15</td>
+              <td class="tabular">$1,189</td>
+              <td class="tabular">3</td>
+              <td class="tabular">15</td>
+            </tr><tr>
+              <td><span class="tr mono" title="MC_46_B_DR-UGC_(5)_LOW_Gut_Health_D4_compressed.mp4">MC 46 B DR-UGC (5) LOW Gut Health D4</span></td>
+              <td><span class="pill pill-y26">2026</span></td>
+              <td><span class="pill pill-n">—</span></td>
+              <td>problem-solution</td>
+              <td>pattern-interrupt</td>
+              <td class="tabular">0.15</td>
+              <td class="tabular">$379</td>
+              <td class="tabular">2</td>
+              <td class="tabular">17</td>
+            </tr><tr>
+              <td><span class="tr mono" title="MC_45_C_DR-UGC_(9)_LOW____D3_compressed.mp4">MC 45 C DR-UGC (9) LOW D3</span></td>
+              <td><span class="pill pill-y26">2026</span></td>
+              <td><span class="pill pill-n">—</span></td>
+              <td>problem-solution</td>
+              <td>pattern-interrupt</td>
+              <td class="tabular">0.11</td>
+              <td class="tabular">$7,184</td>
+              <td class="tabular">18</td>
+              <td class="tabular">28</td>
+            </tr><tr>
+              <td><span class="tr mono" title="MC_45_B_M-UGC_(5)_LOW_Cortisol_D3_compressed.mp4">MC 45 B M-UGC (5) LOW Cortisol D3</span></td>
+              <td><span class="pill pill-y26">2026</span></td>
+              <td><span class="pill pill-n">—</span></td>
+              <td>problem-solution</td>
+              <td>bold-claim</td>
+              <td class="tabular">0.11</td>
+              <td class="tabular">$763</td>
+              <td class="tabular">2</td>
+              <td class="tabular">40</td>
+            </tr><tr>
+              <td><span class="tr mono" title="IT_MC_33_B_DR-UGC_(18)_D5_compressed.mp4">IT MC 33 B DR-UGC (18) D5</span></td>
+              <td><span class="pill pill-y25">2025</span></td>
+              <td><span class="pill pill-n">—</span></td>
+              <td>problem-solution</td>
+              <td>pattern-interrupt</td>
+              <td class="tabular">0.09</td>
+              <td class="tabular">$750</td>
+              <td class="tabular">2</td>
+              <td class="tabular">21</td>
+            </tr><tr>
+              <td><span class="tr mono" title="MC_45_D_DR-UGC_(8)_LOW_Benefit_Bombing_d6_compressed.mp4">MC 45 D DR-UGC (8) LOW Benefit Bombing d6</span></td>
+              <td><span class="pill pill-y26">2026</span></td>
+              <td><span class="pill pill-lose">Loser</span></td>
+              <td>problem-solution</td>
+              <td>question</td>
+              <td class="tabular">0.07</td>
+              <td class="tabular">$381</td>
+              <td class="tabular">1</td>
+              <td class="tabular">42</td>
+            </tr><tr>
+              <td><span class="tr mono" title="IT_MA_32_B_DR-UGC_(13)v2_compressed.mp4">IT MA 32 B DR-UGC (13)v2</span></td>
+              <td><span class="pill pill-y25">2025</span></td>
+              <td><span class="pill pill-lose">Loser</span></td>
+              <td>problem-solution</td>
+              <td>bold-claim</td>
+              <td class="tabular">0.05</td>
+              <td class="tabular">$305</td>
+              <td class="tabular">0</td>
+              <td class="tabular">42</td>
+            </tr><tr>
+              <td><span class="tr mono" title="IT_MC_33_A_DR-UGC_(19)_CR1_compressed.mp4">IT MC 33 A DR-UGC (19) CR1</span></td>
+              <td><span class="pill pill-y25">2025</span></td>
+              <td><span class="pill pill-lose">Loser</span></td>
+              <td>problem-solution</td>
+              <td>story-tease</td>
+              <td class="tabular">0.04</td>
+              <td class="tabular">$799</td>
+              <td class="tabular">1</td>
+              <td class="tabular">28</td>
+            </tr><tr>
+              <td><span class="tr mono" title="MA_32_B_INT-UGC_(11)_D6_compressed.mp4">MA 32 B INT-UGC (11) D6</span></td>
+              <td><span class="pill pill-y25">2025</span></td>
+              <td><span class="pill pill-lose">Loser</span></td>
+              <td>problem-solution</td>
+              <td>question</td>
+              <td class="tabular">0.04</td>
+              <td class="tabular">$311</td>
+              <td class="tabular">0</td>
+              <td class="tabular">42</td>
+            </tr><tr>
+              <td><span class="tr mono" title="MC_45_A_M-UGC_(5) d7_compressed.mp4">MC 45 A M-UGC (5) d7</span></td>
+              <td><span class="pill pill-y26">2026</span></td>
+              <td><span class="pill pill-lose">Loser</span></td>
+              <td>ugc-reaction</td>
+              <td>story-tease</td>
+              <td class="tabular">0.02</td>
+              <td class="tabular">$347</td>
+              <td class="tabular">0</td>
+              <td class="tabular">0</td>
+            </tr>
         </tbody>
       </table>
     </div>
 
-    <h2>Appendix</h2>
     <details>
-      <summary>Method · how winner/loser cohorts are defined</summary>
+      <summary>Method · how the numbers are built</summary>
       <p style="margin-top:12px">
-        Of 36 videos scored by video-analyzer v2 (Gemini, temperature 0.15, seed 42),
-        26 matched rows in <code>matched_rows.csv</code>. Of those, 24 had at least $50 in spend
-        — ads below that threshold are statistically unreliable.
-        Winners are the top 6 by spend-weighted ROAS; losers the bottom 6.
-        Deltas and categorical splits are computed inside those cohorts only.
+        Raw data: <code>Viscap_raw_data_2025_vs_2026.xlsx</code>, two sheets (P30–P34 for 2025, P45–P48 for 2026).
+        All ROAS/CPO/ECR/CPM figures are <b class="fg">spend-weighted</b> — each row contributes in proportion to its dollars.
+        Creative decode: 36 videos scored by video-analyzer v2 (Gemini, temperature 0.15, seed 42), joined to ad rows via core ID extraction (format <code>phase_variant_ugc-type_number</code>).
+        Winner/loser cohorts: top 5 and bottom 5 by spend-weighted ROAS across 22 ads with min $50 spend.
       </p>
       <p>
-        Correlations at n≈24 are exploratory, not causal. Use the findings to
-        generate hypotheses for next week's test batch, not to fire a creator.
+        Observations at these sample sizes (n≈22) are exploratory — good for hypothesis generation, not causal inference. Re-test every claim in a 2026 ad split.
       </p>
-    </details>
-    <details>
-      <summary>All creative-metric × ROAS correlations (Pearson r)</summary>
-      <table style="margin-top:12px">
-        <thead><tr><th>Metric</th><th class="tabular">r vs ROAS</th><th>Direction</th></tr></thead>
-        <tbody>
-        <tr><td>Cuts per minute</td><td class="tabular">0.310</td><td><span class="pill pill-n">weak +</span></td></tr><tr><td>Hook score</td><td class="tabular">0.279</td><td><span class="pill pill-n">weak +</span></td></tr><tr><td>Eye contact</td><td class="tabular">0.277</td><td><span class="pill pill-n">weak +</span></td></tr><tr><td>ECR (predicted)</td><td class="tabular">0.259</td><td><span class="pill pill-n">weak +</span></td></tr><tr><td>Overall score</td><td class="tabular">0.259</td><td><span class="pill pill-n">weak +</span></td></tr><tr><td>Pacing score</td><td class="tabular">0.208</td><td><span class="pill pill-n">weak +</span></td></tr><tr><td>Colloquiality</td><td class="tabular">-0.193</td><td><span class="pill pill-n">none</span></td></tr><tr><td>Duration</td><td class="tabular">0.148</td><td><span class="pill pill-n">none</span></td></tr><tr><td>Stop power</td><td class="tabular">0.133</td><td><span class="pill pill-n">none</span></td></tr><tr><td>NAWP (predicted)</td><td class="tabular">-0.122</td><td><span class="pill pill-n">none</span></td></tr><tr><td>People count</td><td class="tabular">-0.104</td><td><span class="pill pill-n">none</span></td></tr>
-        </tbody>
-      </table>
-    </details>
-    <details>
-      <summary>Creatives without a performance match (10)</summary>
-      <table style="margin-top:12px">
-        <thead><tr><th>Filename</th><th>Angle</th><th>Hook type</th><th class="tabular">Overall</th></tr></thead>
-        <tbody>
-        
-          <tr>
-            <td><span class="tr mono" title="MC_45_C_INT-UGC_(15)_MED_Alcohol_D5_compressed.mp4">MC 45 C INT-UGC (15) MED Alcohol D5</span></td>
-            <td>problem-solution</td>
-            <td>contrarian</td>
-            <td class="tabular">84</td>
-          </tr>
-        
-          <tr>
-            <td><span class="tr mono" title="MC_46_B_DR-UGC_(4) d6_compressed.mp4">MC 46 B DR-UGC (4) d6</span></td>
-            <td>problem-solution</td>
-            <td>question</td>
-            <td class="tabular">88</td>
-          </tr>
-        
-          <tr>
-            <td><span class="tr mono" title="MC_46_D_DR-UGC_(11)_LOW_Benefit_Bombing_D3_compressed.mp4">MC 46 D DR-UGC (11) LOW Benefit Bombing D3</span></td>
-            <td>before-after</td>
-            <td>visual-reveal</td>
-            <td class="tabular">82</td>
-          </tr>
-        
-          <tr>
-            <td><span class="tr mono" title="MC_47_C_DR-UGC_(5) d6_compressed.mp4">MC 47 C DR-UGC (5) d6</span></td>
-            <td>comparison</td>
-            <td>visual-reveal</td>
-            <td class="tabular">82</td>
-          </tr>
-        
-          <tr>
-            <td><span class="tr mono" title="MC_47_C_DR-UGC_(6)_LOW_Benefit_Bombing-d5_compressed.mp4">MC 47 C DR-UGC (6) LOW Benefit Bombing-d5</span></td>
-            <td>problem-solution</td>
-            <td>question</td>
-            <td class="tabular">88</td>
-          </tr>
-        
-        </tbody>
-      </table>
     </details>
 
     <div class="foot">
-      Data: matched_rows.csv (Meta Ads performance) + analyses-v2-2026-04-17T16-35-29 (Gemini video analysis via video-analyzer v2).
-      Generated 2026-04-17 17:43 UTC.
-      <span class="fg">Exploratory analysis — not causal.</span> Use for hypothesis generation.
+      Generated 2026-04-17 18:01 UTC.
+      Q1 2025 window: P30–P34 (658 rows). Q1 2026 window: P45–P48 (314 rows).
+      24 of 36 analysed creatives matched to ad-spend data.
     </div>
   </div>
 
 <script>
-const DATA = {"scatterCuts":[{"x":46,"y":0.33174856424310634,"label":"IT MC 32 B INT-UGC (21) D6","spend":246845.28000199996,"winner":true,"loser":false},{"x":24,"y":0.3305462695625628,"label":"IT MC 32 B INT-UGC (22) d9","spend":58644.520013000016,"winner":true,"loser":false},{"x":32,"y":0.19576842350192103,"label":"MC 45 C DR-UGC (14) MED Liver D7","spend":8591.74,"winner":false,"loser":false},{"x":28,"y":0.10745763799392467,"label":"MC 45 C DR-UGC (9) LOW D3","spend":7183.779997000001,"winner":false,"loser":false},{"x":27.05,"y":0.2188903173460584,"label":"IT MC 32 C INT-UGC (21) D6","spend":5781.879998,"winner":false,"loser":false},{"x":28.4,"y":0.14558391233266219,"label":"MC 44 C DR-UGC (9) d4","spend":5682.240001,"winner":false,"loser":false},{"x":27.8,"y":0.1558881825051917,"label":"MC 45 B INT-UGC (10) LOW Cortisol d4","spend":4456.050002,"winner":false,"loser":false},{"x":14.7,"y":0.15073932817006566,"label":"MC 45 B M-UGC (6) LOW Bloating D4","spend":1189.109997,"winner":false,"loser":false},{"x":38,"y":0.3499831011041773,"label":"IT MA 32 D INT-UGC (16) D6","spend":956.6700000000001,"winner":true,"loser":false},{"x":28.05,"y":0.04428930664892767,"label":"IT MC 33 A DR-UGC (19) CR1","spend":799.290002,"winner":false,"loser":true},{"x":40,"y":0.10693560742989751,"label":"MC 45 B M-UGC (5) LOW Cortisol D3","spend":762.71,"winner":false,"loser":false},{"x":20.8,"y":0.09308443724387687,"label":"IT MC 33 B DR-UGC (18) D5","spend":749.5,"winner":false,"loser":false},{"x":16.7,"y":0.1614883176515682,"label":"MC 45 C M-UGC (5) LOW Free Gift D3","spend":499.0100020000001,"winner":false,"loser":false},{"x":25.4,"y":0.1622164509191251,"label":"CR 33 B DR-UGC (13) D7","spend":456.24,"winner":false,"loser":false},{"x":8.5,"y":0.053135003167590615,"label":"MC 44 D MF-UGC (9) MED Liver-d7","spend":414.2699999999999,"winner":false,"loser":true},{"x":42,"y":0.25918630034527446,"label":"MC 46 D DR-UGC (10) LOW Benefit Bombing D9","spend":383.27,"winner":true,"loser":false},{"x":42,"y":0.06703910614525141,"label":"MC 45 D DR-UGC (8) LOW Benefit Bombing d6","spend":381.2699999999999,"winner":false,"loser":true},{"x":17,"y":0.1467797729073145,"label":"MC 46 B DR-UGC (5) LOW Gut Health D4","spend":378.7,"winner":false,"loser":false},{"x":38,"y":0.22450118228433275,"label":"MC 47 B INT-UGC (9)d8","spend":376.39,"winner":true,"loser":false},{"x":24.3,"y":0.21891136883094897,"label":"MC 46 B DR-UGC (8) LOW Cortisol Reshoot CR1[v5]","spend":354.39,"winner":true,"loser":false},{"x":0,"y":0.023937779195954367,"label":"MC 45 A M-UGC (5) d7","spend":347.14999800000004,"winner":false,"loser":true},{"x":42,"y":0.043556469227804186,"label":"MA 32 B INT-UGC (11) D6","spend":311.32,"winner":false,"loser":true},{"x":42,"y":0.04963144995663522,"label":"IT MA 32 B DR-UGC (13)v2","spend":305.249998,"winner":false,"loser":true},{"x":42,"y":0.18838483787486682,"label":"CR 32 A DR-UGC (8) BLOOD SUGAR d6","spend":262.76,"winner":false,"loser":false}],"scatterColloq":[{"x":8,"y":0.33174856424310634,"label":"IT MC 32 B INT-UGC (21) D6","spend":246845.28000199996,"winner":true,"loser":false},{"x":0,"y":0.3305462695625628,"label":"IT MC 32 B INT-UGC (22) d9","spend":58644.520013000016,"winner":true,"loser":false},{"x":9,"y":0.19576842350192103,"label":"MC 45 C DR-UGC (14) MED Liver D7","spend":8591.74,"winner":false,"loser":false},{"x":9,"y":0.10745763799392467,"label":"MC 45 C DR-UGC (9) LOW D3","spend":7183.779997000001,"winner":false,"loser":false},{"x":8,"y":0.2188903173460584,"label":"IT MC 32 C INT-UGC (21) D6","spend":5781.879998,"winner":false,"loser":false},{"x":8,"y":0.14558391233266219,"label":"MC 44 C DR-UGC (9) d4","spend":5682.240001,"winner":false,"loser":false},{"x":9,"y":0.1558881825051917,"label":"MC 45 B INT-UGC (10) LOW Cortisol d4","spend":4456.050002,"winner":false,"loser":false},{"x":8,"y":0.15073932817006566,"label":"MC 45 B M-UGC (6) LOW Bloating D4","spend":1189.109997,"winner":false,"loser":false},{"x":8,"y":0.3499831011041773,"label":"IT MA 32 D INT-UGC (16) D6","spend":956.6700000000001,"winner":true,"loser":false},{"x":8,"y":0.04428930664892767,"label":"IT MC 33 A DR-UGC (19) CR1","spend":799.290002,"winner":false,"loser":true},{"x":8,"y":0.10693560742989751,"label":"MC 45 B M-UGC (5) LOW Cortisol D3","spend":762.71,"winner":false,"loser":false},{"x":9,"y":0.09308443724387687,"label":"IT MC 33 B DR-UGC (18) D5","spend":749.5,"winner":false,"loser":false},{"x":0,"y":0.1614883176515682,"label":"MC 45 C M-UGC (5) LOW Free Gift D3","spend":499.0100020000001,"winner":false,"loser":false},{"x":9,"y":0.1622164509191251,"label":"CR 33 B DR-UGC (13) D7","spend":456.24,"winner":false,"loser":false},{"x":8,"y":0.053135003167590615,"label":"MC 44 D MF-UGC (9) MED Liver-d7","spend":414.2699999999999,"winner":false,"loser":true},{"x":8,"y":0.25918630034527446,"label":"MC 46 D DR-UGC (10) LOW Benefit Bombing D9","spend":383.27,"winner":true,"loser":false},{"x":8,"y":0.06703910614525141,"label":"MC 45 D DR-UGC (8) LOW Benefit Bombing d6","spend":381.2699999999999,"winner":false,"loser":true},{"x":9,"y":0.1467797729073145,"label":"MC 46 B DR-UGC (5) LOW Gut Health D4","spend":378.7,"winner":false,"loser":false},{"x":8,"y":0.22450118228433275,"label":"MC 47 B INT-UGC (9)d8","spend":376.39,"winner":true,"loser":false},{"x":8,"y":0.21891136883094897,"label":"MC 46 B DR-UGC (8) LOW Cortisol Reshoot CR1[v5]","spend":354.39,"winner":true,"loser":false},{"x":9,"y":0.023937779195954367,"label":"MC 45 A M-UGC (5) d7","spend":347.14999800000004,"winner":false,"loser":true},{"x":8,"y":0.043556469227804186,"label":"MA 32 B INT-UGC (11) D6","spend":311.32,"winner":false,"loser":true},{"x":8,"y":0.04963144995663522,"label":"IT MA 32 B DR-UGC (13)v2","spend":305.249998,"winner":false,"loser":true},{"x":8,"y":0.18838483787486682,"label":"CR 32 A DR-UGC (8) BLOOD SUGAR d6","spend":262.76,"winner":false,"loser":false}]};
+const DATA = {"phase":{"labels":["P30","P31","P32","P33","P34","P45","P46","P47","P48"],"roas":[0.25102721249205007,0.1850140185303871,0.2998701069725962,0.22453463816254018,0.2703838615133917,0.1429990282397765,0.3560827150035305,0.21749979907884193,0.23961612922938977],"ecr":[2.1607057174538884,1.899929870128475,2.399332512301681,1.8013033311101094,2.2418541139219297,1.03926808815787,1.2964992879197854,1.3496246224079596,1.058683200786985],"spend":[181949.37484199987,133519.92004599996,507653.21963800024,85374.70835399999,21089.95001,94290.47002199998,119417.14000200001,87077.58999999998,25360.01],"year":["2025","2025","2025","2025","2025","2026","2026","2026","2026"]},"ugc":{"types":["INT","DR","M","MF"],"roas25":[0.29838821686752554,0.24772205435504072,0.20309779053817725,0.1127188260420496],"roas26":[0.14759857980642568,0.24142653779685247,0.3774912442374465,0.15135903464822395],"spend25":[443413.67041399993,194885.11944500002,20524.151837,2077.2],"spend26":[73091.360016,165494.27001500002,75740.52999499999,11819.049997999999]},"scatter":[{"x":46,"y":0.3317485642431063,"label":"IT MC 32 B INT-UGC (21) D6","spend":246845.28000199996,"winner":true,"loser":false},{"x":24,"y":0.3305462695625627,"label":"IT MC 32 B INT-UGC (22) d9","spend":58644.52001300001,"winner":true,"loser":false},{"x":32,"y":0.195768423501921,"label":"MC 45 C DR-UGC (14) MED Liver D7","spend":8591.74,"winner":false,"loser":false},{"x":28,"y":0.10745763799392465,"label":"MC 45 C DR-UGC (9) LOW D3","spend":7183.779997000001,"winner":false,"loser":false},{"x":27.05,"y":0.21889031734605838,"label":"IT MC 32 C INT-UGC (21) D6","spend":5781.879998,"winner":false,"loser":false},{"x":27.8,"y":0.15588818250519168,"label":"MC 45 B INT-UGC (10) LOW Cortisol d4","spend":4456.050002,"winner":false,"loser":false},{"x":14.7,"y":0.1507393281700656,"label":"MC 45 B M-UGC (6) LOW Bloating D4","spend":1189.109997,"winner":false,"loser":false},{"x":38,"y":0.3499831011041773,"label":"IT MA 32 D INT-UGC (16) D6","spend":956.67,"winner":true,"loser":false},{"x":28.05,"y":0.0442893066489276,"label":"IT MC 33 A DR-UGC (19) CR1","spend":799.290002,"winner":false,"loser":true},{"x":40,"y":0.10693560742989745,"label":"MC 45 B M-UGC (5) LOW Cortisol D3","spend":762.71,"winner":false,"loser":false},{"x":20.8,"y":0.0930844372438768,"label":"IT MC 33 B DR-UGC (18) D5","spend":749.5,"winner":false,"loser":false},{"x":16.7,"y":0.1614883176515682,"label":"MC 45 C M-UGC (5) LOW Free Gift D3","spend":499.0100020000001,"winner":false,"loser":false},{"x":25.4,"y":0.162216450919125,"label":"CR 33 B DR-UGC (13) D7","spend":456.24,"winner":false,"loser":false},{"x":42,"y":0.2591863003452744,"label":"MC 46 D DR-UGC (10) LOW Benefit Bombing D9","spend":383.27,"winner":true,"loser":false},{"x":42,"y":0.0670391061452514,"label":"MC 45 D DR-UGC (8) LOW Benefit Bombing d6","spend":381.2699999999999,"winner":false,"loser":true},{"x":17,"y":0.1467797729073145,"label":"MC 46 B DR-UGC (5) LOW Gut Health D4","spend":378.7,"winner":false,"loser":false},{"x":38,"y":0.2245011822843327,"label":"MC 47 B INT-UGC (9)d8","spend":376.39,"winner":true,"loser":false},{"x":24.3,"y":0.2189113688309489,"label":"MC 46 B DR-UGC (8) LOW Cortisol Reshoot CR1[v5]","spend":354.39,"winner":false,"loser":false},{"x":0,"y":0.0239377791959543,"label":"MC 45 A M-UGC (5) d7","spend":347.149998,"winner":false,"loser":true},{"x":42,"y":0.0435564692278041,"label":"MA 32 B INT-UGC (11) D6","spend":311.32,"winner":false,"loser":true},{"x":42,"y":0.0496314499566352,"label":"IT MA 32 B DR-UGC (13)v2","spend":305.249998,"winner":false,"loser":true},{"x":42,"y":0.1883848378748668,"label":"CR 32 A DR-UGC (8) BLOOD SUGAR d6","spend":262.76,"winner":false,"loser":false}]};
 
-function buildScatter(canvasId, xTitle, yTitle, dataset) {
-  const winnersData = dataset.filter(d => d.winner).map(d => ({ x: d.x, y: d.y, label: d.label, spend: d.spend }));
-  const losersData = dataset.filter(d => d.loser).map(d => ({ x: d.x, y: d.y, label: d.label, spend: d.spend }));
-  const otherData = dataset.filter(d => !d.winner && !d.loser).map(d => ({ x: d.x, y: d.y, label: d.label, spend: d.spend }));
+const TICK = "#9ca3af";
+const GRID = "rgba(255,255,255,0.05)";
+const Y25 = "#3b82f6";
+const Y26 = "#a855f7";
 
-  function radius(ctx) {
-    const p = ctx.raw;
-    if (!p || !p.spend) return 4;
-    return Math.min(18, Math.max(4, Math.sqrt(p.spend) * 0.2));
-  }
-  return new Chart(document.getElementById(canvasId), {
+function splitYears(labels, values, yearArr) {
+  const r25 = values.map((v, i) => yearArr[i] === "2025" ? v : null);
+  const r26 = values.map((v, i) => yearArr[i] === "2026" ? v : null);
+  return { r25, r26 };
+}
+
+const { r25: roas25, r26: roas26 } = splitYears(DATA.phase.labels, DATA.phase.roas, DATA.phase.year);
+new Chart(document.getElementById("phase-roas"), {
+  type: "bar",
+  data: {
+    labels: DATA.phase.labels,
+    datasets: [
+      { label: "2025", data: roas25, backgroundColor: "rgba(59,130,246,0.8)", borderColor: Y25, borderWidth: 0 },
+      { label: "2026", data: roas26, backgroundColor: "rgba(168,85,247,0.8)", borderColor: Y26, borderWidth: 0 },
+    ],
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { labels: { color: "#d4d4d8" } } },
+    scales: {
+      x: { grid: { color: GRID }, ticks: { color: TICK } },
+      y: { grid: { color: GRID }, ticks: { color: TICK, callback: v => v.toFixed(2) }, title: { display: true, text: "Weighted ROAS", color: "#d4d4d8" } },
+    },
+  },
+});
+
+const { r25: ecr25, r26: ecr26 } = splitYears(DATA.phase.labels, DATA.phase.ecr, DATA.phase.year);
+new Chart(document.getElementById("phase-ecr"), {
+  type: "bar",
+  data: {
+    labels: DATA.phase.labels,
+    datasets: [
+      { label: "2025", data: ecr25, backgroundColor: "rgba(59,130,246,0.8)", borderColor: Y25, borderWidth: 0 },
+      { label: "2026", data: ecr26, backgroundColor: "rgba(168,85,247,0.8)", borderColor: Y26, borderWidth: 0 },
+    ],
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { labels: { color: "#d4d4d8" } } },
+    scales: {
+      x: { grid: { color: GRID }, ticks: { color: TICK } },
+      y: { grid: { color: GRID }, ticks: { color: TICK, callback: v => v.toFixed(2) + "%" }, title: { display: true, text: "ECR %", color: "#d4d4d8" } },
+    },
+  },
+});
+
+new Chart(document.getElementById("ugc-spend"), {
+  type: "bar",
+  data: {
+    labels: DATA.ugc.types.map(t => t + "-UGC"),
+    datasets: [
+      { label: "2025", data: DATA.ugc.spend25, backgroundColor: "rgba(59,130,246,0.8)" },
+      { label: "2026", data: DATA.ugc.spend26, backgroundColor: "rgba(168,85,247,0.8)" },
+    ],
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false, indexAxis: "y",
+    plugins: { legend: { labels: { color: "#d4d4d8" } } },
+    scales: {
+      x: { grid: { color: GRID }, ticks: { color: TICK, callback: v => "$" + (v / 1000).toFixed(0) + "k" }, title: { display: true, text: "Spend", color: "#d4d4d8" } },
+      y: { grid: { color: GRID }, ticks: { color: TICK } },
+    },
+  },
+});
+
+new Chart(document.getElementById("ugc-roas"), {
+  type: "bar",
+  data: {
+    labels: DATA.ugc.types.map(t => t + "-UGC"),
+    datasets: [
+      { label: "2025", data: DATA.ugc.roas25, backgroundColor: "rgba(59,130,246,0.8)" },
+      { label: "2026", data: DATA.ugc.roas26, backgroundColor: "rgba(168,85,247,0.8)" },
+    ],
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false, indexAxis: "y",
+    plugins: { legend: { labels: { color: "#d4d4d8" } } },
+    scales: {
+      x: { grid: { color: GRID }, ticks: { color: TICK, callback: v => v.toFixed(2) }, title: { display: true, text: "Weighted ROAS", color: "#d4d4d8" } },
+      y: { grid: { color: GRID }, ticks: { color: TICK } },
+    },
+  },
+});
+
+function scatterDots(sel, title) {
+  const winners = DATA.scatter.filter(d => d.winner);
+  const losers = DATA.scatter.filter(d => d.loser);
+  const mid = DATA.scatter.filter(d => !d.winner && !d.loser);
+  const r = ctx => Math.min(18, Math.max(4, Math.sqrt(ctx.raw?.spend || 100) * 0.2));
+  new Chart(document.getElementById(sel), {
     type: "scatter",
     data: {
       datasets: [
-        { label: "Winners", data: winnersData, backgroundColor: "rgba(16,185,129,0.65)", borderColor: "rgba(16,185,129,1)", borderWidth: 1, pointRadius: radius },
-        { label: "Losers", data: losersData, backgroundColor: "rgba(239,68,68,0.65)", borderColor: "rgba(239,68,68,1)", borderWidth: 1, pointRadius: radius },
-        { label: "Mid", data: otherData, backgroundColor: "rgba(148,163,184,0.45)", borderColor: "rgba(148,163,184,0.8)", borderWidth: 1, pointRadius: radius },
+        { label: "Winners", data: winners, backgroundColor: "rgba(16,185,129,0.65)", borderColor: "rgba(16,185,129,1)", borderWidth: 1, pointRadius: r },
+        { label: "Losers", data: losers, backgroundColor: "rgba(239,68,68,0.65)", borderColor: "rgba(239,68,68,1)", borderWidth: 1, pointRadius: r },
+        { label: "Mid", data: mid, backgroundColor: "rgba(148,163,184,0.45)", borderColor: "rgba(148,163,184,0.8)", borderWidth: 1, pointRadius: r },
       ],
     },
     options: {
-      maintainAspectRatio: false,
-      responsive: true,
+      responsive: true, maintainAspectRatio: false,
       plugins: {
         legend: { labels: { color: "#d4d4d8" } },
         tooltip: {
           callbacks: {
-            label: (ctx) => {
+            label: ctx => {
               const p = ctx.raw;
-              return p.label + " — " + xTitle + ": " + (p.x?.toFixed ? p.x.toFixed(1) : p.x) + ", ROAS: " + (p.y?.toFixed ? p.y.toFixed(2) : p.y) + " (spend $" + (p.spend?.toFixed ? p.spend.toFixed(0) : p.spend) + ")";
+              return p.label + " — cuts/min: " + (p.x ? p.x.toFixed(0) : p.x) + ", ROAS: " + (p.y ? p.y.toFixed(2) : p.y) + " ($" + (p.spend ? p.spend.toFixed(0) : 0) + " spend)";
             },
           },
         },
       },
       scales: {
-        x: { grid: { color: "rgba(255,255,255,0.05)" }, ticks: { color: "#9ca3af" }, title: { display: true, text: xTitle, color: "#d4d4d8" } },
-        y: { grid: { color: "rgba(255,255,255,0.05)" }, ticks: { color: "#9ca3af" }, title: { display: true, text: yTitle, color: "#d4d4d8" } },
+        x: { grid: { color: GRID }, ticks: { color: TICK }, title: { display: true, text: "Cuts per minute", color: "#d4d4d8" } },
+        y: { grid: { color: GRID }, ticks: { color: TICK }, title: { display: true, text: "Weighted ROAS", color: "#d4d4d8" } },
       },
     },
   });
 }
-
-buildScatter("scatter-cuts", "Cuts per minute", "Weighted ROAS", DATA.scatterCuts);
+scatterDots("scatter-cuts", "Cuts / ROAS");
 </script>
 </body>
 </html>
