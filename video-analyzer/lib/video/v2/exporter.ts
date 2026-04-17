@@ -20,6 +20,12 @@ type AnalysisRow = {
   formatPrimary: string | null;
   platformBestFit: string | null;
   schemaVersion: string;
+  // Batch 4
+  scriptAngle?: string | null;
+  primaryGender?: string | null;
+  socioeconomic?: string | null;
+  peopleCountMax?: number | null;
+  eyeContactScore?: string | null;
 };
 
 type VideoRow = {
@@ -102,6 +108,12 @@ export async function buildPerVideoExportZip(
     { k: "Niche", v: analysis.niche ?? "" },
     { k: "Format", v: analysis.formatPrimary ?? "" },
     { k: "Best platform fit", v: analysis.platformBestFit ?? "" },
+    {},
+    { k: "Script angle", v: analysis.scriptAngle ?? "" },
+    { k: "Primary gender target", v: analysis.primaryGender ?? "" },
+    { k: "Socioeconomic target", v: analysis.socioeconomic ?? "" },
+    { k: "People count (max)", v: analysis.peopleCountMax ?? "" },
+    { k: "Eye contact score", v: analysis.eyeContactScore ?? "" },
   ]);
 
   const scenes = Array.isArray(p.scenes) ? (p.scenes as any[]) : [];
@@ -256,6 +268,146 @@ export async function buildPerVideoExportZip(
     }
   }
 
+  // ── Batch 4 sheets ───────────────────────────────────────────────────────
+
+  const extPayload = (p.extended ?? {}) as Record<string, unknown>;
+
+  // People sheet
+  const actors = Array.isArray(
+    (extPayload.peopleAnalysis as any)?.actors
+  )
+    ? ((extPayload.peopleAnalysis as any).actors as any[])
+    : [];
+  if (actors.length > 0) {
+    const sh = wb.addWorksheet("People");
+    sh.columns = [
+      { header: "ID", key: "id", width: 8 },
+      { header: "Role", key: "role", width: 16 },
+      { header: "Gender", key: "gender", width: 12 },
+      { header: "Age range", key: "age", width: 12 },
+      { header: "Ethnicity", key: "eth", width: 16 },
+      { header: "Screen time %", key: "st", width: 14 },
+      { header: "Energy", key: "en", width: 10 },
+      { header: "Trustworthiness", key: "tr", width: 16 },
+      { header: "Eye contact share", key: "ec", width: 18 },
+      { header: "Camera treatment", key: "cam", width: 18 },
+      { header: "Style", key: "style", width: 50 },
+    ];
+    for (const actor of actors) {
+      sh.addRow({
+        id: actor.id ?? "",
+        role: actor.role ?? "",
+        gender: actor.gender ?? "",
+        age: actor.ageRange ?? "",
+        eth: actor.ethnicity ?? "",
+        st: Number(actor.screenTimePct ?? 0),
+        en: Number(actor.energyLevel ?? 0),
+        tr: Number(actor.trustworthiness ?? 0),
+        ec: Number(actor.eyeContactShare ?? 0),
+        cam: actor.cameraTreatment ?? "",
+        style: actor.styleDescription ?? "",
+      });
+    }
+  }
+
+  // Cuts sheet
+  const cuts = Array.isArray(extPayload.cutsMap)
+    ? (extPayload.cutsMap as any[])
+    : [];
+  if (cuts.length > 0) {
+    const sh = wb.addWorksheet("Cuts");
+    sh.columns = [
+      { header: "Timestamp (s)", key: "ts", width: 14 },
+      { header: "Type", key: "type", width: 16 },
+      { header: "Before shot", key: "before", width: 40 },
+      { header: "After shot", key: "after", width: 40 },
+      { header: "Intent", key: "intent", width: 40 },
+    ];
+    for (const cut of cuts) {
+      sh.addRow({
+        ts: Number(cut.timestamp ?? 0),
+        type: cut.type ?? "",
+        before: cut.beforeShot ?? "",
+        after: cut.afterShot ?? "",
+        intent: cut.intent ?? "",
+      });
+    }
+  }
+
+  // Script sheet
+  const sa = (extPayload.scriptAngle ?? {}) as Record<string, unknown>;
+  if (sa.angle) {
+    const sh = wb.addWorksheet("Script");
+    sh.columns = [
+      { header: "Key", key: "k", width: 22 },
+      { header: "Value", key: "v", width: 80 },
+    ];
+    sh.addRows([
+      { k: "Angle", v: sa.angle ?? "" },
+      { k: "Narrative style", v: sa.narrativeStyle ?? "" },
+      { k: "Hook type", v: sa.hookType ?? "" },
+      { k: "Thesis", v: sa.thesis ?? "" },
+      {},
+    ]);
+    const acts = Array.isArray(sa.acts) ? (sa.acts as any[]) : [];
+    if (acts.length > 0) {
+      sh.addRow({ k: "— Acts —", v: "" });
+      for (const act of acts) {
+        sh.addRow({
+          k: `Act: ${act.name ?? ""}`,
+          v: `${act.start ?? 0}s – ${act.end ?? 0}s | ${act.summary ?? ""}`,
+        });
+      }
+    }
+    const hooks = Array.isArray(sa.copyHooks) ? (sa.copyHooks as string[]) : [];
+    if (hooks.length > 0) {
+      sh.addRow({ k: "", v: "" });
+      sh.addRow({ k: "— Copy hooks —", v: "" });
+      for (const hook of hooks) {
+        sh.addRow({ k: "", v: hook });
+      }
+    }
+  }
+
+  // Audience profile sheet
+  const ap = (p.audienceProfile ?? {}) as Record<string, unknown>;
+  if (ap.primaryAgeRange) {
+    const sh = wb.addWorksheet("AudienceProfile");
+    sh.columns = [
+      { header: "Key", key: "k", width: 22 },
+      { header: "Value", key: "v", width: 80 },
+    ];
+    sh.addRows([
+      { k: "Primary age range", v: ap.primaryAgeRange ?? "" },
+      { k: "Primary gender", v: ap.primaryGender ?? "" },
+      { k: "Socioeconomic", v: ap.socioeconomic ?? "" },
+      { k: "Urbanicity", v: ap.urbanicity ?? "" },
+      { k: "Region", v: ap.region ?? "" },
+      { k: "Purchase readiness", v: ap.purchaseReadiness ?? "" },
+      {},
+      {
+        k: "Lifestyle markers",
+        v: Array.isArray(ap.lifestyleMarkers)
+          ? (ap.lifestyleMarkers as string[]).join(", ")
+          : "",
+      },
+      {
+        k: "Values",
+        v: Array.isArray(ap.values) ? (ap.values as string[]).join(", ") : "",
+      },
+      {
+        k: "Pains",
+        v: Array.isArray(ap.pains) ? (ap.pains as string[]).join(", ") : "",
+      },
+      {
+        k: "Desires",
+        v: Array.isArray(ap.desires)
+          ? (ap.desires as string[]).join(", ")
+          : "",
+      },
+    ]);
+  }
+
   const xlsx = await wb.xlsx.writeBuffer();
   zip.file("data.xlsx", xlsx as ArrayBuffer);
 
@@ -289,6 +441,12 @@ export async function buildBatchExportZip(
     { header: "Niche", key: "nc", width: 14 },
     { header: "Format", key: "fm", width: 14 },
     { header: "Best platform", key: "pf", width: 14 },
+    // Batch 4
+    { header: "Script angle", key: "sa", width: 18 },
+    { header: "Gender target", key: "gt", width: 14 },
+    { header: "Socioeconomic", key: "se", width: 14 },
+    { header: "People (max)", key: "pm", width: 12 },
+    { header: "Eye contact", key: "eye", width: 12 },
     { header: "Created", key: "cr", width: 22 },
   ];
   for (const { analysis: a, video: v } of rows) {
@@ -309,6 +467,11 @@ export async function buildBatchExportZip(
       nc: a.niche ?? "",
       fm: a.formatPrimary ?? "",
       pf: a.platformBestFit ?? "",
+      sa: a.scriptAngle ?? "",
+      gt: a.primaryGender ?? "",
+      se: a.socioeconomic ?? "",
+      pm: a.peopleCountMax ?? "",
+      eye: a.eyeContactScore ?? "",
       cr: a.createdAt.toISOString(),
     });
   }
