@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { AnalysesTable } from "@/components/video/v2/analyses-table";
 import { AuthenticityBars } from "@/components/video/v2/authenticity-bars";
 import { DashboardAdvancedCharts } from "@/components/video/v2/dashboard-advanced-charts";
+import { ClearAllButton } from "@/components/video/v2/delete-buttons";
 import { EcrHistogram } from "@/components/video/v2/ecr-histogram";
 import { ExportButton } from "@/components/video/v2/export-button";
 import { RecentAnalysesCards } from "@/components/video/v2/recent-analyses-cards";
@@ -19,10 +20,13 @@ export default function DashboardPage() {
             Research-grounded metrics across all analyses.
           </p>
         </div>
-        <ExportButton
-          href="/analyze/v2/api/export"
-          label="Export all as ZIP"
-        />
+        <div className="flex items-center gap-2">
+          <ExportButton
+            href="/analyze/v2/api/export"
+            label="Export all as ZIP"
+          />
+          <ClearAllButton />
+        </div>
       </div>
       <Suspense fallback={<DashboardSkeleton />}>
         <DashboardBody />

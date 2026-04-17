@@ -6,6 +6,7 @@ import { PacingCurve } from "@/components/video/pacing-curve";
 import { PlatformFitCard } from "@/components/video/platform-fit-card";
 import { SwipeRiskCurve } from "@/components/video/swipe-risk-curve";
 import { AudienceProfileCard } from "@/components/video/v2/audience-profile-card";
+import { DeleteAnalysisButton } from "@/components/video/v2/delete-buttons";
 import { EyeContactChart } from "@/components/video/v2/eye-contact-chart";
 import { ExportButton } from "@/components/video/v2/export-button";
 import { HookDissectionV2Card } from "@/components/video/v2/hook-dissection-v2-card";
@@ -83,10 +84,17 @@ async function PerVideoBody({
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <h2 className="text-lg font-semibold truncate">{v.filename}</h2>
-        <ExportButton
-          href={`/analyze/v2/api/analyses/${a.id}/export`}
-          label="Export ZIP"
-        />
+        <div className="flex items-center gap-2 shrink-0">
+          <ExportButton
+            href={`/analyze/v2/api/analyses/${a.id}/export`}
+            label="Export ZIP"
+          />
+          <DeleteAnalysisButton
+            analysisId={a.id}
+            redirectTo="/analyze/v2/dashboard"
+            label="Delete"
+          />
+        </div>
       </div>
 
       {/* Batch 2: client wrapper owns VideoWithOverlay + all timeline/seek components
