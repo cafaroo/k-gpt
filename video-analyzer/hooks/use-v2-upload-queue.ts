@@ -2,6 +2,31 @@
 import { upload } from "@vercel/blob/client";
 import { useCallback, useRef, useState } from "react";
 
+// Exponential backoff retry — handles flaky networks (ERR_NETWORK_CHANGED,
+// transient 5xx, timeouts). 4 attempts with 1s / 2s / 4s / 8s spacing.
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  label: string,
+  attempts = 4
+): Promise<T> {
+  let lastErr: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      if (i === attempts - 1) break;
+      const delay = 1000 * 2 ** i + Math.random() * 300;
+      console.warn(
+        `[v2 upload] ${label} attempt ${i + 1}/${attempts} failed, retrying in ${Math.round(delay)}ms`,
+        err
+      );
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+  throw lastErr;
+}
+
 export type QueueItem = {
   id: string;
   file: File;
@@ -95,40 +120,61 @@ export function useV2UploadQueue() {
         const ext = item.file.name.split(".").pop()?.toLowerCase() || "mp4";
         const safeName = item.file.name.replace(/[^a-zA-Z0-9._-]+/g, "_");
         const path = `v2/videos/${Date.now()}-${safeName}.${ext}`;
-        const blob = await upload(path, item.file, {
-          access: "public",
-          handleUploadUrl: "/api/blob/upload",
-          contentType: item.file.type || "video/mp4",
-          onUploadProgress: ({ percentage }) => {
-            patch(item.id, { progress: percentage });
-          },
-        });
+        const blob = await withRetry(
+          () =>
+            upload(path, item.file, {
+              access: "public",
+              handleUploadUrl: "/api/blob/upload",
+              contentType: item.file.type || "video/mp4",
+              // Avoid blob collisions on retry after a failed network upload.
+              addRandomSuffix: true,
+              // 5 MB resumable chunks — survives transient network flaps
+              // (ERR_NETWORK_CHANGED) much better than a single PUT.
+              multipart: true,
+              onUploadProgress: ({ percentage }) => {
+                patch(item.id, { progress: percentage });
+              },
+            }),
+          "blob-upload"
+        );
 
         // 2. Register metadata with our API (tiny JSON body).
-        const upRes = await fetch("/analyze/v2/api/uploads", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            blobUrl: blob.url,
-            filename: item.file.name,
-            fileSize: item.file.size,
-            metadata: meta,
-          }),
-        });
-        if (!upRes.ok) {
-          throw new Error("upload registration failed");
-        }
+        const upRes = await withRetry(
+          () =>
+            fetch("/analyze/v2/api/uploads", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({
+                blobUrl: blob.url,
+                filename: item.file.name,
+                fileSize: item.file.size,
+                metadata: meta,
+              }),
+            }).then((r) => {
+              if (!r.ok) {
+                throw new Error(`register ${r.status}`);
+              }
+              return r;
+            }),
+          "register-metadata"
+        );
         const { videoId } = (await upRes.json()) as { videoId: string };
         patch(item.id, { state: "analyzing", videoId });
 
-        const jobRes = await fetch("/analyze/v2/api/jobs", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ videoId }),
-        });
-        if (!jobRes.ok) {
-          throw new Error("job start failed");
-        }
+        const jobRes = await withRetry(
+          () =>
+            fetch("/analyze/v2/api/jobs", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ videoId }),
+            }).then((r) => {
+              if (!r.ok) {
+                throw new Error(`job ${r.status}`);
+              }
+              return r;
+            }),
+          "start-job"
+        );
         const { jobId } = (await jobRes.json()) as { jobId: string };
         patch(item.id, { analysisId: jobId });
 
