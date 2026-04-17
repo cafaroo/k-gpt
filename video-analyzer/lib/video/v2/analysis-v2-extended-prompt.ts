@@ -69,6 +69,58 @@ Server computes these post-hoc from emotionalArc — emit as [] and 0. Do not
 attempt to populate.
 
 ═══════════════════════════════════════════════════════════════════════════
+BATCH 4 EXTENDED FIELDS (ALL MANDATORY — use best inference, never null)
+═══════════════════════════════════════════════════════════════════════════
+
+### eyeContact
+Measure viewer-facing gaze coverage:
+- \`overallScore\` (0-10): 0 = never looks at camera, 10 = constant direct address.
+- \`directAddressPct\` (0-1): fraction of total runtime with clear direct gaze.
+- \`perScene\`: for each scene window (use your scene timestamps) emit {start, end, pct}
+  where pct is 0-1 eye-contact share for that window.
+If there is no human talent (product-only video), set overallScore=0, directAddressPct=0, perScene=[].
+
+### cutsMap
+List EVERY visible edit (cut, dissolve, wipe, etc.) in chronological order:
+- \`timestamp\`: seconds at which the cut occurs.
+- \`type\`: choose from the provided enum. "hard-cut" is a clean frame cut; "jump-cut"
+  is a cut on the same subject that jumps forward; "dissolve" is a gradual blend.
+- \`beforeShot\` / \`afterShot\`: 5-10 word description of the outgoing/incoming shot.
+- \`intent\` (optional): brief reason — "pace acceleration", "scene transition", "continuity cut".
+Aim for comprehensive coverage. A 30-second ad might have 8-25 entries.
+
+### peopleAnalysis
+Objective observation of on-screen people — this is for creative research, not surveillance.
+Use only what is visible in the video. Estimate, don't identify individuals.
+- \`countMax\`: most people visible at once.
+- \`countAvg\`: average across the runtime.
+- \`overallGenderMix\`: fraction of screen time by broad gender presentation
+  (male/female/other, must sum to 1.0).
+- \`actors\`: one entry per distinct person. Assign stable IDs ("A1", "A2", …).
+  - \`role\`: what function they serve in the ad.
+  - \`gender\`: broad visual presentation — use "unclear" when genuinely ambiguous.
+  - \`ageRange\`: estimated age bracket based on visual appearance only.
+  - \`ethnicity\`: omit if indiscernible; use the broadest accurate descriptor when clear
+    (e.g. "East Asian", "Black", "White", "South Asian", "Latina/o", "Middle Eastern").
+    Never speculate; leave absent if unclear.
+  - \`styleDescription\`: clothing, grooming, aesthetic (2-3 sentences).
+  - \`appearanceTimeRanges\`: all time windows they are on screen.
+  - \`screenTimePct\`: 0-1 fraction of total duration.
+  - \`energyLevel\` (0-10), \`trustworthiness\` (0-10): based on performance/delivery.
+  - \`eyeContactShare\` (0-1): their personal gaze-at-camera ratio while on screen.
+  - \`cameraTreatment\`: dominant framing they receive.
+
+### scriptAngle
+Creative strategy framework:
+- \`angle\`: the primary narrative structure (pick the best single fit).
+- \`narrativeStyle\`: who the script speaks as/to.
+- \`hookType\`: what mechanism the first 3 seconds uses to grab attention.
+- \`thesis\`: one clear sentence — what does this video promise the viewer?
+- \`acts\`: 2-5 structural acts with timestamps. Common 3-act: Setup/Turn/Payoff.
+  For listicle: Intro/Points/CTA. Label naturally.
+- \`copyHooks\`: the 3-6 most quotable, shareable, or memorable script lines verbatim.
+
+═══════════════════════════════════════════════════════════════════════════
 V2 OUTPUT FORMAT — USE THIS SKELETON
 ═══════════════════════════════════════════════════════════════════════════
 \`\`\`
