@@ -119,15 +119,20 @@ export function useV2UploadQueue() {
         //    ~4.5 MB request-body limit on serverless functions.
         const ext = item.file.name.split(".").pop()?.toLowerCase() || "mp4";
         const safeName = item.file.name.replace(/[^a-zA-Z0-9._-]+/g, "_");
-        const path = `v2/videos/${Date.now()}-${safeName}.${ext}`;
+        // Unique UUID suffix guarantees no path collisions across retries
+        // or same-file re-uploads. Client-side upload() doesn't accept
+        // addRandomSuffix so we build uniqueness into the path itself.
+        const uniq =
+          typeof crypto !== "undefined" && "randomUUID" in crypto
+            ? crypto.randomUUID().slice(0, 8)
+            : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        const path = `v2/videos/${Date.now()}-${uniq}-${safeName}.${ext}`;
         const blob = await withRetry(
           () =>
             upload(path, item.file, {
               access: "public",
               handleUploadUrl: "/api/blob/upload",
               contentType: item.file.type || "video/mp4",
-              // Avoid blob collisions on retry after a failed network upload.
-              addRandomSuffix: true,
               // 5 MB resumable chunks — survives transient network flaps
               // (ERR_NETWORK_CHANGED) much better than a single PUT.
               multipart: true,
