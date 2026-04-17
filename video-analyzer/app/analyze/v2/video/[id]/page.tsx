@@ -2,16 +2,15 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { v2Session as auth } from "@/lib/video/v2/session";
 import { EmotionalArcChart } from "@/components/video/emotional-arc-chart";
-import { HookDissectionCard } from "@/components/video/hook-dissection-card";
-import { MicroMomentsCard } from "@/components/video/micro-moments-card";
 import { PacingCurve } from "@/components/video/pacing-curve";
-import { PatternInterruptsCard } from "@/components/video/pattern-interrupts-card";
 import { PlatformFitCard } from "@/components/video/platform-fit-card";
 import { SwipeRiskCurve } from "@/components/video/swipe-risk-curve";
-import { TrustSignalsCard } from "@/components/video/trust-signals-card";
+import { EventsTimeline } from "@/components/video/v2/events-timeline";
+import { HookDissectionV2Card } from "@/components/video/v2/hook-dissection-v2-card";
 import { InsightsRichCard } from "@/components/video/v2/insights-rich-card";
 import { OverallScorecard } from "@/components/video/v2/overall-scorecard";
 import { PlatformFitRadar } from "@/components/video/v2/platform-fit-radar";
+import { PredictedMetricsGridV2 } from "@/components/video/v2/predicted-metrics-grid-v2";
 import { RuleComplianceRadar } from "@/components/video/v2/rule-compliance-radar";
 import { VisualCharacterRadar } from "@/components/video/v2/visual-character-radar";
 import { PerVideoClient } from "@/components/video/v2/per-video-client";
@@ -81,6 +80,16 @@ async function PerVideoBody({
       {/* Batch 2: client wrapper owns VideoWithOverlay + all timeline/seek components */}
       <PerVideoClient fullPayload={fullPayload} video={v} />
 
+      {/* Timed events overview (interrupts + trust signals + micro-moments) */}
+      {fullPayload && (
+        <EventsTimeline
+          patternInterrupts={fullPayload.extended?.patternInterrupts}
+          trustSignals={fullPayload.extended?.trustSignals}
+          microMoments={fullPayload.extended?.microMoments}
+          totalDuration={Number(v.durationSec ?? 0)}
+        />
+      )}
+
       {/* Overall scorecard */}
       {fullPayload && <OverallScorecard analysis={fullPayload} />}
 
@@ -98,6 +107,11 @@ async function PerVideoBody({
         </div>
       )}
 
+      {/* Predicted metrics v2 */}
+      {fullPayload?.predictedMetrics && (
+        <PredictedMetricsGridV2 metrics={fullPayload.predictedMetrics} />
+      )}
+
       {fullPayload && (
         <>
           <section className="space-y-4">
@@ -105,7 +119,7 @@ async function PerVideoBody({
               Tier 1 · Attention capture (0-3s)
             </h2>
             {fullPayload.extended?.hookDissection && (
-              <HookDissectionCard
+              <HookDissectionV2Card
                 hookDissection={fullPayload.extended.hookDissection}
                 hookDuration={fullPayload.hook?.duration}
               />
@@ -129,30 +143,13 @@ async function PerVideoBody({
                 />
               )}
             </div>
-            {fullPayload.extended?.patternInterrupts && (
-              <PatternInterruptsCard
-                patternInterrupts={fullPayload.extended.patternInterrupts}
-              />
-            )}
-            {/* AudioLandscapeExpanded is rendered in PerVideoClient above */}
+            {/* AudioLandscapeV2 is rendered in PerVideoClient above */}
           </section>
 
           <section className="space-y-4">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               Tier 3 · Outcome signals
             </h2>
-            <div className="grid md:grid-cols-2 gap-4">
-              {fullPayload.extended?.trustSignals && (
-                <TrustSignalsCard
-                  trustSignals={fullPayload.extended.trustSignals}
-                />
-              )}
-              {fullPayload.extended?.microMoments && (
-                <MicroMomentsCard
-                  microMoments={fullPayload.extended.microMoments}
-                />
-              )}
-            </div>
             {fullPayload.extended?.platformFit && (
               <PlatformFitCard platformFit={fullPayload.extended.platformFit} />
             )}

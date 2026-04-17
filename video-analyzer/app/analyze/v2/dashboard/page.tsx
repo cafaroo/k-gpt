@@ -4,6 +4,7 @@ import { AnalysesTable } from "@/components/video/v2/analyses-table";
 import { AuthenticityBars } from "@/components/video/v2/authenticity-bars";
 import { DashboardAdvancedCharts } from "@/components/video/v2/dashboard-advanced-charts";
 import { EcrHistogram } from "@/components/video/v2/ecr-histogram";
+import { RecentAnalysesCards } from "@/components/video/v2/recent-analyses-cards";
 import { listAnalyses } from "@/lib/db/queries";
 import { v2Session as auth } from "@/lib/video/v2/session";
 
@@ -91,6 +92,22 @@ async function DashboardBody() {
         <AuthenticityBars rows={authenticityRows} />
       </div>
       <DashboardAdvancedCharts
+        rows={rows.map((r) => ({
+          id: r.id,
+          filename: r.filename,
+          thumbnailUrl: r.thumbnailUrl,
+          overallScore: r.overallScore,
+          ecr: r.ecr,
+          nawp: r.nawp,
+          colloquialityScore: r.colloquialityScore,
+          authenticityBand: r.authenticityBand,
+          niche: r.niche,
+          platformBestFit: r.platformBestFit,
+          createdAt: r.createdAt.toISOString(),
+          durationSec: r.durationSec,
+        }))}
+      />
+      <RecentAnalysesCards
         rows={rows.map((r) => ({
           id: r.id,
           filename: r.filename,
