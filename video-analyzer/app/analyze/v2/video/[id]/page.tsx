@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { v2Session as auth } from "@/lib/video/v2/session";
-import { AudioInsightsV2 } from "@/components/video/audio-insights-v2";
 import { EmotionalArcChart } from "@/components/video/emotional-arc-chart";
 import { HookDissectionCard } from "@/components/video/hook-dissection-card";
 import { MicroMomentsCard } from "@/components/video/micro-moments-card";
@@ -13,8 +12,8 @@ import { InsightsRichCard } from "@/components/video/v2/insights-rich-card";
 import { OverallScorecard } from "@/components/video/v2/overall-scorecard";
 import { PlatformFitRadar } from "@/components/video/v2/platform-fit-radar";
 import { RuleComplianceRadar } from "@/components/video/v2/rule-compliance-radar";
-import { VideoWithOverlay } from "@/components/video/v2/video-with-overlay";
 import { VisualCharacterRadar } from "@/components/video/v2/visual-character-radar";
+import { PerVideoClient } from "@/components/video/v2/per-video-client";
 import { getAnalysisById } from "@/lib/db/queries";
 
 export default async function PerVideoPage({
@@ -52,8 +51,8 @@ export default async function PerVideoPage({
 
   return (
     <div className="space-y-6">
-      {/* Video player with live overlay */}
-      <VideoWithOverlay video={v} fullPayload={fullPayload} />
+      {/* Batch 2: client wrapper owns VideoWithOverlay + all timeline/seek components */}
+      <PerVideoClient fullPayload={fullPayload} video={v} />
 
       {/* Overall scorecard */}
       {fullPayload && <OverallScorecard analysis={fullPayload} />}
@@ -108,11 +107,7 @@ export default async function PerVideoPage({
                 patternInterrupts={fullPayload.extended.patternInterrupts}
               />
             )}
-            {fullPayload.extended?.audioExtended && (
-              <AudioInsightsV2
-                audioExtended={fullPayload.extended.audioExtended}
-              />
-            )}
+            {/* AudioLandscapeExpanded is rendered in PerVideoClient above */}
           </section>
 
           <section className="space-y-4">

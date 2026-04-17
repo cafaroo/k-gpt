@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
-import { v2Session as auth } from "@/lib/video/v2/session";
 import { AnalysesTable } from "@/components/video/v2/analyses-table";
 import { AuthenticityBars } from "@/components/video/v2/authenticity-bars";
+import { DashboardAdvancedCharts } from "@/components/video/v2/dashboard-advanced-charts";
 import { EcrHistogram } from "@/components/video/v2/ecr-histogram";
 import { listAnalyses } from "@/lib/db/queries";
+import { v2Session as auth } from "@/lib/video/v2/session";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -78,6 +79,22 @@ export default async function DashboardPage() {
         <EcrHistogram ecrs={ecrs} />
         <AuthenticityBars rows={authenticityRows} />
       </div>
+      <DashboardAdvancedCharts
+        rows={rows.map((r) => ({
+          id: r.id,
+          filename: r.filename,
+          thumbnailUrl: r.thumbnailUrl,
+          overallScore: r.overallScore,
+          ecr: r.ecr,
+          nawp: r.nawp,
+          colloquialityScore: r.colloquialityScore,
+          authenticityBand: r.authenticityBand,
+          niche: r.niche,
+          platformBestFit: r.platformBestFit,
+          createdAt: r.createdAt.toISOString(),
+          durationSec: r.durationSec,
+        }))}
+      />
       <AnalysesTable
         rows={rows.map((r) => ({
           id: r.id,
