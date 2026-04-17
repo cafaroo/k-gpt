@@ -17,26 +17,23 @@ type Props = {
   onSeek?: (time: number) => void;
 };
 
-const BEAT_COLORS: Record<
-  string,
-  { bg: string; text: string; border: string }
-> = {
-  hook: { bg: "#3b82f6", text: "#dbeafe", border: "#1d4ed8" },
-  problem: { bg: "#ef4444", text: "#fee2e2", border: "#b91c1c" },
-  "micro-proof": { bg: "#10b981", text: "#d1fae5", border: "#059669" },
-  payoff: { bg: "#f59e0b", text: "#fef3c7", border: "#d97706" },
-  benefit: { bg: "#a855f7", text: "#f3e8ff", border: "#7c3aed" },
-  "social-proof": { bg: "#14b8a6", text: "#ccfbf1", border: "#0d9488" },
-  objection: { bg: "#ec4899", text: "#fce7f3", border: "#be185d" },
-  "product-intro": { bg: "#06b6d4", text: "#cffafe", border: "#0891b2" },
-  transition: { bg: "#6b7280", text: "#f3f4f6", border: "#4b5563" },
-  "soft-cta": { bg: "#6366f1", text: "#e0e7ff", border: "#4338ca" },
-  "hard-cta": { bg: "#8b5cf6", text: "#ede9fe", border: "#6d28d9" },
-  "how-to-step": { bg: "#84cc16", text: "#ecfccb", border: "#65a30d" },
+const BEAT_COLORS: Record<string, string> = {
+  hook: "#3b82f6",
+  problem: "#ef4444",
+  "micro-proof": "#10b981",
+  payoff: "#f59e0b",
+  benefit: "#a855f7",
+  "social-proof": "#14b8a6",
+  objection: "#ec4899",
+  "product-intro": "#06b6d4",
+  transition: "#6b7280",
+  "soft-cta": "#6366f1",
+  "hard-cta": "#8b5cf6",
+  "how-to-step": "#84cc16",
 };
 
-function fallbackColor() {
-  return { bg: "#64748b", text: "#f1f5f9", border: "#475569" };
+function colorFor(type: string) {
+  return BEAT_COLORS[type] ?? "#64748b";
 }
 
 function fmt(t: number): string {
@@ -45,11 +42,29 @@ function fmt(t: number): string {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
+// Pack beats into 2 alternating lanes — like a video editor track layout.
+// Greedy: each beat goes to the lane where the last-assigned beat ends
+// earliest (and ≤ start). Produces compact 2-row stacking even when
+// beats overlap slightly.
+function packLanes<T extends { start: number; end: number }>(
+  items: T[]
+): Array<T & { lane: 0 | 1 }> {
+  const laneEnd = [0, 0];
+  return items.map((item) => {
+    const l0Free = laneEnd[0] <= item.start;
+    const l1Free = laneEnd[1] <= item.start;
+    let lane: 0 | 1;
+    if (l0Free && !l1Free) lane = 0;
+    else if (!l0Free && l1Free) lane = 1;
+    else if (l0Free && l1Free) lane = laneEnd[0] <= laneEnd[1] ? 0 : 1;
+    else lane = laneEnd[0] <= laneEnd[1] ? 0 : 1;
+    laneEnd[lane] = item.end;
+    return { ...item, lane };
+  });
+}
+
 export function BeatMapTimeline({ beatMap, totalDuration, onSeek }: Props) {
-  const [tooltip, setTooltip] = useState<{
-    beat: Beat;
-    pct: number;
-  } | null>(null);
+  const [hovered, setHovered] = useState<number | null>(null);
 
   if (!beatMap || beatMap.length === 0) {
     return (
@@ -68,110 +83,163 @@ export function BeatMapTimeline({ beatMap, totalDuration, onSeek }: Props) {
 
   const dur = totalDuration > 0 ? totalDuration : 1;
   const sorted = [...beatMap].sort((a, b) => a.start - b.start);
+  const laneItems = packLanes(sorted);
 
   const ticks = [0, 0.25, 0.5, 0.75, 1].map((f) => ({
     pct: f * 100,
     label: fmt(f * dur),
   }));
 
+  const LANE_HEIGHT = 36;
+  const LANE_GAP = 4;
+  const TRACK_HEIGHT = LANE_HEIGHT * 2 + LANE_GAP;
+
+  const hoveredBeat =
+    hovered !== null ? (laneItems[hovered] ?? null) : null;
+  const hoveredLeftPct =
+    hoveredBeat !== null
+      ? (hoveredBeat.start / dur) * 100 +
+        (Math.max(0.8, ((hoveredBeat.end - hoveredBeat.start) / dur) * 100)) / 2
+      : 0;
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Beat Map</CardTitle>
+        <div className="flex items-center justify-between gap-4">
+          <CardTitle className="text-base">Beat Map</CardTitle>
+          <span className="text-xs text-muted-foreground font-mono">
+            {laneItems.length} beats · {fmt(dur)}
+          </span>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-1">
+      <CardContent className="space-y-2">
         {/* Legend */}
-        <div className="flex flex-wrap gap-1.5 mb-2">
-          {Object.entries(BEAT_COLORS).map(([type, colors]) => (
+        <div className="flex flex-wrap gap-1">
+          {Array.from(new Set(laneItems.map((b) => b.type))).map((type) => (
             <span
-              className="rounded-full px-2 py-0.5 text-[10px] font-medium"
+              className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium bg-muted/60"
               key={type}
-              style={{
-                background: `${colors.bg}33`,
-                color: colors.bg,
-                border: `1px solid ${colors.bg}55`,
-              }}
             >
+              <span
+                className="h-2 w-2 rounded-sm"
+                style={{ background: colorFor(type) }}
+              />
               {type}
             </span>
           ))}
         </div>
 
-        {/* Rows */}
-        <div className="space-y-[3px] relative">
-          {sorted.map((beat, i) => {
-            const colors = BEAT_COLORS[beat.type] ?? fallbackColor();
+        {/* Track */}
+        <div
+          className="relative rounded-md border bg-muted/20 overflow-hidden"
+          style={{ height: `${TRACK_HEIGHT}px` }}
+        >
+          {/* Mid-line separator */}
+          <div
+            className="absolute left-0 right-0 border-t border-dashed border-border/40 pointer-events-none"
+            style={{ top: `${LANE_HEIGHT + LANE_GAP / 2}px` }}
+          />
+
+          {laneItems.map((beat, i) => {
             const leftPct = (beat.start / dur) * 100;
             const widthPct = Math.max(
               0.8,
               ((beat.end - beat.start) / dur) * 100
             );
-            const midPct = leftPct + widthPct / 2;
+            const color = colorFor(beat.type);
+            const top =
+              beat.lane === 0 ? 0 : LANE_HEIGHT + LANE_GAP;
+            const strengthOpacity = Math.max(
+              0.6,
+              Math.min(1, beat.strength / 10)
+            );
             return (
-              <div
-                className="relative"
+              <button
+                className="absolute rounded-[3px] cursor-pointer transition-all hover:brightness-110 hover:z-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-background"
                 key={`beat-${i}-${beat.start}`}
-                style={{ height: "28px" }}
+                onClick={() => onSeek?.(beat.start)}
+                onMouseEnter={() => setHovered(i)}
+                onMouseLeave={() => setHovered(null)}
+                style={{
+                  left: `${leftPct}%`,
+                  width: `${widthPct}%`,
+                  top: `${top + 2}px`,
+                  height: `${LANE_HEIGHT - 4}px`,
+                  background: `linear-gradient(to bottom, ${color}ee, ${color}bb)`,
+                  borderLeft: `3px solid ${color}`,
+                  borderRadius: "3px",
+                  opacity: strengthOpacity,
+                  minWidth: "4px",
+                }}
+                type="button"
               >
-                <button
-                  className="absolute h-full rounded cursor-pointer transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2"
-                  onClick={() => onSeek?.(beat.start)}
-                  onMouseEnter={() => setTooltip({ beat, pct: midPct })}
-                  onMouseLeave={() => setTooltip(null)}
-                  style={{
-                    left: `${leftPct}%`,
-                    width: `${widthPct}%`,
-                    background: colors.bg,
-                    border: `1px solid ${colors.border}`,
-                    minWidth: "4px",
-                  }}
-                  title={`${beat.type} · ${beat.description} (strength ${beat.strength}/10)`}
-                  type="button"
-                >
-                  {widthPct > 6 && (
-                    <span
-                      className="absolute inset-0 flex items-center px-1.5 text-[10px] font-medium truncate"
-                      style={{ color: colors.text }}
-                    >
+                {widthPct > 5 && (
+                  <span className="absolute inset-0 flex items-center justify-between px-2 gap-1 text-white/95 overflow-hidden">
+                    <span className="text-[10px] font-semibold tracking-tight uppercase truncate">
                       {beat.type}
                     </span>
-                  )}
-                </button>
-              </div>
+                    {widthPct > 14 && (
+                      <span className="text-[9px] tabular-nums opacity-70 shrink-0 font-mono">
+                        {fmt(beat.start)}
+                      </span>
+                    )}
+                  </span>
+                )}
+              </button>
             );
           })}
-        </div>
 
-        {/* Tooltip */}
-        {tooltip && (
-          <div
-            className="pointer-events-none absolute z-20 -mt-1"
-            style={{
-              left: `clamp(8px, ${tooltip.pct}%, calc(100% - 180px))`,
-              transform: "translateX(-50%)",
-              bottom: "100%",
-              marginBottom: "4px",
-            }}
-          >
-            <div className="rounded-lg border bg-popover px-3 py-2 text-xs shadow-lg max-w-[220px]">
-              <div className="font-semibold capitalize mb-0.5">
-                {tooltip.beat.type}
-              </div>
-              <div className="font-mono text-[10px] text-muted-foreground mb-1">
-                {fmt(tooltip.beat.start)} – {fmt(tooltip.beat.end)}
-              </div>
-              <p className="text-muted-foreground leading-snug">
-                {tooltip.beat.description}
-              </p>
-              <div className="mt-1 text-[10px] text-muted-foreground">
-                Strength: {tooltip.beat.strength}/10
+          {/* Tooltip */}
+          {hoveredBeat && (
+            <div
+              className="pointer-events-none absolute z-20"
+              style={{
+                left: `clamp(8px, ${hoveredLeftPct}%, calc(100% - 240px))`,
+                top: "100%",
+                marginTop: "6px",
+              }}
+            >
+              <div className="rounded-lg border bg-popover px-3 py-2 text-xs shadow-xl max-w-[260px]">
+                <div className="flex items-center gap-2 mb-1">
+                  <span
+                    className="h-2 w-2 rounded-sm"
+                    style={{ background: colorFor(hoveredBeat.type) }}
+                  />
+                  <span className="font-semibold capitalize">
+                    {hoveredBeat.type}
+                  </span>
+                </div>
+                <div className="font-mono text-[10px] text-muted-foreground mb-1">
+                  {fmt(hoveredBeat.start)} – {fmt(hoveredBeat.end)} · lane{" "}
+                  {hoveredBeat.lane + 1}
+                </div>
+                <p className="text-muted-foreground leading-snug">
+                  {hoveredBeat.description}
+                </p>
+                <div className="mt-1.5 flex items-center gap-1.5">
+                  <span className="text-[10px] text-muted-foreground">
+                    Strength
+                  </span>
+                  <div className="h-1.5 w-16 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${(hoveredBeat.strength / 10) * 100}%`,
+                        background: colorFor(hoveredBeat.type),
+                      }}
+                    />
+                  </div>
+                  <span className="text-[10px] tabular-nums">
+                    {hoveredBeat.strength.toFixed(1)}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Time axis */}
-        <div className="relative h-5 mt-1">
+        <div className="relative h-4">
           {ticks.map((tick) => (
             <span
               className="absolute -translate-x-1/2 text-[10px] text-muted-foreground font-mono"

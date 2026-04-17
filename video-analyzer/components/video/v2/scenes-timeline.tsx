@@ -18,23 +18,20 @@ type Props = {
   onSeek?: (time: number) => void;
 };
 
-const SCENE_COLORS: Record<
-  string,
-  { bg: string; text: string; border: string }
-> = {
-  hook: { bg: "#3b82f6", text: "#dbeafe", border: "#1d4ed8" },
-  problem: { bg: "#ef4444", text: "#fee2e2", border: "#b91c1c" },
-  "product-intro": { bg: "#06b6d4", text: "#cffafe", border: "#0891b2" },
-  "social-proof": { bg: "#14b8a6", text: "#ccfbf1", border: "#0d9488" },
-  demo: { bg: "#f59e0b", text: "#fef3c7", border: "#d97706" },
-  benefit: { bg: "#a855f7", text: "#f3e8ff", border: "#7c3aed" },
-  cta: { bg: "#6366f1", text: "#e0e7ff", border: "#4338ca" },
-  transition: { bg: "#6b7280", text: "#f3f4f6", border: "#4b5563" },
-  other: { bg: "#64748b", text: "#f1f5f9", border: "#475569" },
+const SCENE_COLORS: Record<string, string> = {
+  hook: "#3b82f6",
+  problem: "#ef4444",
+  "product-intro": "#06b6d4",
+  "social-proof": "#14b8a6",
+  demo: "#f59e0b",
+  benefit: "#a855f7",
+  cta: "#6366f1",
+  transition: "#6b7280",
+  other: "#64748b",
 };
 
-function fallbackColor() {
-  return { bg: "#64748b", text: "#f1f5f9", border: "#475569" };
+function colorFor(fn: string) {
+  return SCENE_COLORS[fn] ?? "#64748b";
 }
 
 function fmt(t: number): string {
@@ -43,11 +40,26 @@ function fmt(t: number): string {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
+// 2-lane packing — same logic as BeatMap.
+function packLanes<T extends { start: number; end: number }>(
+  items: T[]
+): Array<T & { lane: 0 | 1 }> {
+  const laneEnd = [0, 0];
+  return items.map((item) => {
+    const l0Free = laneEnd[0] <= item.start;
+    const l1Free = laneEnd[1] <= item.start;
+    let lane: 0 | 1;
+    if (l0Free && !l1Free) lane = 0;
+    else if (!l0Free && l1Free) lane = 1;
+    else if (l0Free && l1Free) lane = laneEnd[0] <= laneEnd[1] ? 0 : 1;
+    else lane = laneEnd[0] <= laneEnd[1] ? 0 : 1;
+    laneEnd[lane] = item.end;
+    return { ...item, lane };
+  });
+}
+
 export function ScenesTimeline({ scenes, totalDuration, onSeek }: Props) {
-  const [tooltip, setTooltip] = useState<{
-    scene: Scene;
-    pct: number;
-  } | null>(null);
+  const [hovered, setHovered] = useState<number | null>(null);
 
   if (!scenes || scenes.length === 0) {
     return (
@@ -66,159 +78,146 @@ export function ScenesTimeline({ scenes, totalDuration, onSeek }: Props) {
 
   const dur = totalDuration > 0 ? totalDuration : 1;
   const sorted = [...scenes].sort((a, b) => a.start - b.start);
+  const laneItems = packLanes(sorted);
 
   const ticks = [0, 0.25, 0.5, 0.75, 1].map((f) => ({
     pct: f * 100,
     label: fmt(f * dur),
   }));
 
+  const LANE_HEIGHT = 40;
+  const LANE_GAP = 4;
+  const TRACK_HEIGHT = LANE_HEIGHT * 2 + LANE_GAP;
+
+  const hoveredScene = hovered !== null ? (laneItems[hovered] ?? null) : null;
+  const hoveredLeftPct =
+    hoveredScene !== null
+      ? (hoveredScene.start / dur) * 100 +
+        (Math.max(0.8, ((hoveredScene.end - hoveredScene.start) / dur) * 100)) /
+          2
+      : 0;
+
   return (
     <Card>
       <CardHeader>
-        <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-4">
           <CardTitle className="text-base">Scenes</CardTitle>
-          <span className="text-xs text-muted-foreground">
-            {sorted.length} scene{sorted.length === 1 ? "" : "s"}
+          <span className="text-xs text-muted-foreground font-mono">
+            {laneItems.length} scenes · {fmt(dur)}
           </span>
         </div>
-        {/* Legend */}
-        <div className="flex flex-wrap gap-1.5 pt-1">
-          {Object.entries(SCENE_COLORS)
-            .filter(([type]) => sorted.some((s) => s.function === type))
-            .map(([type, colors]) => (
-              <span
-                className="rounded-full px-2 py-0.5 text-[10px] font-medium"
-                key={type}
-                style={{
-                  background: `${colors.bg}33`,
-                  color: colors.bg,
-                  border: `1px solid ${colors.bg}55`,
-                }}
-              >
-                {type}
-              </span>
-            ))}
-        </div>
       </CardHeader>
-      <CardContent className="space-y-1">
-        {/* Single stacked bar track */}
-        <div className="relative" style={{ height: "28px" }}>
-          {sorted.map((scene, i) => {
-            const colors = SCENE_COLORS[scene.function] ?? fallbackColor();
+      <CardContent className="space-y-2">
+        {/* Legend */}
+        <div className="flex flex-wrap gap-1">
+          {Array.from(new Set(laneItems.map((s) => s.function))).map((fn) => (
+            <span
+              className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium bg-muted/60"
+              key={fn}
+            >
+              <span
+                className="h-2 w-2 rounded-sm"
+                style={{ background: colorFor(fn) }}
+              />
+              {fn}
+            </span>
+          ))}
+        </div>
+
+        {/* Track */}
+        <div
+          className="relative rounded-md border bg-muted/20 overflow-hidden"
+          style={{ height: `${TRACK_HEIGHT}px` }}
+        >
+          {/* Lane separator */}
+          <div
+            className="absolute left-0 right-0 border-t border-dashed border-border/40 pointer-events-none"
+            style={{ top: `${LANE_HEIGHT + LANE_GAP / 2}px` }}
+          />
+
+          {laneItems.map((scene, i) => {
             const leftPct = (scene.start / dur) * 100;
             const widthPct = Math.max(
               0.8,
               ((scene.end - scene.start) / dur) * 100
             );
-            const midPct = leftPct + widthPct / 2;
+            const color = colorFor(scene.function);
+            const top = scene.lane === 0 ? 0 : LANE_HEIGHT + LANE_GAP;
             return (
               <button
-                className="absolute h-full rounded-sm cursor-pointer transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 overflow-hidden"
+                className="absolute cursor-pointer transition-all hover:brightness-110 hover:z-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-background"
                 key={`scene-${i}-${scene.start}`}
                 onClick={() => onSeek?.(scene.start)}
-                onMouseEnter={() => setTooltip({ scene, pct: midPct })}
-                onMouseLeave={() => setTooltip(null)}
+                onMouseEnter={() => setHovered(i)}
+                onMouseLeave={() => setHovered(null)}
                 style={{
                   left: `${leftPct}%`,
                   width: `${widthPct}%`,
-                  background: colors.bg,
-                  border: `1px solid ${colors.border}`,
+                  top: `${top + 2}px`,
+                  height: `${LANE_HEIGHT - 4}px`,
+                  background: `linear-gradient(to bottom, ${color}e0, ${color}a0)`,
+                  borderLeft: `3px solid ${color}`,
+                  borderRadius: "3px",
                   minWidth: "4px",
                 }}
-                title={`${scene.label} · ${scene.function}`}
                 type="button"
               >
-                {widthPct > 8 && (
-                  <span
-                    className="absolute inset-0 flex items-center px-1.5 text-[10px] font-medium truncate"
-                    style={{ color: colors.text }}
-                  >
-                    {scene.label}
+                {widthPct > 5 && (
+                  <span className="absolute inset-0 flex flex-col items-start justify-center px-2 gap-0 text-white/95 overflow-hidden">
+                    <span className="text-[11px] font-semibold leading-tight truncate w-full">
+                      {scene.label}
+                    </span>
+                    {widthPct > 10 && (
+                      <span className="text-[9px] uppercase opacity-80 tracking-tight leading-tight truncate w-full">
+                        {scene.function}
+                      </span>
+                    )}
                   </span>
                 )}
               </button>
             );
           })}
-        </div>
 
-        {/* Individual scene rows for detail */}
-        <div className="mt-3 space-y-[2px]">
-          {sorted.map((scene, i) => {
-            const colors = SCENE_COLORS[scene.function] ?? fallbackColor();
-            const leftPct = (scene.start / dur) * 100;
-            const widthPct = Math.max(
-              0.8,
-              ((scene.end - scene.start) / dur) * 100
-            );
-            const midPct = leftPct + widthPct / 2;
-            return (
-              <div
-                className="relative"
-                key={`scene-row-${i}-${scene.start}`}
-                style={{ height: "24px" }}
-              >
-                <button
-                  className="absolute h-full rounded-sm cursor-pointer transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2"
-                  onClick={() => onSeek?.(scene.start)}
-                  onMouseEnter={() => setTooltip({ scene, pct: midPct })}
-                  onMouseLeave={() => setTooltip(null)}
-                  style={{
-                    left: `${leftPct}%`,
-                    width: `${widthPct}%`,
-                    background: `${colors.bg}40`,
-                    border: `1px solid ${colors.border}80`,
-                    minWidth: "4px",
-                  }}
-                  type="button"
-                >
-                  {widthPct > 10 && (
-                    <span
-                      className="absolute inset-0 flex items-center px-1.5 text-[10px] truncate"
-                      style={{ color: colors.bg }}
-                    >
-                      {scene.label}
-                    </span>
-                  )}
-                </button>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Tooltip */}
-        {tooltip && (
-          <div
-            className="pointer-events-none z-20"
-            style={{
-              position: "absolute",
-              left: `clamp(8px, ${tooltip.pct}%, calc(100% - 200px))`,
-              transform: "translateX(-50%)",
-              bottom: "100%",
-              marginBottom: "4px",
-            }}
-          >
-            <div className="rounded-lg border bg-popover px-3 py-2 text-xs shadow-lg max-w-[240px]">
-              <div className="font-semibold mb-0.5">{tooltip.scene.label}</div>
-              <div className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">
-                {tooltip.scene.function}
-              </div>
-              <div className="font-mono text-[10px] text-muted-foreground mb-1">
-                {fmt(tooltip.scene.start)} – {fmt(tooltip.scene.end)}
-              </div>
-              <p className="text-muted-foreground leading-snug">
-                {tooltip.scene.description}
-              </p>
-              {tooltip.scene.visualStyle && (
-                <p className="mt-1 text-[10px] text-muted-foreground italic">
-                  Style: {tooltip.scene.visualStyle}
+          {/* Tooltip */}
+          {hoveredScene && (
+            <div
+              className="pointer-events-none absolute z-20"
+              style={{
+                left: `clamp(8px, ${hoveredLeftPct}%, calc(100% - 260px))`,
+                top: "100%",
+                marginTop: "6px",
+              }}
+            >
+              <div className="rounded-lg border bg-popover px-3 py-2 text-xs shadow-xl max-w-[280px]">
+                <div className="flex items-center gap-2 mb-1">
+                  <span
+                    className="h-2 w-2 rounded-sm"
+                    style={{ background: colorFor(hoveredScene.function) }}
+                  />
+                  <span className="font-semibold">{hoveredScene.label}</span>
+                </div>
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">
+                  {hoveredScene.function}
+                </div>
+                <div className="font-mono text-[10px] text-muted-foreground mb-1">
+                  {fmt(hoveredScene.start)} – {fmt(hoveredScene.end)} · lane{" "}
+                  {hoveredScene.lane + 1}
+                </div>
+                <p className="text-muted-foreground leading-snug">
+                  {hoveredScene.description}
                 </p>
-              )}
+                {hoveredScene.visualStyle && (
+                  <p className="mt-1 text-[10px] text-muted-foreground italic">
+                    Style: {hoveredScene.visualStyle}
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Time axis */}
-        <div className="relative h-5 mt-1">
+        <div className="relative h-4">
           {ticks.map((tick) => (
             <span
               className="absolute -translate-x-1/2 text-[10px] text-muted-foreground font-mono"
