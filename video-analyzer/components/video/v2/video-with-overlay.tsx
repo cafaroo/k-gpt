@@ -44,7 +44,11 @@ type MicroMoment = {
   impactOnRetention: string;
 };
 
-type VideoRow = { blobUrl: string; filename?: string };
+type VideoRow = {
+  blobUrl: string;
+  filename?: string;
+  videoDeletedAt?: Date | string | null;
+};
 
 type FullPayload = {
   beatMap?: Beat[];
@@ -278,15 +282,30 @@ export function VideoWithOverlay({ video, fullPayload }: Props) {
       <div className="grid gap-4 md:grid-cols-[2fr_1fr]">
         {/* Video with floating callouts */}
         <div className="relative bg-black rounded-lg overflow-hidden aspect-[9/16] md:aspect-video">
-          {/* biome-ignore lint/a11y/useMediaCaption: no caption for POC */}
-          <video
-            className="h-full w-full object-contain"
-            controls
-            onLoadedMetadata={handleLoadedMetadata}
-            onTimeUpdate={handleTimeUpdate}
-            ref={videoRef}
-            src={video.blobUrl}
-          />
+          {video.videoDeletedAt ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-6 text-center text-white/70">
+              <div className="text-sm font-semibold text-white">
+                Video removed to free storage
+              </div>
+              <p className="text-xs text-white/50 max-w-xs">
+                The underlying file was purged from Vercel Blob. All analysis
+                data (scores, timelines, insights, transcript, JSON export)
+                remains intact — only the player is offline.
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* biome-ignore lint/a11y/useMediaCaption: no caption for POC */}
+              <video
+                className="h-full w-full object-contain"
+                controls
+                onLoadedMetadata={handleLoadedMetadata}
+                onTimeUpdate={handleTimeUpdate}
+                ref={videoRef}
+                src={video.blobUrl}
+              />
+            </>
+          )}
 
           {/* Floating callouts — absolute so they don't push layout */}
           <div className="pointer-events-none absolute top-3 right-3 flex flex-col gap-2 max-w-[240px] z-10">

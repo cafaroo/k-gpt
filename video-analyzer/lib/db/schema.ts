@@ -167,6 +167,9 @@ export const video = pgTable("Video", {
   userTags: json("userTags").$type<string[]>().notNull().default([]),
   thumbnailUrl: text("thumbnailUrl"),
   uploadedAt: timestamp("uploadedAt").notNull().defaultNow(),
+  // When set, the underlying blob was purged to free storage. Analyses
+  // (hot fields + JSON) stay usable; only the video player goes offline.
+  videoDeletedAt: timestamp("videoDeletedAt"),
 });
 
 export type Video = InferSelectModel<typeof video>;

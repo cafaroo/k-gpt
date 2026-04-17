@@ -1,6 +1,6 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { HardDriveDownload, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
@@ -125,6 +125,54 @@ export function ClearAllButton() {
     >
       <Trash2 className="size-3.5" />
       {busy ? "Clearing…" : "Clear all"}
+    </button>
+  );
+}
+
+export function FreeStorageButton() {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+
+  const click = async () => {
+    if (busy) return;
+    const ok = window.confirm(
+      "Free storage by removing uploaded video files?\n\nThe analyses, insights, scores and JSON payloads stay intact. Only the video player on per-video pages goes offline (the uploaded .mp4 / .mov binaries are permanently deleted from Vercel Blob).\n\nContinue?"
+    );
+    if (!ok) return;
+    setBusy(true);
+    try {
+      const res = await fetch("/analyze/v2/api/videos/blobs", {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        window.alert("Purge failed — check console.");
+        console.error(await res.text());
+        setBusy(false);
+        return;
+      }
+      const data = (await res.json()) as {
+        purged: { videos: number; blobs: number };
+      };
+      window.alert(
+        `Freed storage: ${data.purged.videos} videos · ${data.purged.blobs} blob files removed. Analyses preserved.`
+      );
+      router.refresh();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <button
+      className="inline-flex items-center gap-1.5 rounded-md border border-amber-500/40 px-3 py-1.5 text-xs font-medium text-amber-600 hover:bg-amber-500/10 transition-colors disabled:opacity-50"
+      disabled={busy}
+      onClick={click}
+      type="button"
+    >
+      <HardDriveDownload className="size-3.5" />
+      {busy ? "Purging…" : "Free storage"}
     </button>
   );
 }
