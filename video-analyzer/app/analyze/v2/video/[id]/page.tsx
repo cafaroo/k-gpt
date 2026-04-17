@@ -2,6 +2,15 @@ import { redirect } from "next/navigation";
 import { auth } from "@/app/(auth)/auth";
 import { ResearchRow } from "@/components/video/v2/research-row";
 import { getAnalysisById } from "@/lib/db/queries";
+import { HookDissectionCard } from "@/components/video/hook-dissection-card";
+import { PacingCurve } from "@/components/video/pacing-curve";
+import { SwipeRiskCurve } from "@/components/video/swipe-risk-curve";
+import { EmotionalArcChart } from "@/components/video/emotional-arc-chart";
+import { PatternInterruptsCard } from "@/components/video/pattern-interrupts-card";
+import { AudioInsightsV2 } from "@/components/video/audio-insights-v2";
+import { TrustSignalsCard } from "@/components/video/trust-signals-card";
+import { MicroMomentsCard } from "@/components/video/micro-moments-card";
+import { PlatformFitCard } from "@/components/video/platform-fit-card";
 
 export default async function PerVideoPage({
   params,
@@ -57,9 +66,61 @@ export default async function PerVideoPage({
         nawpRationale={fullPayload?.researchMeta?.nawp?.rationale}
       />
 
-      <div className="rounded-lg border p-6 text-sm text-muted-foreground">
-        Tier 1 / 2 / 3 cards render here (Task 7.2).
-      </div>
+      {fullPayload && (
+        <>
+          <section className="space-y-4">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              Tier 1 · Attention capture (0-3s)
+            </h2>
+            {fullPayload.extended?.hookDissection && (
+              <HookDissectionCard
+                hookDissection={fullPayload.extended.hookDissection}
+                hookDuration={fullPayload.hook?.duration}
+              />
+            )}
+          </section>
+
+          <section className="space-y-4">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              Tier 2 · Sustained engagement
+            </h2>
+            <PacingCurve analysis={fullPayload} />
+            <div className="grid md:grid-cols-2 gap-4">
+              {fullPayload.extended?.swipeRiskCurve && (
+                <SwipeRiskCurve swipeRiskCurve={fullPayload.extended.swipeRiskCurve} />
+              )}
+              {fullPayload.extended?.emotionalArc && (
+                <EmotionalArcChart emotionalArc={fullPayload.extended.emotionalArc} />
+              )}
+            </div>
+            {fullPayload.extended?.patternInterrupts && (
+              <PatternInterruptsCard
+                patternInterrupts={fullPayload.extended.patternInterrupts}
+              />
+            )}
+            {fullPayload.extended?.audioExtended && (
+              <AudioInsightsV2 audioExtended={fullPayload.extended.audioExtended} />
+            )}
+          </section>
+
+          <section className="space-y-4">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              Tier 3 · Outcome signals
+            </h2>
+            <div className="grid md:grid-cols-2 gap-4">
+              {fullPayload.extended?.trustSignals && (
+                <TrustSignalsCard trustSignals={fullPayload.extended.trustSignals} />
+              )}
+              {fullPayload.extended?.microMoments && (
+                <MicroMomentsCard microMoments={fullPayload.extended.microMoments} />
+              )}
+            </div>
+            {fullPayload.extended?.platformFit && (
+              <PlatformFitCard platformFit={fullPayload.extended.platformFit} />
+            )}
+          </section>
+        </>
+      )}
     </div>
   );
 }
