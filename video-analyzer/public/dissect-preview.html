@@ -7,10 +7,11 @@
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <style>
   :root {
-    --bg: #07070a;
-    --panel: rgba(17,17,20,0.72);
-    --panel-solid: #0f0f13;
-    --border: rgba(255,255,255,0.08);
+    --bg: #06060a;
+    --bg-deep: #030307;
+    --panel: rgba(13,13,18,0.78);
+    --panel-solid: #0c0c11;
+    --border: rgba(255,255,255,0.07);
     --border-bright: rgba(255,255,255,0.14);
     --fg: #fafafa;
     --muted: #8b8b95;
@@ -23,9 +24,7 @@
     --purple: #a855f7;
     --cyan: #22d3ee;
     --gold: #f5c94b;
-    --white: #fafafa;
 
-    /* attribute-type palette */
     --at-hook: #60a5fa;
     --at-claim: #fbbf24;
     --at-theme: #ec4899;
@@ -35,37 +34,38 @@
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; overflow: hidden; }
   body {
-    background: var(--bg);
+    background: var(--bg-deep);
     color: var(--fg);
     font-family: -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
     font-size: 14px;
     line-height: 1.5;
     font-feature-settings: "ss01";
+    -webkit-font-smoothing: antialiased;
   }
 
-  /* Top header bar */
+  /* Top bar */
   .topbar {
     position: absolute; top: 0; left: 0; right: 0; height: 56px;
     display: flex; align-items: center; justify-content: space-between;
     padding: 0 24px;
-    backdrop-filter: blur(20px);
-    background: linear-gradient(180deg, rgba(7,7,10,0.85), rgba(7,7,10,0.55));
+    backdrop-filter: blur(24px) saturate(140%);
+    background: linear-gradient(180deg, rgba(3,3,7,0.85), rgba(3,3,7,0.5));
     border-bottom: 1px solid var(--border);
-    z-index: 20;
+    z-index: 30;
   }
   .brand { display: flex; align-items: center; gap: 12px; }
   .brand-mark {
-    width: 28px; height: 28px; border-radius: 6px;
-    background: conic-gradient(from 210deg, var(--magenta), var(--purple), var(--cyan), var(--accent), var(--magenta));
-    filter: drop-shadow(0 0 8px rgba(236,72,153,0.4));
+    width: 30px; height: 30px; border-radius: 7px;
+    background: conic-gradient(from 210deg, #ec4899, #a855f7, #22d3ee, #3b82f6, #ec4899);
+    filter: drop-shadow(0 0 10px rgba(236,72,153,0.5));
     position: relative;
   }
   .brand-mark::after {
     content: ""; position: absolute; inset: 4px;
-    background: var(--bg); border-radius: 4px;
+    background: var(--bg-deep); border-radius: 4px;
   }
-  .brand-name { font-size: 16px; font-weight: 700; letter-spacing: -0.01em; }
-  .brand-sub { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; margin-left: 6px; }
+  .brand-name { font-size: 16px; font-weight: 700; letter-spacing: -0.015em; }
+  .brand-sub { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.16em; margin-left: 8px; }
 
   .personas { display: flex; gap: 6px; }
   .persona {
@@ -75,7 +75,7 @@
     color: var(--muted); font-size: 13px; font-weight: 500;
     cursor: pointer; transition: all 0.15s;
   }
-  .persona:hover { color: var(--fg); background: rgba(255,255,255,0.06); border-color: var(--border-bright); }
+  .persona:hover { color: var(--fg); background: rgba(255,255,255,0.06); }
   .persona.active { color: var(--fg); background: rgba(96,165,250,0.12); border-color: rgba(96,165,250,0.4); }
   .persona-dot { width: 6px; height: 6px; border-radius: 999px; background: currentColor; }
 
@@ -92,21 +92,21 @@
     display: grid; grid-template-columns: 280px 1fr 340px;
   }
 
-  /* Left: params panel */
+  /* Left: params */
   .params {
     background: var(--panel);
     backdrop-filter: blur(14px);
     border-right: 1px solid var(--border);
     padding: 20px;
     overflow-y: auto;
+    z-index: 15;
   }
   .section-title {
     font-size: 10px; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 0.14em;
+    text-transform: uppercase; letter-spacing: 0.15em;
     color: var(--muted); margin: 20px 0 10px;
   }
   .section-title:first-child { margin-top: 4px; }
-  .param-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
 
   select.metric {
     width: 100%; padding: 10px 12px;
@@ -127,59 +127,86 @@
   .attrtoggle:hover { background: rgba(255,255,255,0.04); border-color: var(--border); }
   .attrtoggle.off { opacity: 0.4; }
   .attrtoggle .lbl { display: flex; align-items: center; gap: 8px; font-size: 13px; }
-  .swatch { width: 10px; height: 10px; border-radius: 999px; box-shadow: 0 0 8px currentColor; }
+  .swatch { width: 10px; height: 10px; border-radius: 999px; box-shadow: 0 0 10px currentColor; }
   .attrtoggle .cnt { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; font-family: "SF Mono", Menlo, monospace; }
 
   .legend { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
   .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
   .legend-dot { width: 10px; height: 10px; border-radius: 999px; }
 
-  /* Center: canvas */
+  /* Center canvas */
   .canvas-wrap {
     position: relative; overflow: hidden;
-    background: radial-gradient(ellipse 70% 50% at 50% 40%, rgba(59,130,246,0.04), transparent 60%),
-                radial-gradient(ellipse 40% 30% at 80% 70%, rgba(236,72,153,0.04), transparent 60%),
-                var(--bg);
+    background:
+      radial-gradient(ellipse 45% 35% at 50% 50%, rgba(59,130,246,0.025), transparent 70%),
+      var(--bg-deep);
   }
-  canvas { display: block; width: 100%; height: 100%; }
+  /* starfield background */
+  .starfield {
+    position: absolute; inset: 0; pointer-events: none;
+    background-image:
+      radial-gradient(1px 1px at 15% 20%, rgba(255,255,255,0.6), transparent),
+      radial-gradient(1px 1px at 35% 70%, rgba(255,255,255,0.4), transparent),
+      radial-gradient(1px 1px at 60% 30%, rgba(255,255,255,0.5), transparent),
+      radial-gradient(1px 1px at 80% 85%, rgba(255,255,255,0.3), transparent),
+      radial-gradient(1px 1px at 90% 15%, rgba(255,255,255,0.5), transparent),
+      radial-gradient(1px 1px at 25% 55%, rgba(255,255,255,0.3), transparent),
+      radial-gradient(1px 1px at 55% 50%, rgba(255,255,255,0.4), transparent),
+      radial-gradient(1px 1px at 72% 68%, rgba(255,255,255,0.3), transparent),
+      radial-gradient(1px 1px at 8%  88%, rgba(255,255,255,0.4), transparent),
+      radial-gradient(1px 1px at 92% 40%, rgba(255,255,255,0.3), transparent);
+    background-size: 200% 200%;
+    animation: driftstars 180s linear infinite;
+    opacity: 0.6;
+  }
+  @keyframes driftstars { from { background-position: 0 0; } to { background-position: 200% 100%; } }
+
+  canvas { display: block; width: 100%; height: 100%; position: relative; z-index: 1; }
 
   .tooltip {
-    position: absolute; pointer-events: none; z-index: 30;
-    background: rgba(10,10,12,0.95); backdrop-filter: blur(10px);
-    border: 1px solid var(--border-bright); border-radius: 8px;
-    padding: 10px 12px; font-size: 12px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-    max-width: 280px;
+    position: absolute; pointer-events: none; z-index: 40;
+    background: rgba(8,8,12,0.96); backdrop-filter: blur(14px);
+    border: 1px solid var(--border-bright); border-radius: 10px;
+    padding: 12px 14px; font-size: 12px;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+    max-width: 300px;
     transform: translate(-50%, -100%);
-    opacity: 0; transition: opacity 0.1s;
+    opacity: 0; transition: opacity 0.12s;
   }
   .tooltip.on { opacity: 1; }
-  .tt-title { font-size: 12px; font-weight: 600; margin-bottom: 4px; line-height: 1.3; }
+  .tt-title { font-size: 13px; font-weight: 600; margin-bottom: 6px; line-height: 1.3; }
   .tt-row { display: flex; justify-content: space-between; gap: 14px; font-size: 11px; color: var(--muted); margin-top: 2px; }
   .tt-row b { color: var(--fg); font-variant-numeric: tabular-nums; }
-  .tt-pills { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 3px; }
-  .tt-pill { font-size: 10px; padding: 1px 6px; border-radius: 999px; background: rgba(255,255,255,0.06); color: var(--muted); }
+  .tt-tag { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 3px; }
+  .tt-pill { font-size: 10px; padding: 2px 7px; border-radius: 999px; background: rgba(255,255,255,0.06); color: var(--muted); }
 
-  /* Canvas overlay stats */
   .canvas-overlay {
-    position: absolute; top: 16px; left: 16px; z-index: 10;
+    position: absolute; top: 16px; left: 16px; z-index: 12;
     display: flex; gap: 10px;
   }
   .stat-chip {
-    background: rgba(10,10,12,0.6); backdrop-filter: blur(10px);
+    background: rgba(8,8,12,0.72); backdrop-filter: blur(10px);
     border: 1px solid var(--border); border-radius: 8px;
     padding: 8px 12px;
   }
   .stat-chip .k { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
   .stat-chip .v { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
   .stat-chip .v.win { color: var(--win); }
-  .stat-chip .v.accent { color: var(--accent); }
+  .stat-chip .v.accent { color: var(--cyan); }
 
   .canvas-hint {
-    position: absolute; bottom: 16px; left: 16px; z-index: 10;
+    position: absolute; bottom: 16px; left: 16px; z-index: 12;
     font-size: 11px; color: var(--dim);
-    padding: 6px 10px; background: rgba(10,10,12,0.6);
+    padding: 6px 10px; background: rgba(8,8,12,0.72);
     border: 1px solid var(--border); border-radius: 6px;
+  }
+
+  .canvas-scale-note {
+    position: absolute; bottom: 16px; right: 16px; z-index: 12;
+    font-size: 10px; color: var(--dim);
+    padding: 6px 10px; background: rgba(8,8,12,0.72);
+    border: 1px solid var(--border); border-radius: 6px;
+    font-family: "SF Mono", Menlo, monospace;
   }
 
   /* Right: chat */
@@ -188,25 +215,24 @@
     backdrop-filter: blur(14px);
     border-left: 1px solid var(--border);
     display: flex; flex-direction: column;
+    z-index: 15;
   }
-  .chat-header {
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
-  }
+  .chat-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
   .chat-title { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
   .chat-title::before {
     content: ""; width: 8px; height: 8px; border-radius: 999px;
     background: var(--win); box-shadow: 0 0 8px var(--win);
+    animation: pulse 2.4s ease-in-out infinite;
   }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
   .chat-mode { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
 
   .messages { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; }
   .msg { font-size: 13px; line-height: 1.55; }
   .msg.bot { color: #d4d4d8; }
   .msg .who { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 4px; font-weight: 600; }
-  .msg.bot .who { color: var(--accent); }
-  .msg.user { background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2); border-radius: 10px; padding: 10px 12px; }
+  .msg.bot .who { color: var(--cyan); }
+  .msg.user { background: rgba(96,165,250,0.08); border: 1px solid rgba(96,165,250,0.22); border-radius: 10px; padding: 10px 12px; }
   .msg.user .who { color: var(--accent); }
 
   .tool-chips { display: flex; flex-direction: column; gap: 3px; margin: 6px 0; font-family: "SF Mono", Menlo, monospace; font-size: 11px; }
@@ -226,19 +252,16 @@
   }
   .sugg:hover { color: var(--fg); background: rgba(255,255,255,0.06); border-color: var(--border-bright); }
 
-  .chat-input {
-    padding: 12px 16px 16px; border-top: 1px solid var(--border);
-  }
+  .chat-input { padding: 12px 16px 16px; border-top: 1px solid var(--border); }
   .chat-input input {
     width: 100%; padding: 10px 14px;
     background: var(--panel-solid); color: var(--fg);
     border: 1px solid var(--border-bright); border-radius: 10px;
     font-size: 13px; font-family: inherit;
   }
-  .chat-input input:focus { outline: none; border-color: var(--accent); }
+  .chat-input input:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(34,211,238,0.15); }
   .chat-input .hint { margin-top: 6px; font-size: 10px; color: var(--dim); text-align: right; }
 
-  /* Pinned insights */
   .pin {
     margin-top: 10px; padding: 10px 12px;
     background: linear-gradient(180deg, rgba(245,201,75,0.06), rgba(245,201,75,0.02));
@@ -248,7 +271,6 @@
   .pin .pin-ttl { font-size: 12px; font-weight: 600; line-height: 1.3; }
   .pin .pin-meta { font-size: 11px; color: var(--muted); margin-top: 4px; font-variant-numeric: tabular-nums; }
 
-  /* Scrollbars */
   .params::-webkit-scrollbar, .messages::-webkit-scrollbar { width: 8px; }
   .params::-webkit-scrollbar-thumb, .messages::-webkit-scrollbar-thumb {
     background: rgba(255,255,255,0.06); border-radius: 4px;
@@ -259,9 +281,10 @@
     height: 28px; padding: 0 16px;
     display: flex; align-items: center; justify-content: space-between;
     font-size: 10px; color: var(--dim);
-    background: linear-gradient(180deg, transparent, rgba(7,7,10,0.9));
+    background: linear-gradient(180deg, transparent, rgba(3,3,7,0.92));
     border-top: 1px solid var(--border);
     pointer-events: none;
+    z-index: 10;
   }
   .status-footer b { color: var(--muted); }
 </style>
@@ -297,28 +320,28 @@
     <div class="legend">
       <div class="legend-item"><span class="legend-dot" style="background:#10b981;box-shadow:0 0 6px #10b981"></span>Top quartile</div>
       <div class="legend-item"><span class="legend-dot" style="background:#f5c94b;box-shadow:0 0 6px #f5c94b"></span>Mid</div>
-      <div class="legend-item"><span class="legend-dot" style="background:#ef4444;box-shadow:0 0 6px #ef4444"></span>Bottom quartile</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#ef4444;box-shadow:0 0 6px #ef4444"></span>Bottom</div>
     </div>
 
-    <div class="section-title">Attribute dimensions</div>
+    <div class="section-title">Attribute clusters</div>
     <div class="attrtoggle" data-dim="hook_archetype">
-      <span class="lbl"><span class="swatch" style="background:var(--at-hook);color:var(--at-hook)"></span>Hook archetype</span>
+      <span class="lbl"><span class="swatch" style="background:var(--at-hook);color:var(--at-hook)"></span>HOOK STYLE</span>
       <span class="cnt" id="cnt-hook_archetype">—</span>
     </div>
     <div class="attrtoggle" data-dim="claim_type">
-      <span class="lbl"><span class="swatch" style="background:var(--at-claim);color:var(--at-claim)"></span>Claim type</span>
+      <span class="lbl"><span class="swatch" style="background:var(--at-claim);color:var(--at-claim)"></span>CLAIMS</span>
       <span class="cnt" id="cnt-claim_type">—</span>
     </div>
     <div class="attrtoggle" data-dim="dominant_theme">
-      <span class="lbl"><span class="swatch" style="background:var(--at-theme);color:var(--at-theme)"></span>Theme</span>
+      <span class="lbl"><span class="swatch" style="background:var(--at-theme);color:var(--at-theme)"></span>THEMES</span>
       <span class="cnt" id="cnt-dominant_theme">—</span>
     </div>
     <div class="attrtoggle" data-dim="format_primary">
-      <span class="lbl"><span class="swatch" style="background:var(--at-format);color:var(--at-format)"></span>Format</span>
+      <span class="lbl"><span class="swatch" style="background:var(--at-format);color:var(--at-format)"></span>FORMATS</span>
       <span class="cnt" id="cnt-format_primary">—</span>
     </div>
     <div class="attrtoggle" data-dim="ugc_subtype">
-      <span class="lbl"><span class="swatch" style="background:var(--at-ugc);color:var(--at-ugc)"></span>UGC subtype</span>
+      <span class="lbl"><span class="swatch" style="background:var(--at-ugc);color:var(--at-ugc)"></span>UGC SUBTYPE</span>
       <span class="cnt" id="cnt-ugc_subtype">—</span>
     </div>
 
@@ -329,20 +352,22 @@
 
     <div class="section-title">Session log</div>
     <div style="font-size:12px;color:var(--muted);line-height:1.6">
-      <div style="display:flex;gap:6px"><span style="color:var(--dim)">10:14</span>Opening canvas · 27 creatives loaded</div>
-      <div style="display:flex;gap:6px"><span style="color:var(--dim)">10:15</span>Metric → ROAS</div>
+      <div style="display:flex;gap:6px"><span style="color:var(--dim)">10:14</span>Constellation loaded · 27 stars</div>
+      <div style="display:flex;gap:6px"><span style="color:var(--dim)">10:15</span>Metric → ROAS · tier-glow on</div>
     </div>
   </aside>
 
   <div class="canvas-wrap">
+    <div class="starfield"></div>
     <div class="canvas-overlay">
       <div class="stat-chip"><div class="k">Creatives</div><div class="v">27</div></div>
-      <div class="stat-chip"><div class="k">Attributes</div><div class="v accent" id="stat-attrs">—</div></div>
+      <div class="stat-chip"><div class="k">Attribute clusters</div><div class="v accent" id="stat-attrs">—</div></div>
       <div class="stat-chip"><div class="k">Top ROAS</div><div class="v win">0.33</div></div>
     </div>
     <canvas id="cvs"></canvas>
     <div class="tooltip" id="tip"></div>
-    <div class="canvas-hint">drag to pan · scroll to zoom · hover any node · lasso + filters land in M4</div>
+    <div class="canvas-hint">drag to pan · scroll to zoom · hover any star</div>
+    <div class="canvas-scale-note">27 creatives shown · scales to 500+ @ WebGL instancing in M3</div>
   </div>
 
   <aside class="chat">
@@ -353,7 +378,7 @@
     <div class="messages" id="messages">
       <div class="msg bot">
         <div class="who">Dissect</div>
-        Your portfolio has <b style="color:var(--fg)">27 creatives</b> across <b style="color:var(--fg)">5 attribute dimensions</b>. The three strongest ROAS correlations are <b style="color:var(--fg)">medical claims</b> (ρ=0.70), <b style="color:var(--fg)">audience breadth</b> (ρ=0.54), and <b style="color:var(--fg)">fast hook opening</b> (ρ=−0.37).
+        Your brand DNA clusters around <b style="color:var(--fg)">5 dimensions</b>. Biggest gravity: <b style="color:var(--at-claim)">CLAIMS → medical</b> (13/27), <b style="color:var(--at-theme)">THEMES → mushroom</b> (18/27), <b style="color:var(--at-hook)">HOOK → problem-stating</b> (9/27). The three strongest ROAS correlations are <b style="color:var(--fg)">medical claims</b> (ρ=0.70), <b style="color:var(--fg)">audience breadth</b> (ρ=0.54), and <b style="color:var(--fg)">fast hook opening</b> (ρ=−0.37).
         <div class="chat-suggest">
           <div class="sugg">⟶ Ta fram framgångssagor Q1 2025 metric ROAS</div>
           <div class="sugg">⟶ Jämför INT-UGC mot M-UGC</div>
@@ -372,9 +397,9 @@
           <div class="tool-chip writing">→ addFilter(cohort=top-quartile)</div>
           <div class="tool-chip">→ getTopAttributes(metric=roas, n=5)</div>
         </div>
-        Q1 2025 top-ROAS quartile = <b style="color:var(--fg)">12 creatives</b>. Strongest attributes: <b style="color:var(--fg)">medical claims</b> (8/12), <b style="color:var(--fg)">mushroom theme</b> (10/12), <b style="color:var(--fg)">INT-UGC format</b> (7/12). Try lassoing the medical cluster.
+        Q1 2025 top-ROAS quartile = <b style="color:var(--fg)">12 stars</b>. They cluster heavily around <b style="color:var(--at-claim)">medical</b> (8/12), <b style="color:var(--at-theme)">mushroom</b> (10/12) and <b style="color:var(--at-ugc)">INT-UGC</b> (7/12). Try lassoing the medical cluster.
         <div class="pin">
-          <div class="pin-lbl">⭐ Pinned by you · 10:18</div>
+          <div class="pin-lbl">⭐ Pinned · 10:18</div>
           <div class="pin-ttl">Medical × Mushroom = ROAS 0.30 (n=8)</div>
           <div class="pin-meta">+67% vs portfolio · p=0.01 · Cliff's δ=0.62</div>
         </div>
@@ -396,7 +421,7 @@
       </div>
     </div>
     <div class="chat-input">
-      <input placeholder='"filter away cortisol" · "show only 2025" · "test H vs Q2" …' />
+      <input placeholder='"filter away cortisol" · "compare MC_32 vs MC_45" · "test H vs Q2" …' />
       <div class="hint">enter to send · ⌘K for DSL · ⌘Z to undo</div>
     </div>
   </aside>
@@ -405,79 +430,133 @@
 
 <div class="status-footer">
   <div>3 pinned · 2 active filters · metric <b>ROAS</b></div>
-  <div>M0 preview · graph-static (d3-force) · three.js shaders in M3</div>
+  <div>M0 preview · procedural thumbnails · three.js shaders + real screenshots in M3</div>
 </div>
 
 <script>
-/* -----------------------------------------------------------
+/* ─────────────────────────────────────────────────────────────
  * Dissect — BRAND RETRO DNA preview
- * Loads Ryze's per_video JSON (embedded below) and renders
- * creatives + attribute nodes as a force-directed canvas.
- * -------------------------------------------------------- */
+ * Constellation layout: creatives = stars with portrait-thumbs;
+ * attribute values form labeled clusters arranged radially.
+ * ────────────────────────────────────────────────────────── */
 
-// Embedded Ryze dataset (27 rows, only the fields we render)
 const DATA = [{"video_filename":"IT_MC_32_B_INT-UGC_(22)_d9_compressed.mp4","primary_year":2025,"total_spend":58644.52001300001,"total_orders":536.0487130390744,"weighted_roas_new":0.32981294690842866,"weighted_ecr_new":0.024401064493064208,"overall_score":88,"hook_archetype":"personal-story","claim_type":"medical","dominant_theme":"mushroom","format_primary":"storytime","ugc_subtype":"INT-UGC","creative_phase":"MC_32"},{"video_filename":"IT_MC_32_B_INT-UGC_(21)_D6_compressed.mp4","primary_year":2025,"total_spend":247594.64000299998,"total_orders":2187.177615972611,"weighted_roas_new":0.331040252849811,"weighted_ecr_new":0.025946076365903917,"overall_score":88,"hook_archetype":"curiosity-gap","claim_type":"medical","dominant_theme":"mushroom","format_primary":"reaction","ugc_subtype":"INT-UGC","creative_phase":"MC_32"},{"video_filename":"IT_MC_32_C_INT-UGC_(21)_D6_compressed.mp4","primary_year":2025,"total_spend":5781.879998,"total_orders":33.4968253968254,"weighted_roas_new":0.21889031734605838,"weighted_ecr_new":0.01680425932581891,"overall_score":88,"hook_archetype":"problem-stating","claim_type":"medical","dominant_theme":"mushroom","format_primary":"testimonial","ugc_subtype":"INT-UGC","creative_phase":"MC_32"},{"video_filename":"IT_MC_33_A_DR-UGC_(19)_CR1_compressed.mp4","primary_year":2025,"total_spend":799.290002,"total_orders":1.0186868686868689,"weighted_roas_new":0.0442893066489276,"weighted_ecr_new":0.0076592997645629,"overall_score":88,"hook_archetype":"problem-stating","claim_type":"before_after","dominant_theme":"mushroom","format_primary":"routine","ugc_subtype":"DR-UGC","creative_phase":"MC_33"},{"video_filename":"IT_MC_33_B_DR-UGC_(18)_D5_compressed.mp4","primary_year":2025,"total_spend":749.5,"total_orders":1.6899801587301588,"weighted_roas_new":0.0930844372438768,"weighted_ecr_new":0.0092856052677481,"overall_score":82,"hook_archetype":"bold-claim","claim_type":"none","dominant_theme":"mushroom","format_primary":"unboxing","ugc_subtype":"DR-UGC","creative_phase":"MC_33"},{"video_filename":"MC_47_C_DR-UGC_(5) d6_compressed.mp4","primary_year":2025,"total_spend":1614.1800010000002,"total_orders":4.680952380952381,"weighted_roas_new":0.12924816897406813,"weighted_ecr_new":0.021195097629272613,"overall_score":82,"hook_archetype":"contrarian","claim_type":"lifestyle","dominant_theme":"mushroom","format_primary":"before-after","ugc_subtype":"DR-UGC","creative_phase":"MC_47"},{"video_filename":"CR_32_A_DR-UGC_(8)_BLOOD_SUGAR d6_compressed.mp4","primary_year":2025,"total_spend":262.76,"total_orders":1,"weighted_roas_new":0.1883848378748668,"weighted_ecr_new":0.0114942528735632,"overall_score":88,"hook_archetype":"problem-stating","claim_type":"medical","dominant_theme":"mushroom","format_primary":"tutorial","ugc_subtype":"DR-UGC","creative_phase":"CR_32"},{"video_filename":"CR_32_C_DR-UGC_(9)_D5_compressed.mp4","primary_year":2025,"total_spend":211.31000100000003,"total_orders":1,"weighted_roas_new":0.12777435934042705,"weighted_ecr_new":0.01180138180019222,"overall_score":88,"hook_archetype":"result-tease","claim_type":"before_after","dominant_theme":"mushroom","format_primary":"testimonial","ugc_subtype":"DR-UGC","creative_phase":"CR_32"},{"video_filename":"CR_33_B_DR-UGC_(13)_D7_compressed.mp4","primary_year":2025,"total_spend":456.24,"total_orders":0.5964912280701754,"weighted_roas_new":0.05533791079487247,"weighted_ecr_new":0.006782825905725205,"overall_score":88,"hook_archetype":"problem-stating","claim_type":"none","dominant_theme":"mushroom","format_primary":"testimonial","ugc_subtype":"DR-UGC","creative_phase":"CR_33"},{"video_filename":"IT_MA_32_B_DR-UGC_(13)v2_compressed.mp4","primary_year":2025,"total_spend":305.249998,"total_orders":0.25,"weighted_roas_new":0.0496314499566352,"weighted_ecr_new":0.0049019607843137,"overall_score":88,"hook_archetype":"problem-stating","claim_type":"lifestyle","dominant_theme":"bloating","format_primary":"montage","ugc_subtype":"DR-UGC","creative_phase":"MA_32"},{"video_filename":"IT_MA_32_D_INT-UGC_(16)_D6_compressed.mp4","primary_year":2025,"total_spend":956.67,"total_orders":6.333333333333333,"weighted_roas_new":0.3499831011041773,"weighted_ecr_new":0.0284005979073243,"overall_score":88,"hook_archetype":"problem-stating","claim_type":"medical","dominant_theme":"mushroom","format_primary":"testimonial","ugc_subtype":"INT-UGC","creative_phase":"MA_32"},{"video_filename":"MA_32_B_INT-UGC_(11)_D6_compressed.mp4","primary_year":2025,"total_spend":311.32,"total_orders":0.2666666666666666,"weighted_roas_new":0.0435564692278041,"weighted_ecr_new":0.0020050125313283,"overall_score":88,"hook_archetype":"problem-stating","claim_type":"none","dominant_theme":"mushroom","format_primary":"explainer","ugc_subtype":"INT-UGC","creative_phase":"MA_32"},{"video_filename":"MC_45_A_M-UGC_(5) d7_compressed.mp4","primary_year":2026,"total_spend":347.14999800000004,"total_orders":0.1428571428571428,"weighted_roas_new":0.0239377791959543,"weighted_ecr_new":0.0008403361344537,"overall_score":88,"hook_archetype":"curiosity-gap","claim_type":"none","dominant_theme":"none","format_primary":"reaction","ugc_subtype":"M-UGC","creative_phase":"MC_45"},{"video_filename":"MC_45_D_DR-UGC_(8)_LOW_Benefit_Bombing_d6_compressed.mp4","primary_year":2026,"total_spend":381.2699999999999,"total_orders":0.9333333333333332,"weighted_roas_new":0.0670391061452514,"weighted_ecr_new":0.0071246819338422,"overall_score":89,"hook_archetype":"problem-stating","claim_type":"none","dominant_theme":"mushroom","format_primary":"explainer","ugc_subtype":"DR-UGC","creative_phase":"MC_45"},{"video_filename":"MC_46_B_DR-UGC_(5)_LOW_Gut_Health_D4_compressed.mp4","primary_year":2026,"total_spend":378.7,"total_orders":1.5125,"weighted_roas_new":0.1467797729073145,"weighted_ecr_new":0.016263440860215,"overall_score":85,"hook_archetype":"problem-stating","claim_type":"lifestyle","dominant_theme":"mushroom","format_primary":"explainer","ugc_subtype":"DR-UGC","creative_phase":"MC_46"},{"video_filename":"MC_45_C_DR-UGC_(14)_MED_Liver_D7_compressed.mp4","primary_year":2026,"total_spend":8591.74,"total_orders":44.052769452769446,"weighted_roas_new":0.19576842350192097,"weighted_ecr_new":0.01561581342661832,"overall_score":88,"hook_archetype":"problem-stating","claim_type":"medical","dominant_theme":"liver","format_primary":"testimonial","ugc_subtype":"DR-UGC","creative_phase":"MC_45"},{"video_filename":"MC_46_D_DR-UGC_(10)_LOW_Benefit_Bombing_D9_compressed.mp4","primary_year":2026,"total_spend":383.27,"total_orders":1.8333333333333333,"weighted_roas_new":0.2591863003452744,"weighted_ecr_new":0.0143229166666666,"overall_score":88,"hook_archetype":"contrarian","claim_type":"lifestyle","dominant_theme":"mushroom","format_primary":"montage","ugc_subtype":"DR-UGC","creative_phase":"MC_46"},{"video_filename":"MC_46_B_DR-UGC_(8)_LOW_Cortisol_Reshoot _CR1[v5]_compressed.mp4","primary_year":2026,"total_spend":354.39,"total_orders":1.4333333333333331,"weighted_roas_new":0.2189113688309489,"weighted_ecr_new":0.0181434599156118,"overall_score":88,"hook_archetype":"authority","claim_type":"medical","dominant_theme":"cortisol","format_primary":"before-after","ugc_subtype":"DR-UGC","creative_phase":"MC_46"},{"video_filename":"MC_47_B_INT-UGC_(9)d8_compressed.mp4","primary_year":2026,"total_spend":376.39,"total_orders":1.3333333333333333,"weighted_roas_new":0.2245011822843327,"weighted_ecr_new":0.0133333333333333,"overall_score":92,"hook_archetype":"problem-stating","claim_type":"medical","dominant_theme":"bloating","format_primary":"tutorial","ugc_subtype":"INT-UGC","creative_phase":"MC_47"},{"video_filename":"MC_47_D_DR-UGC_(14)_3rd-Party_MED_D6_compressed.mp4","primary_year":2026,"total_spend":33.41,"total_orders":0.2,"weighted_roas_new":0.29799461239149955,"weighted_ecr_new":0.0333333333333333,"overall_score":78,"hook_archetype":"problem-stating","claim_type":"medical","dominant_theme":"mushroom","format_primary":"testimonial","ugc_subtype":"DR-UGC","creative_phase":"MC_47"},{"video_filename":"MC_44_C_DR-UGC_(9) d4_compressed.mp4","primary_year":2026,"total_spend":5682.240001,"total_orders":20.074603174603176,"weighted_roas_new":0.14558391233266216,"weighted_ecr_new":0.013064767548272625,"overall_score":88,"hook_archetype":"problem-stating","claim_type":"none","dominant_theme":"mushroom","format_primary":"explainer","ugc_subtype":"DR-UGC","creative_phase":"MC_44"},{"video_filename":"MC_45_B_M-UGC_(5)_LOW_Cortisol_D3_compressed.mp4","primary_year":2026,"total_spend":762.71,"total_orders":1.9428571428571426,"weighted_roas_new":0.10693560742989744,"weighted_ecr_new":0.008731587661934638,"overall_score":72,"hook_archetype":"contrarian","claim_type":"lifestyle","dominant_theme":"cortisol","format_primary":"montage","ugc_subtype":"M-UGC","creative_phase":"MC_45"},{"video_filename":"MC_45_B_M-UGC_(6)_LOW_Bloating_D4_compressed.mp4","primary_year":2026,"total_spend":1189.109997,"total_orders":3.2777777777777777,"weighted_roas_new":0.09834292525551402,"weighted_ecr_new":0.016200265139897172,"overall_score":88,"hook_archetype":"problem-stating","claim_type":"none","dominant_theme":"bloating","format_primary":"routine","ugc_subtype":"M-UGC","creative_phase":"MC_45"},{"video_filename":"MC_45_C_DR-UGC_(9)_LOW____D3_compressed.mp4","primary_year":2026,"total_spend":7183.779997000001,"total_orders":18.248904519253355,"weighted_roas_new":0.10745763799392465,"weighted_ecr_new":0.001460958616987744,"overall_score":92,"hook_archetype":"problem-stating","claim_type":"none","dominant_theme":"mushroom","format_primary":"testimonial","ugc_subtype":"DR-UGC","creative_phase":"MC_45"},{"video_filename":"MC_44_D_MF-UGC_(9)_MED_Liver-d7_compressed.mp4","primary_year":2026,"total_spend":414.2699999999999,"total_orders":0.751165501165501,"weighted_roas_new":0.0531350031675906,"weighted_ecr_new":0.0049418782971414,"overall_score":72,"hook_archetype":"problem-stating","claim_type":"lifestyle","dominant_theme":"mushroom","format_primary":"storytime","ugc_subtype":"MF-UGC","creative_phase":"MC_44"},{"video_filename":"MC_45_C_M-UGC_(5)_LOW_Free_Gift_D3_compressed.mp4","primary_year":2026,"total_spend":499.0100020000001,"total_orders":1.5873015873015872,"weighted_roas_new":0.1614883176515682,"weighted_ecr_new":0.0095047999239616,"overall_score":78,"hook_archetype":"pattern-interrupt","claim_type":"none","dominant_theme":"free_gift","format_primary":"testimonial","ugc_subtype":"M-UGC","creative_phase":"MC_45"},{"video_filename":"MC_45_B_INT-UGC_(10)_LOW_Cortisol_d4_compressed.mp4","primary_year":2026,"total_spend":4456.050002,"total_orders":18.658753746253744,"weighted_roas_new":0.15588818250519168,"weighted_ecr_new":0.020362575916097372,"overall_score":88,"hook_archetype":"contrarian","claim_type":"before_after","dominant_theme":"cortisol","format_primary":"explainer","ugc_subtype":"INT-UGC","creative_phase":"MC_45"}];
 
-const ATTR_DIMS = [
-  { key: "hook_archetype", color: "#60a5fa", label: "hook" },
-  { key: "claim_type",     color: "#fbbf24", label: "claim" },
-  { key: "dominant_theme", color: "#ec4899", label: "theme" },
-  { key: "format_primary", color: "#a78bfa", label: "format" },
-  { key: "ugc_subtype",    color: "#34d399", label: "ugc" },
+// Dimension = attribute family. Each dimension gets an angular zone.
+// angle in degrees (0=right, 90=down in canvas coords)
+const DIMENSIONS = [
+  { key: "hook_archetype", label: "HOOK STYLE", angle: -90, color: "#60a5fa" },   // top
+  { key: "claim_type",     label: "CLAIMS",     angle: -30, color: "#fbbf24" },   // upper-right
+  { key: "dominant_theme", label: "THEMES",     angle: 30,  color: "#ec4899" },   // lower-right
+  { key: "format_primary", label: "FORMATS",    angle: 150, color: "#a78bfa" },   // lower-left
+  { key: "ugc_subtype",    label: "UGC",        angle: 210, color: "#34d399" },   // upper-left
 ];
+const DIM_RADIUS = 320;         // distance from canvas center
+const VALUE_SPREAD = 180;       // how much values spread from dim anchor (arc length proxy)
 
-// --- build graph from dataset
+// --- build graph with clustered layout
 function buildGraph(rows, dimsOn) {
+  const valueIndex = new Map();
   const nodes = [];
   const links = [];
-  const attrIndex = new Map(); // key → node
+
+  // create value-nodes with pinned positions
+  const dimValueCounts = new Map();
+  for (const d of DIMENSIONS) {
+    if (!dimsOn[d.key]) continue;
+    const vals = new Map();
+    for (const r of rows) {
+      const v = r[d.key];
+      if (v == null || v === "none" || v === "unset") continue;
+      vals.set(v, (vals.get(v) || 0) + 1);
+    }
+    dimValueCounts.set(d.key, vals);
+
+    // Position each value on an arc centred on dimension anchor
+    const valArr = [...vals.entries()].sort((a,b) => b[1]-a[1]); // biggest first
+    const n = valArr.length;
+    const arcStart = (d.angle - 25) * Math.PI / 180;
+    const arcEnd = (d.angle + 25) * Math.PI / 180;
+    for (let i = 0; i < n; i++) {
+      const t = n === 1 ? 0.5 : i / (n - 1);
+      const ang = arcStart + (arcEnd - arcStart) * t;
+      const rad = DIM_RADIUS - 40 + Math.sin(i * 1.3) * 30; // slight radial variance
+      const [value, count] = valArr[i];
+      const node = {
+        id: "a:" + d.key + ":" + value,
+        type: "attribute",
+        dim: d.key,
+        dimLabel: d.label,
+        color: d.color,
+        value,
+        label: value,
+        count,
+        radius: 5 + Math.log(1 + count) * 3,
+        fx: Math.cos(ang) * rad,
+        fy: Math.sin(ang) * rad,
+      };
+      valueIndex.set(node.id, node);
+      nodes.push(node);
+    }
+  }
+
+  // creative nodes (not pinned — force-positioned)
   for (const r of rows) {
     const cNode = {
       id: "c:" + r.video_filename,
       type: "creative",
       label: r.video_filename.replace(/\.mp4$/, "").replace(/_compressed$/, ""),
       row: r,
-      radius: 4 + Math.min(16, Math.sqrt((r.total_spend || 0)) / 18),
+      radius: 14 + Math.min(10, Math.sqrt((r.total_spend || 0)) / 30),
     };
     nodes.push(cNode);
-    for (const d of ATTR_DIMS) {
+
+    for (const d of DIMENSIONS) {
       if (!dimsOn[d.key]) continue;
       const v = r[d.key];
       if (v == null || v === "none" || v === "unset") continue;
-      const aKey = d.key + ":" + v;
-      let aNode = attrIndex.get(aKey);
-      if (!aNode) {
-        aNode = { id: "a:" + aKey, type: "attribute", dim: d.key, value: v, label: v, color: d.color, count: 0 };
-        attrIndex.set(aKey, aNode);
-        nodes.push(aNode);
+      const aId = "a:" + d.key + ":" + v;
+      if (valueIndex.has(aId)) {
+        links.push({ source: cNode.id, target: aId, dim: d.key });
       }
-      aNode.count++;
-      links.push({ source: cNode.id, target: aNode.id, dim: d.key });
     }
   }
-  for (const a of attrIndex.values()) {
-    a.radius = 4 + Math.log(1 + a.count) * 4.5;
-  }
-  return { nodes, links };
+
+  return { nodes, links, dimValueCounts };
 }
 
-// --- performance tier color for creative glow
+// --- tier color for creative
 function tierColor(row, metric) {
-  // compute quartile against full dataset on chosen metric
   const key =
     metric === "roas" ? "weighted_roas_new" :
     metric === "spend" ? "total_spend" :
     metric === "overall" ? "overall_score" :
     metric === "ecr" ? "weighted_ecr_new" : "weighted_roas_new";
-  const vals = DATA.map(r => r[key]).filter(v => typeof v === "number" && isFinite(v)).sort((a,b) => a-b);
-  if (!vals.length) return { fill: "#ffffff", glow: "#ffffff", alpha: 0.4 };
+  const vals = DATA.map(r => r[key]).filter(v => typeof v === "number" && isFinite(v)).sort((a,b)=>a-b);
+  if (!vals.length) return { ring: "#ffffff", glow: "#ffffff" };
   const v = row[key];
-  if (typeof v !== "number") return { fill: "#555", glow: "#555", alpha: 0.2 };
+  if (typeof v !== "number") return { ring: "#555", glow: "#555" };
   const q1 = vals[Math.floor(vals.length * 0.25)];
   const q3 = vals[Math.floor(vals.length * 0.75)];
-  if (v >= q3) return { fill: "#10b981", glow: "#10b981", alpha: 0.85 };
-  if (v <= q1) return { fill: "#ef4444", glow: "#ef4444", alpha: 0.7 };
-  return { fill: "#f5c94b", glow: "#f5c94b", alpha: 0.55 };
+  if (v >= q3) return { ring: "#10b981", glow: "#10b981" };
+  if (v <= q1) return { ring: "#ef4444", glow: "#ef4444" };
+  return { ring: "#f5c94b", glow: "#f5c94b" };
+}
+
+// --- procedural portrait thumbnail
+function thumbColor(row) {
+  // deterministic color from creator_variant hash
+  const s = row.creative_phase || row.video_filename || "x";
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  const hue = (h % 360);
+  return `hsl(${hue}, 55%, 45%)`;
+}
+function thumbInitials(row) {
+  const s = row.creative_phase || row.video_filename || "?";
+  const m = s.match(/[A-Z]+_(\d+)_([A-Z])/);
+  if (m) return m[2] + m[1];
+  return s.slice(0, 2).toUpperCase();
 }
 
 // --- canvas setup
@@ -498,106 +577,186 @@ resize();
 // --- state
 let dimsOn = { hook_archetype: true, claim_type: true, dominant_theme: true, format_primary: true, ugc_subtype: true };
 let metric = "roas";
-let { nodes, links } = buildGraph(DATA, dimsOn);
-let transform = d3.zoomIdentity.translate(W/2, H/2).scale(1);
+let { nodes, links, dimValueCounts } = buildGraph(DATA, dimsOn);
+let transform = d3.zoomIdentity.translate(W/2, H/2).scale(0.88);
 let hoverNode = null;
 
-// update attribute counts in sidebar
+// --- update sidebar counts
 function updateCounts() {
-  const counts = {};
-  for (const d of ATTR_DIMS) counts[d.key] = 0;
-  const seen = new Set();
-  for (const n of nodes) if (n.type === "attribute" && !seen.has(n.id)) { counts[n.dim]++; seen.add(n.id); }
-  for (const [k, v] of Object.entries(counts)) {
-    const el = document.getElementById("cnt-" + k);
-    if (el) el.textContent = v;
+  let attrCount = 0;
+  for (const d of DIMENSIONS) {
+    const vals = dimValueCounts.get(d.key);
+    const n = vals ? vals.size : 0;
+    const el = document.getElementById("cnt-" + d.key);
+    if (el) el.textContent = n;
+    attrCount += n;
   }
-  document.getElementById("stat-attrs").textContent = seen.size;
+  document.getElementById("stat-attrs").textContent = attrCount;
 }
 updateCounts();
 
 // --- simulation
 let simulation = d3.forceSimulation(nodes)
   .force("link", d3.forceLink(links).id(d => d.id)
-    .distance(d => d.target.type === "attribute" ? 60 : 80)
-    .strength(0.6))
-  .force("charge", d3.forceManyBody().strength(d => d.type === "attribute" ? -180 : -100))
-  .force("center", d3.forceCenter(0, 0).strength(0.04))
-  .force("collide", d3.forceCollide().radius(d => d.radius + 3).iterations(2))
-  .force("x", d3.forceX().strength(0.03))
-  .force("y", d3.forceY().strength(0.03))
-  .alphaDecay(0.025)
+    .distance(d => d.target.type === "attribute" ? 120 : 80)
+    .strength(0.7))
+  .force("charge", d3.forceManyBody().strength(d => d.type === "attribute" ? -60 : -220))
+  .force("collide", d3.forceCollide().radius(d => d.radius + 5).iterations(2))
+  .force("x", d3.forceX().strength(d => d.type === "creative" ? 0.012 : 0))
+  .force("y", d3.forceY().strength(d => d.type === "creative" ? 0.012 : 0))
+  .alphaDecay(0.02)
   .on("tick", draw);
 
-// --- draw
+// --- DRAW
 function draw() {
   ctx.save();
   ctx.clearRect(0, 0, W, H);
   ctx.translate(transform.x, transform.y);
   ctx.scale(transform.k, transform.k);
 
-  // edges first (behind)
+  // 1. cluster auras (behind everything)
+  for (const d of DIMENSIONS) {
+    if (!dimsOn[d.key]) continue;
+    const ang = d.angle * Math.PI / 180;
+    const cx = Math.cos(ang) * (DIM_RADIUS - 20);
+    const cy = Math.sin(ang) * (DIM_RADIUS - 20);
+    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 260);
+    grad.addColorStop(0, hexA(d.color, 0.18));
+    grad.addColorStop(0.5, hexA(d.color, 0.06));
+    grad.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = grad;
+    ctx.fillRect(cx - 260, cy - 260, 520, 520);
+  }
+
+  // 2. edges
   ctx.lineCap = "round";
   for (const l of links) {
-    const s = typeof l.source === "object" ? l.source : nodes.find(n => n.id === l.source);
-    const t = typeof l.target === "object" ? l.target : nodes.find(n => n.id === l.target);
+    const s = typeof l.source === "object" ? l.source : null;
+    const t = typeof l.target === "object" ? l.target : null;
     if (!s || !t) continue;
     const alpha = hoverNode
-      ? (s === hoverNode || t === hoverNode ? 0.45 : 0.06)
-      : 0.12;
+      ? (s === hoverNode || t === hoverNode ? 0.55 : 0.04)
+      : 0.08;
     ctx.strokeStyle = `rgba(200,220,255,${alpha})`;
-    ctx.lineWidth = 0.8;
+    ctx.lineWidth = 0.7;
     ctx.beginPath();
     ctx.moveTo(s.x, s.y);
     ctx.lineTo(t.x, t.y);
     ctx.stroke();
   }
 
-  // attribute nodes first (smaller z)
+  // 3. attribute-value nodes + labels
   for (const n of nodes) {
     if (n.type !== "attribute") continue;
+    const faded = hoverNode && hoverNode !== n && !isNeighbor(n, hoverNode);
     ctx.save();
-    ctx.shadowBlur = 14;
+    ctx.shadowBlur = 16;
     ctx.shadowColor = n.color;
     ctx.fillStyle = n.color;
-    ctx.globalAlpha = hoverNode && hoverNode !== n && !isNeighbor(n, hoverNode) ? 0.25 : 0.9;
+    ctx.globalAlpha = faded ? 0.25 : 0.9;
     ctx.beginPath();
     ctx.arc(n.x, n.y, n.radius, 0, Math.PI * 2);
     ctx.fill();
-
-    // label
     ctx.shadowBlur = 0;
-    ctx.globalAlpha = hoverNode && hoverNode !== n && !isNeighbor(n, hoverNode) ? 0.3 : 0.85;
+    ctx.globalAlpha = faded ? 0.35 : 0.9;
     ctx.font = '500 11px -apple-system,system-ui,sans-serif';
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
-    ctx.fillStyle = "#d4d4d8";
+    ctx.fillStyle = "#e4e4e7";
     ctx.fillText(n.label, n.x, n.y + n.radius + 3);
     ctx.restore();
   }
 
-  // creative nodes on top
+  // 4. dimension labels (big, uppercase, at cluster center)
+  for (const d of DIMENSIONS) {
+    if (!dimsOn[d.key]) continue;
+    const ang = d.angle * Math.PI / 180;
+    const cx = Math.cos(ang) * (DIM_RADIUS + 90);
+    const cy = Math.sin(ang) * (DIM_RADIUS + 90);
+    ctx.save();
+    ctx.font = '700 24px -apple-system,system-ui,sans-serif';
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.letterSpacing = "0.14em";
+    // shadow glow
+    ctx.shadowBlur = 22;
+    ctx.shadowColor = d.color;
+    ctx.fillStyle = hexA(d.color, 0.08);
+    ctx.fillText(d.label, cx, cy);
+    // solid main
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = d.color;
+    ctx.globalAlpha = 0.85;
+    ctx.fillText(d.label, cx, cy);
+    ctx.restore();
+  }
+
+  // 5. creative "stars" with portrait-thumbs
   for (const n of nodes) {
     if (n.type !== "creative") continue;
     const t = tierColor(n.row, metric);
-    ctx.save();
-    // outer glow
-    ctx.shadowBlur = 18;
-    ctx.shadowColor = t.glow;
-    ctx.fillStyle = `rgba(250,250,250,${hoverNode && hoverNode !== n && !isNeighbor(n, hoverNode) ? 0.2 : 0.95})`;
-    ctx.beginPath();
-    ctx.arc(n.x, n.y, n.radius, 0, Math.PI * 2);
-    ctx.fill();
-    // tier ring
-    ctx.shadowBlur = 0;
-    ctx.strokeStyle = t.fill;
-    ctx.globalAlpha = t.alpha;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(n.x, n.y, n.radius + 2.5, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
+    const faded = hoverNode && hoverNode !== n && !isNeighbor(n, hoverNode);
+    drawStar(n, t, faded);
   }
+
+  ctx.restore();
+}
+
+function drawStar(n, tier, faded) {
+  const alpha = faded ? 0.3 : 1.0;
+  ctx.save();
+
+  // outer halo (tier glow)
+  ctx.shadowBlur = 26;
+  ctx.shadowColor = tier.glow;
+  ctx.globalAlpha = alpha * 0.9;
+  ctx.fillStyle = tier.glow;
+  ctx.beginPath();
+  ctx.arc(n.x, n.y, n.radius + 1, 0, Math.PI * 2);
+  ctx.fill();
+
+  // portrait disk (procedural gradient)
+  const r = n.radius;
+  ctx.shadowBlur = 0;
+  const portraitGrad = ctx.createLinearGradient(n.x - r, n.y - r, n.x + r, n.y + r);
+  portraitGrad.addColorStop(0, thumbColor(n.row));
+  portraitGrad.addColorStop(1, "rgba(0,0,0,0.6)");
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = portraitGrad;
+  ctx.beginPath();
+  ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+  ctx.fill();
+
+  // scan-line overlay for "video frame" feel
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+  ctx.clip();
+  ctx.fillStyle = "rgba(255,255,255,0.04)";
+  for (let y = -r; y < r; y += 2) {
+    ctx.fillRect(n.x - r, n.y + y, r * 2, 1);
+  }
+  ctx.restore();
+
+  // initials
+  ctx.globalAlpha = alpha;
+  const init = thumbInitials(n.row);
+  ctx.font = `700 ${Math.max(8, r * 0.55)}px -apple-system,system-ui,sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "rgba(255,255,255,0.92)";
+  ctx.shadowBlur = 4;
+  ctx.shadowColor = "rgba(0,0,0,0.6)";
+  ctx.fillText(init, n.x, n.y);
+
+  // tier ring
+  ctx.shadowBlur = 0;
+  ctx.globalAlpha = alpha * 0.9;
+  ctx.strokeStyle = tier.ring;
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.arc(n.x, n.y, r + 2, 0, Math.PI * 2);
+  ctx.stroke();
 
   ctx.restore();
 }
@@ -611,26 +770,27 @@ function isNeighbor(a, b) {
   return false;
 }
 
-// --- zoom/pan
-d3.select(canvas).call(d3.zoom()
-  .scaleExtent([0.3, 3])
-  .filter((ev) => !ev.button)
-  .on("zoom", (ev) => { transform = ev.transform; draw(); })
-  .transform, transform);
+function hexA(hex, a) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
 
+// --- zoom/pan
 const zoomBehavior = d3.zoom()
   .scaleExtent([0.3, 3])
   .on("zoom", (ev) => { transform = ev.transform; draw(); });
 d3.select(canvas).call(zoomBehavior);
+d3.select(canvas).call(zoomBehavior.transform, transform);
 
-// --- hover tooltip
+// --- hover
 const tip = document.getElementById("tip");
 function pickNode(clientX, clientY) {
   const rect = canvas.getBoundingClientRect();
   const x = (clientX - rect.left - transform.x) / transform.k;
   const y = (clientY - rect.top - transform.y) / transform.k;
-  let best = null;
-  let bestD = Infinity;
+  let best = null, bestD = Infinity;
   for (const n of nodes) {
     const d = Math.hypot(n.x - x, n.y - y);
     if (d < n.radius + 4 && d < bestD) { best = n; bestD = d; }
@@ -649,23 +809,23 @@ canvas.addEventListener("mousemove", (e) => {
       const r = n.row;
       tip.innerHTML = `
         <div class="tt-title">${escapeHtml(n.label)}</div>
-        <div class="tt-row"><span>Primary year</span><b>${r.primary_year ?? "—"}</b></div>
+        <div class="tt-row"><span>Year · Phase</span><b>${r.primary_year ?? "—"} · ${escapeHtml(r.creative_phase || "—")}</b></div>
         <div class="tt-row"><span>Spend</span><b>$${fmt(r.total_spend, 0)}</b></div>
         <div class="tt-row"><span>Orders</span><b>${fmt(r.total_orders, 0)}</b></div>
         <div class="tt-row"><span>ROAS</span><b>${fmt(r.weighted_roas_new, 2)}</b></div>
         <div class="tt-row"><span>ECR</span><b>${fmt((r.weighted_ecr_new||0)*100, 2)}%</b></div>
-        <div class="tt-pills">
-          ${r.hook_archetype ? '<span class="tt-pill">hook: ' + r.hook_archetype + '</span>' : ''}
-          ${r.claim_type ? '<span class="tt-pill">claim: ' + r.claim_type + '</span>' : ''}
-          ${r.dominant_theme ? '<span class="tt-pill">theme: ' + r.dominant_theme + '</span>' : ''}
-          ${r.ugc_subtype ? '<span class="tt-pill">' + r.ugc_subtype + '</span>' : ''}
+        <div class="tt-tag">
+          ${r.hook_archetype ? '<span class="tt-pill">hook: ' + escapeHtml(r.hook_archetype) + '</span>' : ''}
+          ${r.claim_type ? '<span class="tt-pill">claim: ' + escapeHtml(r.claim_type) + '</span>' : ''}
+          ${r.dominant_theme ? '<span class="tt-pill">theme: ' + escapeHtml(r.dominant_theme) + '</span>' : ''}
+          ${r.ugc_subtype ? '<span class="tt-pill">' + escapeHtml(r.ugc_subtype) + '</span>' : ''}
         </div>
       `;
     } else {
       tip.innerHTML = `
         <div class="tt-title" style="color:${n.color}">${escapeHtml(n.label)}</div>
-        <div class="tt-row"><span>Dimension</span><b>${escapeHtml(n.dim)}</b></div>
-        <div class="tt-row"><span>Linked creatives</span><b>${n.count}</b></div>
+        <div class="tt-row"><span>Dimension</span><b>${escapeHtml(n.dimLabel)}</b></div>
+        <div class="tt-row"><span>Creatives</span><b>${n.count}</b></div>
       `;
     }
     tip.classList.add("on");
@@ -673,47 +833,35 @@ canvas.addEventListener("mousemove", (e) => {
     tip.classList.remove("on");
   }
 });
-
 canvas.addEventListener("mouseleave", () => { hoverNode = null; tip.classList.remove("on"); draw(); });
 
 function fmt(n, d) {
   if (typeof n !== "number" || !isFinite(n)) return "—";
   return d === 0 ? Math.round(n).toLocaleString("en-US") : n.toFixed(d);
 }
-function escapeHtml(s) {
-  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-}
+function escapeHtml(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
-// --- metric switcher
-document.getElementById("metric-select").addEventListener("change", (e) => {
-  metric = e.target.value;
-  draw();
-});
-
-// --- attribute dimension toggles
+// --- controls
+document.getElementById("metric-select").addEventListener("change", (e) => { metric = e.target.value; draw(); });
 document.querySelectorAll(".attrtoggle").forEach((el) => {
   el.addEventListener("click", () => {
     const k = el.dataset.dim;
     dimsOn[k] = !dimsOn[k];
     el.classList.toggle("off", !dimsOn[k]);
     const g = buildGraph(DATA, dimsOn);
-    nodes = g.nodes; links = g.links;
+    nodes = g.nodes; links = g.links; dimValueCounts = g.dimValueCounts;
     simulation.nodes(nodes);
     simulation.force("link").links(links);
-    simulation.alpha(0.5).restart();
+    simulation.alpha(0.7).restart();
     updateCounts();
   });
 });
-
-// --- persona tabs (cosmetic for now)
 document.querySelectorAll(".persona").forEach((el) => {
   el.addEventListener("click", () => {
     document.querySelectorAll(".persona").forEach(p => p.classList.remove("active"));
     el.classList.add("active");
   });
 });
-
-// --- chat suggestion clicks (cosmetic)
 document.querySelectorAll(".sugg").forEach((el) => {
   el.addEventListener("click", () => {
     const input = document.querySelector(".chat-input input");
@@ -722,13 +870,14 @@ document.querySelectorAll(".sugg").forEach((el) => {
   });
 });
 
-// --- idle breathing — subtle ambient motion
+// --- idle breathing
 let breath = 0;
 function breathe() {
-  breath += 0.005;
-  simulation.force("x").strength(0.03 + Math.sin(breath) * 0.008);
-  simulation.force("y").strength(0.03 + Math.cos(breath * 0.9) * 0.008);
-  simulation.alpha(Math.max(simulation.alpha(), 0.02));
+  breath += 0.004;
+  const s = 0.012 + Math.sin(breath) * 0.004;
+  simulation.force("x").strength(s);
+  simulation.force("y").strength(s);
+  if (simulation.alpha() < 0.02) simulation.alpha(0.02);
   requestAnimationFrame(breathe);
 }
 breathe();
