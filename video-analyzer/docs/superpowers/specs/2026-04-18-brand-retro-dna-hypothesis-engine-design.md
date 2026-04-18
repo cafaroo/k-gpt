@@ -1,12 +1,22 @@
-# BRAND RETRO DNA — Hypothesis Engine · Design Spec
+# Dissect — Design Spec
 
 *Author: Gustaf + Claude · Drafted: 2026-04-18 · Status: iteration-1 (awaiting review)*
 
 > *"You and I can do anything, Claude — trust yourself."*
 
+## Naming & taxonomy
+
+- **Dissect** — the product (SaaS platform name; domain `dissect.studio`).
+- **BRAND RETRO DNA** — internal module name for the shared graph-canvas view where creative attributes, performance, and time are laid out spatially as a living cosmos. All three personas (Growth Manager, Editor, Executive) work on top of it.
+- **video-analyzer** — the per-creative analysis engine that produces the canonical attribute schema feeding the BRAND RETRO DNA graph. Lives inside Dissect.
+
+The rest of this spec uses "Dissect" when the subject is the whole platform, and "BRAND RETRO DNA canvas" (or just "the canvas") when the subject is specifically the graph-view module.
+
+---
+
 ## 1 · Purpose
 
-Build a **multi-tenant, graph-first, chat-driven retrospective analysis platform** that lets three personas — Growth Manager, Editor, Executive — explore the creative DNA of their brand's ad portfolio and validate hypotheses about what drives performance.
+Build **Dissect** — a multi-tenant, graph-first, chat-driven retrospective analysis platform that lets three personas — Growth Manager, Editor, Executive — explore the creative DNA of their brand's ad portfolio and validate hypotheses about what drives performance. The primary workspace inside Dissect is the **BRAND RETRO DNA canvas**: a living node-network where self-evident findings bubble up visually.
 
 The platform extends `video-analyzer` (the POC whose canonical creative schema is already in production — formerly "v2", promoted to canonical in M0; see §14). It adds:
 
@@ -47,8 +57,8 @@ Three architectural layers + three persona-specific surfaces, all sharing one gr
 │  └────────┬───────┘  └────────┬───────┘  └────────┬───────┘         │
 │           │                   │                   │                   │
 │  ┌────────┴───────────────────┴───────────────────┴───────┐         │
-│  │             GraphView canvas (single source of truth)    │         │
-│  │   react-three-fiber + custom GLSL + orthographic 2.5D    │         │
+│  │     BRAND RETRO DNA canvas (single source of truth)      │         │
+│  │     react-three-fiber + custom GLSL + orthographic 2.5D  │         │
 │  └────────┬───────────────────────────────────┬───────────┘         │
 │           │                                   │                       │
 │     MANUAL PARAMS                      CHAT (LLM + tools)            │
@@ -392,9 +402,9 @@ If `PerformanceMonitor` reports <30fps for 3s consecutive, switch to Sigma.js re
 
 ---
 
-## 9 · Opening canvas (establishing shot)
+## 9 · Opening canvas — the BRAND RETRO DNA establishing shot
 
-First load for a new session in a tenant:
+The BRAND RETRO DNA canvas is the shared graph-view module inside Dissect. Every persona enters their surface through it. First load for a new session in a tenant:
 
 1. **Camera zoomed to fit all creatives.** The entire portfolio visible as circular thumbnails scattered across the canvas, clustered around their attribute centroids.
 2. **Ambient motion.** Soft drift, subtle bloom, no hard shadows.
@@ -639,7 +649,7 @@ Total: ~6 months to Growth-Manager-persona alpha with one paying tenant. Editor 
 
 ### 14.1 · M0 v1 retirement — task breakdown
 
-v1 (the original Qwen-era analyzer at `/analyze/*`) has been superseded by v2 (Gemini-era, richer schema, already running the Ryze pipeline). Before any BRAND RETRO DNA work begins, we collapse the v1/v2 split so there's one canonical analyzer.
+v1 (the original Qwen-era analyzer at `/analyze/*`) has been superseded by v2 (Gemini-era, richer schema, already running the Ryze pipeline). Before any Dissect work begins, we collapse the v1/v2 split so there's one canonical analyzer.
 
 **Pre-conditions:**
 - Confirm no live tenant/customer depends on a v1-only route (Ryze POC already uses v2 exclusively)
