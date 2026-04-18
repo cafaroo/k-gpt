@@ -1,0 +1,737 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Dissect — BRAND RETRO DNA preview</title>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<style>
+  :root {
+    --bg: #07070a;
+    --panel: rgba(17,17,20,0.72);
+    --panel-solid: #0f0f13;
+    --border: rgba(255,255,255,0.08);
+    --border-bright: rgba(255,255,255,0.14);
+    --fg: #fafafa;
+    --muted: #8b8b95;
+    --dim: #4b4b55;
+    --win: #10b981;
+    --warn: #f59e0b;
+    --lose: #ef4444;
+    --accent: #3b82f6;
+    --magenta: #ec4899;
+    --purple: #a855f7;
+    --cyan: #22d3ee;
+    --gold: #f5c94b;
+    --white: #fafafa;
+
+    /* attribute-type palette */
+    --at-hook: #60a5fa;
+    --at-claim: #fbbf24;
+    --at-theme: #ec4899;
+    --at-format: #a78bfa;
+    --at-ugc: #34d399;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    font-feature-settings: "ss01";
+  }
+
+  /* Top header bar */
+  .topbar {
+    position: absolute; top: 0; left: 0; right: 0; height: 56px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px;
+    backdrop-filter: blur(20px);
+    background: linear-gradient(180deg, rgba(7,7,10,0.85), rgba(7,7,10,0.55));
+    border-bottom: 1px solid var(--border);
+    z-index: 20;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-mark {
+    width: 28px; height: 28px; border-radius: 6px;
+    background: conic-gradient(from 210deg, var(--magenta), var(--purple), var(--cyan), var(--accent), var(--magenta));
+    filter: drop-shadow(0 0 8px rgba(236,72,153,0.4));
+    position: relative;
+  }
+  .brand-mark::after {
+    content: ""; position: absolute; inset: 4px;
+    background: var(--bg); border-radius: 4px;
+  }
+  .brand-name { font-size: 16px; font-weight: 700; letter-spacing: -0.01em; }
+  .brand-sub { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; margin-left: 6px; }
+
+  .personas { display: flex; gap: 6px; }
+  .persona {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 7px 14px; border-radius: 999px;
+    background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+    color: var(--muted); font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .persona:hover { color: var(--fg); background: rgba(255,255,255,0.06); border-color: var(--border-bright); }
+  .persona.active { color: var(--fg); background: rgba(96,165,250,0.12); border-color: rgba(96,165,250,0.4); }
+  .persona-dot { width: 6px; height: 6px; border-radius: 999px; background: currentColor; }
+
+  .tenant {
+    font-size: 12px; color: var(--muted);
+    padding: 6px 12px; background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border); border-radius: 999px;
+  }
+  .tenant b { color: var(--fg); font-weight: 600; }
+
+  /* Three-pane layout */
+  .stage {
+    position: absolute; top: 56px; left: 0; right: 0; bottom: 0;
+    display: grid; grid-template-columns: 280px 1fr 340px;
+  }
+
+  /* Left: params panel */
+  .params {
+    background: var(--panel);
+    backdrop-filter: blur(14px);
+    border-right: 1px solid var(--border);
+    padding: 20px;
+    overflow-y: auto;
+  }
+  .section-title {
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--muted); margin: 20px 0 10px;
+  }
+  .section-title:first-child { margin-top: 4px; }
+  .param-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+
+  select.metric {
+    width: 100%; padding: 10px 12px;
+    background: var(--panel-solid); color: var(--fg);
+    border: 1px solid var(--border-bright); border-radius: 8px;
+    font-size: 14px; font-weight: 500;
+    appearance: none; cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5l3 3 3-3' stroke='%238b8b95' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 10px center;
+  }
+
+  .attrtoggle {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 10px; border-radius: 6px;
+    background: rgba(255,255,255,0.02); border: 1px solid transparent;
+    cursor: pointer; transition: all 0.1s; margin-bottom: 3px;
+  }
+  .attrtoggle:hover { background: rgba(255,255,255,0.04); border-color: var(--border); }
+  .attrtoggle.off { opacity: 0.4; }
+  .attrtoggle .lbl { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .swatch { width: 10px; height: 10px; border-radius: 999px; box-shadow: 0 0 8px currentColor; }
+  .attrtoggle .cnt { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; font-family: "SF Mono", Menlo, monospace; }
+
+  .legend { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 999px; }
+
+  /* Center: canvas */
+  .canvas-wrap {
+    position: relative; overflow: hidden;
+    background: radial-gradient(ellipse 70% 50% at 50% 40%, rgba(59,130,246,0.04), transparent 60%),
+                radial-gradient(ellipse 40% 30% at 80% 70%, rgba(236,72,153,0.04), transparent 60%),
+                var(--bg);
+  }
+  canvas { display: block; width: 100%; height: 100%; }
+
+  .tooltip {
+    position: absolute; pointer-events: none; z-index: 30;
+    background: rgba(10,10,12,0.95); backdrop-filter: blur(10px);
+    border: 1px solid var(--border-bright); border-radius: 8px;
+    padding: 10px 12px; font-size: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    max-width: 280px;
+    transform: translate(-50%, -100%);
+    opacity: 0; transition: opacity 0.1s;
+  }
+  .tooltip.on { opacity: 1; }
+  .tt-title { font-size: 12px; font-weight: 600; margin-bottom: 4px; line-height: 1.3; }
+  .tt-row { display: flex; justify-content: space-between; gap: 14px; font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .tt-row b { color: var(--fg); font-variant-numeric: tabular-nums; }
+  .tt-pills { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 3px; }
+  .tt-pill { font-size: 10px; padding: 1px 6px; border-radius: 999px; background: rgba(255,255,255,0.06); color: var(--muted); }
+
+  /* Canvas overlay stats */
+  .canvas-overlay {
+    position: absolute; top: 16px; left: 16px; z-index: 10;
+    display: flex; gap: 10px;
+  }
+  .stat-chip {
+    background: rgba(10,10,12,0.6); backdrop-filter: blur(10px);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 12px;
+  }
+  .stat-chip .k { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+  .stat-chip .v { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .stat-chip .v.win { color: var(--win); }
+  .stat-chip .v.accent { color: var(--accent); }
+
+  .canvas-hint {
+    position: absolute; bottom: 16px; left: 16px; z-index: 10;
+    font-size: 11px; color: var(--dim);
+    padding: 6px 10px; background: rgba(10,10,12,0.6);
+    border: 1px solid var(--border); border-radius: 6px;
+  }
+
+  /* Right: chat */
+  .chat {
+    background: var(--panel);
+    backdrop-filter: blur(14px);
+    border-left: 1px solid var(--border);
+    display: flex; flex-direction: column;
+  }
+  .chat-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .chat-title { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .chat-title::before {
+    content: ""; width: 8px; height: 8px; border-radius: 999px;
+    background: var(--win); box-shadow: 0 0 8px var(--win);
+  }
+  .chat-mode { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+
+  .messages { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; }
+  .msg { font-size: 13px; line-height: 1.55; }
+  .msg.bot { color: #d4d4d8; }
+  .msg .who { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 4px; font-weight: 600; }
+  .msg.bot .who { color: var(--accent); }
+  .msg.user { background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2); border-radius: 10px; padding: 10px 12px; }
+  .msg.user .who { color: var(--accent); }
+
+  .tool-chips { display: flex; flex-direction: column; gap: 3px; margin: 6px 0; font-family: "SF Mono", Menlo, monospace; font-size: 11px; }
+  .tool-chip {
+    color: var(--muted); background: rgba(255,255,255,0.03);
+    padding: 4px 8px; border-radius: 4px; border-left: 2px solid var(--cyan);
+  }
+  .tool-chip.writing { border-left-color: var(--magenta); }
+  .tool-chip.ingest { border-left-color: var(--gold); }
+
+  .chat-suggest { margin: 6px 0 0; display: flex; flex-direction: column; gap: 4px; }
+  .sugg {
+    padding: 7px 10px; border-radius: 6px;
+    background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+    color: var(--muted); font-size: 12px; cursor: pointer;
+    transition: all 0.1s;
+  }
+  .sugg:hover { color: var(--fg); background: rgba(255,255,255,0.06); border-color: var(--border-bright); }
+
+  .chat-input {
+    padding: 12px 16px 16px; border-top: 1px solid var(--border);
+  }
+  .chat-input input {
+    width: 100%; padding: 10px 14px;
+    background: var(--panel-solid); color: var(--fg);
+    border: 1px solid var(--border-bright); border-radius: 10px;
+    font-size: 13px; font-family: inherit;
+  }
+  .chat-input input:focus { outline: none; border-color: var(--accent); }
+  .chat-input .hint { margin-top: 6px; font-size: 10px; color: var(--dim); text-align: right; }
+
+  /* Pinned insights */
+  .pin {
+    margin-top: 10px; padding: 10px 12px;
+    background: linear-gradient(180deg, rgba(245,201,75,0.06), rgba(245,201,75,0.02));
+    border: 1px solid rgba(245,201,75,0.25); border-radius: 8px;
+  }
+  .pin .pin-lbl { font-size: 10px; color: var(--gold); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; margin-bottom: 4px; }
+  .pin .pin-ttl { font-size: 12px; font-weight: 600; line-height: 1.3; }
+  .pin .pin-meta { font-size: 11px; color: var(--muted); margin-top: 4px; font-variant-numeric: tabular-nums; }
+
+  /* Scrollbars */
+  .params::-webkit-scrollbar, .messages::-webkit-scrollbar { width: 8px; }
+  .params::-webkit-scrollbar-thumb, .messages::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.06); border-radius: 4px;
+  }
+
+  .status-footer {
+    position: absolute; bottom: 0; left: 280px; right: 340px;
+    height: 28px; padding: 0 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 10px; color: var(--dim);
+    background: linear-gradient(180deg, transparent, rgba(7,7,10,0.9));
+    border-top: 1px solid var(--border);
+    pointer-events: none;
+  }
+  .status-footer b { color: var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark"></div>
+    <div>
+      <span class="brand-name">Dissect</span>
+      <span class="brand-sub">BRAND RETRO DNA</span>
+    </div>
+  </div>
+  <div class="personas">
+    <button class="persona active"><span class="persona-dot"></span>Hypothesis Studio</button>
+    <button class="persona"><span class="persona-dot"></span>Creative Inspector</button>
+    <button class="persona"><span class="persona-dot"></span>Report Builder</button>
+  </div>
+  <div class="tenant"><b>Ryze</b> · wellness · 27 creatives</div>
+</div>
+
+<div class="stage">
+
+  <aside class="params">
+    <div class="section-title">Metric</div>
+    <select class="metric" id="metric-select">
+      <option value="roas">Weighted ROAS</option>
+      <option value="spend">Spend</option>
+      <option value="overall">Overall score</option>
+      <option value="ecr">ECR (engagement continuation)</option>
+    </select>
+    <div class="legend">
+      <div class="legend-item"><span class="legend-dot" style="background:#10b981;box-shadow:0 0 6px #10b981"></span>Top quartile</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#f5c94b;box-shadow:0 0 6px #f5c94b"></span>Mid</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#ef4444;box-shadow:0 0 6px #ef4444"></span>Bottom quartile</div>
+    </div>
+
+    <div class="section-title">Attribute dimensions</div>
+    <div class="attrtoggle" data-dim="hook_archetype">
+      <span class="lbl"><span class="swatch" style="background:var(--at-hook);color:var(--at-hook)"></span>Hook archetype</span>
+      <span class="cnt" id="cnt-hook_archetype">—</span>
+    </div>
+    <div class="attrtoggle" data-dim="claim_type">
+      <span class="lbl"><span class="swatch" style="background:var(--at-claim);color:var(--at-claim)"></span>Claim type</span>
+      <span class="cnt" id="cnt-claim_type">—</span>
+    </div>
+    <div class="attrtoggle" data-dim="dominant_theme">
+      <span class="lbl"><span class="swatch" style="background:var(--at-theme);color:var(--at-theme)"></span>Theme</span>
+      <span class="cnt" id="cnt-dominant_theme">—</span>
+    </div>
+    <div class="attrtoggle" data-dim="format_primary">
+      <span class="lbl"><span class="swatch" style="background:var(--at-format);color:var(--at-format)"></span>Format</span>
+      <span class="cnt" id="cnt-format_primary">—</span>
+    </div>
+    <div class="attrtoggle" data-dim="ugc_subtype">
+      <span class="lbl"><span class="swatch" style="background:var(--at-ugc);color:var(--at-ugc)"></span>UGC subtype</span>
+      <span class="cnt" id="cnt-ugc_subtype">—</span>
+    </div>
+
+    <div class="section-title">Time range</div>
+    <div style="color:var(--muted);font-size:12px;padding:10px 0">
+      Q1 2025 · Q1 2026 <span style="float:right;color:var(--dim)">(scrubber in M4)</span>
+    </div>
+
+    <div class="section-title">Session log</div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.6">
+      <div style="display:flex;gap:6px"><span style="color:var(--dim)">10:14</span>Opening canvas · 27 creatives loaded</div>
+      <div style="display:flex;gap:6px"><span style="color:var(--dim)">10:15</span>Metric → ROAS</div>
+    </div>
+  </aside>
+
+  <div class="canvas-wrap">
+    <div class="canvas-overlay">
+      <div class="stat-chip"><div class="k">Creatives</div><div class="v">27</div></div>
+      <div class="stat-chip"><div class="k">Attributes</div><div class="v accent" id="stat-attrs">—</div></div>
+      <div class="stat-chip"><div class="k">Top ROAS</div><div class="v win">0.33</div></div>
+    </div>
+    <canvas id="cvs"></canvas>
+    <div class="tooltip" id="tip"></div>
+    <div class="canvas-hint">drag to pan · scroll to zoom · hover any node · lasso + filters land in M4</div>
+  </div>
+
+  <aside class="chat">
+    <div class="chat-header">
+      <div class="chat-title">Chat</div>
+      <div class="chat-mode">filter · read · ingest</div>
+    </div>
+    <div class="messages" id="messages">
+      <div class="msg bot">
+        <div class="who">Dissect</div>
+        Your portfolio has <b style="color:var(--fg)">27 creatives</b> across <b style="color:var(--fg)">5 attribute dimensions</b>. The three strongest ROAS correlations are <b style="color:var(--fg)">medical claims</b> (ρ=0.70), <b style="color:var(--fg)">audience breadth</b> (ρ=0.54), and <b style="color:var(--fg)">fast hook opening</b> (ρ=−0.37).
+        <div class="chat-suggest">
+          <div class="sugg">⟶ Ta fram framgångssagor Q1 2025 metric ROAS</div>
+          <div class="sugg">⟶ Jämför INT-UGC mot M-UGC</div>
+          <div class="sugg">⟶ Varför underpresterade MC_45_A?</div>
+        </div>
+      </div>
+      <div class="msg user">
+        <div class="who">You</div>
+        Ta fram framgångssagor Q1 2025, metric ROAS — jag vill forska
+      </div>
+      <div class="msg bot">
+        <div class="who">Dissect</div>
+        <div class="tool-chips">
+          <div class="tool-chip writing">→ setMetric(roas)</div>
+          <div class="tool-chip writing">→ addFilter(period=2025-Q1)</div>
+          <div class="tool-chip writing">→ addFilter(cohort=top-quartile)</div>
+          <div class="tool-chip">→ getTopAttributes(metric=roas, n=5)</div>
+        </div>
+        Q1 2025 top-ROAS quartile = <b style="color:var(--fg)">12 creatives</b>. Strongest attributes: <b style="color:var(--fg)">medical claims</b> (8/12), <b style="color:var(--fg)">mushroom theme</b> (10/12), <b style="color:var(--fg)">INT-UGC format</b> (7/12). Try lassoing the medical cluster.
+        <div class="pin">
+          <div class="pin-lbl">⭐ Pinned by you · 10:18</div>
+          <div class="pin-ttl">Medical × Mushroom = ROAS 0.30 (n=8)</div>
+          <div class="pin-meta">+67% vs portfolio · p=0.01 · Cliff's δ=0.62</div>
+        </div>
+      </div>
+      <div class="msg user">
+        <div class="who">You</div>
+        Är detta reproducerbart i Q2 2025?
+      </div>
+      <div class="msg bot">
+        <div class="who">Dissect</div>
+        <div class="tool-chips">
+          <div class="tool-chip ingest">→ assessCoverageForQuery(…)</div>
+        </div>
+        I'd answer with 3 matching Q2 creatives — but ECR data is missing on 2 of them. Filling those in would tighten confidence by ≈31%. Want to add the data, or proceed?
+        <div class="chat-suggest">
+          <div class="sugg">⟵ Upload Q2 CSV</div>
+          <div class="sugg">⟵ Proceed — flag uncertainty</div>
+        </div>
+      </div>
+    </div>
+    <div class="chat-input">
+      <input placeholder='"filter away cortisol" · "show only 2025" · "test H vs Q2" …' />
+      <div class="hint">enter to send · ⌘K for DSL · ⌘Z to undo</div>
+    </div>
+  </aside>
+
+</div>
+
+<div class="status-footer">
+  <div>3 pinned · 2 active filters · metric <b>ROAS</b></div>
+  <div>M0 preview · graph-static (d3-force) · three.js shaders in M3</div>
+</div>
+
+<script>
+/* -----------------------------------------------------------
+ * Dissect — BRAND RETRO DNA preview
+ * Loads Ryze's per_video JSON (embedded below) and renders
+ * creatives + attribute nodes as a force-directed canvas.
+ * -------------------------------------------------------- */
+
+// Embedded Ryze dataset (27 rows, only the fields we render)
+const DATA = [{"video_filename":"IT_MC_32_B_INT-UGC_(22)_d9_compressed.mp4","primary_year":2025,"total_spend":58644.52001300001,"total_orders":536.0487130390744,"weighted_roas_new":0.32981294690842866,"weighted_ecr_new":0.024401064493064208,"overall_score":88,"hook_archetype":"personal-story","claim_type":"medical","dominant_theme":"mushroom","format_primary":"storytime","ugc_subtype":"INT-UGC","creative_phase":"MC_32"},{"video_filename":"IT_MC_32_B_INT-UGC_(21)_D6_compressed.mp4","primary_year":2025,"total_spend":247594.64000299998,"total_orders":2187.177615972611,"weighted_roas_new":0.331040252849811,"weighted_ecr_new":0.025946076365903917,"overall_score":88,"hook_archetype":"curiosity-gap","claim_type":"medical","dominant_theme":"mushroom","format_primary":"reaction","ugc_subtype":"INT-UGC","creative_phase":"MC_32"},{"video_filename":"IT_MC_32_C_INT-UGC_(21)_D6_compressed.mp4","primary_year":2025,"total_spend":5781.879998,"total_orders":33.4968253968254,"weighted_roas_new":0.21889031734605838,"weighted_ecr_new":0.01680425932581891,"overall_score":88,"hook_archetype":"problem-stating","claim_type":"medical","dominant_theme":"mushroom","format_primary":"testimonial","ugc_subtype":"INT-UGC","creative_phase":"MC_32"},{"video_filename":"IT_MC_33_A_DR-UGC_(19)_CR1_compressed.mp4","primary_year":2025,"total_spend":799.290002,"total_orders":1.0186868686868689,"weighted_roas_new":0.0442893066489276,"weighted_ecr_new":0.0076592997645629,"overall_score":88,"hook_archetype":"problem-stating","claim_type":"before_after","dominant_theme":"mushroom","format_primary":"routine","ugc_subtype":"DR-UGC","creative_phase":"MC_33"},{"video_filename":"IT_MC_33_B_DR-UGC_(18)_D5_compressed.mp4","primary_year":2025,"total_spend":749.5,"total_orders":1.6899801587301588,"weighted_roas_new":0.0930844372438768,"weighted_ecr_new":0.0092856052677481,"overall_score":82,"hook_archetype":"bold-claim","claim_type":"none","dominant_theme":"mushroom","format_primary":"unboxing","ugc_subtype":"DR-UGC","creative_phase":"MC_33"},{"video_filename":"MC_47_C_DR-UGC_(5) d6_compressed.mp4","primary_year":2025,"total_spend":1614.1800010000002,"total_orders":4.680952380952381,"weighted_roas_new":0.12924816897406813,"weighted_ecr_new":0.021195097629272613,"overall_score":82,"hook_archetype":"contrarian","claim_type":"lifestyle","dominant_theme":"mushroom","format_primary":"before-after","ugc_subtype":"DR-UGC","creative_phase":"MC_47"},{"video_filename":"CR_32_A_DR-UGC_(8)_BLOOD_SUGAR d6_compressed.mp4","primary_year":2025,"total_spend":262.76,"total_orders":1,"weighted_roas_new":0.1883848378748668,"weighted_ecr_new":0.0114942528735632,"overall_score":88,"hook_archetype":"problem-stating","claim_type":"medical","dominant_theme":"mushroom","format_primary":"tutorial","ugc_subtype":"DR-UGC","creative_phase":"CR_32"},{"video_filename":"CR_32_C_DR-UGC_(9)_D5_compressed.mp4","primary_year":2025,"total_spend":211.31000100000003,"total_orders":1,"weighted_roas_new":0.12777435934042705,"weighted_ecr_new":0.01180138180019222,"overall_score":88,"hook_archetype":"result-tease","claim_type":"before_after","dominant_theme":"mushroom","format_primary":"testimonial","ugc_subtype":"DR-UGC","creative_phase":"CR_32"},{"video_filename":"CR_33_B_DR-UGC_(13)_D7_compressed.mp4","primary_year":2025,"total_spend":456.24,"total_orders":0.5964912280701754,"weighted_roas_new":0.05533791079487247,"weighted_ecr_new":0.006782825905725205,"overall_score":88,"hook_archetype":"problem-stating","claim_type":"none","dominant_theme":"mushroom","format_primary":"testimonial","ugc_subtype":"DR-UGC","creative_phase":"CR_33"},{"video_filename":"IT_MA_32_B_DR-UGC_(13)v2_compressed.mp4","primary_year":2025,"total_spend":305.249998,"total_orders":0.25,"weighted_roas_new":0.0496314499566352,"weighted_ecr_new":0.0049019607843137,"overall_score":88,"hook_archetype":"problem-stating","claim_type":"lifestyle","dominant_theme":"bloating","format_primary":"montage","ugc_subtype":"DR-UGC","creative_phase":"MA_32"},{"video_filename":"IT_MA_32_D_INT-UGC_(16)_D6_compressed.mp4","primary_year":2025,"total_spend":956.67,"total_orders":6.333333333333333,"weighted_roas_new":0.3499831011041773,"weighted_ecr_new":0.0284005979073243,"overall_score":88,"hook_archetype":"problem-stating","claim_type":"medical","dominant_theme":"mushroom","format_primary":"testimonial","ugc_subtype":"INT-UGC","creative_phase":"MA_32"},{"video_filename":"MA_32_B_INT-UGC_(11)_D6_compressed.mp4","primary_year":2025,"total_spend":311.32,"total_orders":0.2666666666666666,"weighted_roas_new":0.0435564692278041,"weighted_ecr_new":0.0020050125313283,"overall_score":88,"hook_archetype":"problem-stating","claim_type":"none","dominant_theme":"mushroom","format_primary":"explainer","ugc_subtype":"INT-UGC","creative_phase":"MA_32"},{"video_filename":"MC_45_A_M-UGC_(5) d7_compressed.mp4","primary_year":2026,"total_spend":347.14999800000004,"total_orders":0.1428571428571428,"weighted_roas_new":0.0239377791959543,"weighted_ecr_new":0.0008403361344537,"overall_score":88,"hook_archetype":"curiosity-gap","claim_type":"none","dominant_theme":"none","format_primary":"reaction","ugc_subtype":"M-UGC","creative_phase":"MC_45"},{"video_filename":"MC_45_D_DR-UGC_(8)_LOW_Benefit_Bombing_d6_compressed.mp4","primary_year":2026,"total_spend":381.2699999999999,"total_orders":0.9333333333333332,"weighted_roas_new":0.0670391061452514,"weighted_ecr_new":0.0071246819338422,"overall_score":89,"hook_archetype":"problem-stating","claim_type":"none","dominant_theme":"mushroom","format_primary":"explainer","ugc_subtype":"DR-UGC","creative_phase":"MC_45"},{"video_filename":"MC_46_B_DR-UGC_(5)_LOW_Gut_Health_D4_compressed.mp4","primary_year":2026,"total_spend":378.7,"total_orders":1.5125,"weighted_roas_new":0.1467797729073145,"weighted_ecr_new":0.016263440860215,"overall_score":85,"hook_archetype":"problem-stating","claim_type":"lifestyle","dominant_theme":"mushroom","format_primary":"explainer","ugc_subtype":"DR-UGC","creative_phase":"MC_46"},{"video_filename":"MC_45_C_DR-UGC_(14)_MED_Liver_D7_compressed.mp4","primary_year":2026,"total_spend":8591.74,"total_orders":44.052769452769446,"weighted_roas_new":0.19576842350192097,"weighted_ecr_new":0.01561581342661832,"overall_score":88,"hook_archetype":"problem-stating","claim_type":"medical","dominant_theme":"liver","format_primary":"testimonial","ugc_subtype":"DR-UGC","creative_phase":"MC_45"},{"video_filename":"MC_46_D_DR-UGC_(10)_LOW_Benefit_Bombing_D9_compressed.mp4","primary_year":2026,"total_spend":383.27,"total_orders":1.8333333333333333,"weighted_roas_new":0.2591863003452744,"weighted_ecr_new":0.0143229166666666,"overall_score":88,"hook_archetype":"contrarian","claim_type":"lifestyle","dominant_theme":"mushroom","format_primary":"montage","ugc_subtype":"DR-UGC","creative_phase":"MC_46"},{"video_filename":"MC_46_B_DR-UGC_(8)_LOW_Cortisol_Reshoot _CR1[v5]_compressed.mp4","primary_year":2026,"total_spend":354.39,"total_orders":1.4333333333333331,"weighted_roas_new":0.2189113688309489,"weighted_ecr_new":0.0181434599156118,"overall_score":88,"hook_archetype":"authority","claim_type":"medical","dominant_theme":"cortisol","format_primary":"before-after","ugc_subtype":"DR-UGC","creative_phase":"MC_46"},{"video_filename":"MC_47_B_INT-UGC_(9)d8_compressed.mp4","primary_year":2026,"total_spend":376.39,"total_orders":1.3333333333333333,"weighted_roas_new":0.2245011822843327,"weighted_ecr_new":0.0133333333333333,"overall_score":92,"hook_archetype":"problem-stating","claim_type":"medical","dominant_theme":"bloating","format_primary":"tutorial","ugc_subtype":"INT-UGC","creative_phase":"MC_47"},{"video_filename":"MC_47_D_DR-UGC_(14)_3rd-Party_MED_D6_compressed.mp4","primary_year":2026,"total_spend":33.41,"total_orders":0.2,"weighted_roas_new":0.29799461239149955,"weighted_ecr_new":0.0333333333333333,"overall_score":78,"hook_archetype":"problem-stating","claim_type":"medical","dominant_theme":"mushroom","format_primary":"testimonial","ugc_subtype":"DR-UGC","creative_phase":"MC_47"},{"video_filename":"MC_44_C_DR-UGC_(9) d4_compressed.mp4","primary_year":2026,"total_spend":5682.240001,"total_orders":20.074603174603176,"weighted_roas_new":0.14558391233266216,"weighted_ecr_new":0.013064767548272625,"overall_score":88,"hook_archetype":"problem-stating","claim_type":"none","dominant_theme":"mushroom","format_primary":"explainer","ugc_subtype":"DR-UGC","creative_phase":"MC_44"},{"video_filename":"MC_45_B_M-UGC_(5)_LOW_Cortisol_D3_compressed.mp4","primary_year":2026,"total_spend":762.71,"total_orders":1.9428571428571426,"weighted_roas_new":0.10693560742989744,"weighted_ecr_new":0.008731587661934638,"overall_score":72,"hook_archetype":"contrarian","claim_type":"lifestyle","dominant_theme":"cortisol","format_primary":"montage","ugc_subtype":"M-UGC","creative_phase":"MC_45"},{"video_filename":"MC_45_B_M-UGC_(6)_LOW_Bloating_D4_compressed.mp4","primary_year":2026,"total_spend":1189.109997,"total_orders":3.2777777777777777,"weighted_roas_new":0.09834292525551402,"weighted_ecr_new":0.016200265139897172,"overall_score":88,"hook_archetype":"problem-stating","claim_type":"none","dominant_theme":"bloating","format_primary":"routine","ugc_subtype":"M-UGC","creative_phase":"MC_45"},{"video_filename":"MC_45_C_DR-UGC_(9)_LOW____D3_compressed.mp4","primary_year":2026,"total_spend":7183.779997000001,"total_orders":18.248904519253355,"weighted_roas_new":0.10745763799392465,"weighted_ecr_new":0.001460958616987744,"overall_score":92,"hook_archetype":"problem-stating","claim_type":"none","dominant_theme":"mushroom","format_primary":"testimonial","ugc_subtype":"DR-UGC","creative_phase":"MC_45"},{"video_filename":"MC_44_D_MF-UGC_(9)_MED_Liver-d7_compressed.mp4","primary_year":2026,"total_spend":414.2699999999999,"total_orders":0.751165501165501,"weighted_roas_new":0.0531350031675906,"weighted_ecr_new":0.0049418782971414,"overall_score":72,"hook_archetype":"problem-stating","claim_type":"lifestyle","dominant_theme":"mushroom","format_primary":"storytime","ugc_subtype":"MF-UGC","creative_phase":"MC_44"},{"video_filename":"MC_45_C_M-UGC_(5)_LOW_Free_Gift_D3_compressed.mp4","primary_year":2026,"total_spend":499.0100020000001,"total_orders":1.5873015873015872,"weighted_roas_new":0.1614883176515682,"weighted_ecr_new":0.0095047999239616,"overall_score":78,"hook_archetype":"pattern-interrupt","claim_type":"none","dominant_theme":"free_gift","format_primary":"testimonial","ugc_subtype":"M-UGC","creative_phase":"MC_45"},{"video_filename":"MC_45_B_INT-UGC_(10)_LOW_Cortisol_d4_compressed.mp4","primary_year":2026,"total_spend":4456.050002,"total_orders":18.658753746253744,"weighted_roas_new":0.15588818250519168,"weighted_ecr_new":0.020362575916097372,"overall_score":88,"hook_archetype":"contrarian","claim_type":"before_after","dominant_theme":"cortisol","format_primary":"explainer","ugc_subtype":"INT-UGC","creative_phase":"MC_45"}];
+
+const ATTR_DIMS = [
+  { key: "hook_archetype", color: "#60a5fa", label: "hook" },
+  { key: "claim_type",     color: "#fbbf24", label: "claim" },
+  { key: "dominant_theme", color: "#ec4899", label: "theme" },
+  { key: "format_primary", color: "#a78bfa", label: "format" },
+  { key: "ugc_subtype",    color: "#34d399", label: "ugc" },
+];
+
+// --- build graph from dataset
+function buildGraph(rows, dimsOn) {
+  const nodes = [];
+  const links = [];
+  const attrIndex = new Map(); // key → node
+  for (const r of rows) {
+    const cNode = {
+      id: "c:" + r.video_filename,
+      type: "creative",
+      label: r.video_filename.replace(/\.mp4$/, "").replace(/_compressed$/, ""),
+      row: r,
+      radius: 4 + Math.min(16, Math.sqrt((r.total_spend || 0)) / 18),
+    };
+    nodes.push(cNode);
+    for (const d of ATTR_DIMS) {
+      if (!dimsOn[d.key]) continue;
+      const v = r[d.key];
+      if (v == null || v === "none" || v === "unset") continue;
+      const aKey = d.key + ":" + v;
+      let aNode = attrIndex.get(aKey);
+      if (!aNode) {
+        aNode = { id: "a:" + aKey, type: "attribute", dim: d.key, value: v, label: v, color: d.color, count: 0 };
+        attrIndex.set(aKey, aNode);
+        nodes.push(aNode);
+      }
+      aNode.count++;
+      links.push({ source: cNode.id, target: aNode.id, dim: d.key });
+    }
+  }
+  for (const a of attrIndex.values()) {
+    a.radius = 4 + Math.log(1 + a.count) * 4.5;
+  }
+  return { nodes, links };
+}
+
+// --- performance tier color for creative glow
+function tierColor(row, metric) {
+  // compute quartile against full dataset on chosen metric
+  const key =
+    metric === "roas" ? "weighted_roas_new" :
+    metric === "spend" ? "total_spend" :
+    metric === "overall" ? "overall_score" :
+    metric === "ecr" ? "weighted_ecr_new" : "weighted_roas_new";
+  const vals = DATA.map(r => r[key]).filter(v => typeof v === "number" && isFinite(v)).sort((a,b) => a-b);
+  if (!vals.length) return { fill: "#ffffff", glow: "#ffffff", alpha: 0.4 };
+  const v = row[key];
+  if (typeof v !== "number") return { fill: "#555", glow: "#555", alpha: 0.2 };
+  const q1 = vals[Math.floor(vals.length * 0.25)];
+  const q3 = vals[Math.floor(vals.length * 0.75)];
+  if (v >= q3) return { fill: "#10b981", glow: "#10b981", alpha: 0.85 };
+  if (v <= q1) return { fill: "#ef4444", glow: "#ef4444", alpha: 0.7 };
+  return { fill: "#f5c94b", glow: "#f5c94b", alpha: 0.55 };
+}
+
+// --- canvas setup
+const canvas = document.getElementById("cvs");
+const ctx = canvas.getContext("2d");
+let W = 0, H = 0;
+function resize() {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  W = rect.width; H = rect.height;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + "px"; canvas.style.height = H + "px";
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener("resize", () => { resize(); simulation && simulation.alpha(0.3).restart(); });
+resize();
+
+// --- state
+let dimsOn = { hook_archetype: true, claim_type: true, dominant_theme: true, format_primary: true, ugc_subtype: true };
+let metric = "roas";
+let { nodes, links } = buildGraph(DATA, dimsOn);
+let transform = d3.zoomIdentity.translate(W/2, H/2).scale(1);
+let hoverNode = null;
+
+// update attribute counts in sidebar
+function updateCounts() {
+  const counts = {};
+  for (const d of ATTR_DIMS) counts[d.key] = 0;
+  const seen = new Set();
+  for (const n of nodes) if (n.type === "attribute" && !seen.has(n.id)) { counts[n.dim]++; seen.add(n.id); }
+  for (const [k, v] of Object.entries(counts)) {
+    const el = document.getElementById("cnt-" + k);
+    if (el) el.textContent = v;
+  }
+  document.getElementById("stat-attrs").textContent = seen.size;
+}
+updateCounts();
+
+// --- simulation
+let simulation = d3.forceSimulation(nodes)
+  .force("link", d3.forceLink(links).id(d => d.id)
+    .distance(d => d.target.type === "attribute" ? 60 : 80)
+    .strength(0.6))
+  .force("charge", d3.forceManyBody().strength(d => d.type === "attribute" ? -180 : -100))
+  .force("center", d3.forceCenter(0, 0).strength(0.04))
+  .force("collide", d3.forceCollide().radius(d => d.radius + 3).iterations(2))
+  .force("x", d3.forceX().strength(0.03))
+  .force("y", d3.forceY().strength(0.03))
+  .alphaDecay(0.025)
+  .on("tick", draw);
+
+// --- draw
+function draw() {
+  ctx.save();
+  ctx.clearRect(0, 0, W, H);
+  ctx.translate(transform.x, transform.y);
+  ctx.scale(transform.k, transform.k);
+
+  // edges first (behind)
+  ctx.lineCap = "round";
+  for (const l of links) {
+    const s = typeof l.source === "object" ? l.source : nodes.find(n => n.id === l.source);
+    const t = typeof l.target === "object" ? l.target : nodes.find(n => n.id === l.target);
+    if (!s || !t) continue;
+    const alpha = hoverNode
+      ? (s === hoverNode || t === hoverNode ? 0.45 : 0.06)
+      : 0.12;
+    ctx.strokeStyle = `rgba(200,220,255,${alpha})`;
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(s.x, s.y);
+    ctx.lineTo(t.x, t.y);
+    ctx.stroke();
+  }
+
+  // attribute nodes first (smaller z)
+  for (const n of nodes) {
+    if (n.type !== "attribute") continue;
+    ctx.save();
+    ctx.shadowBlur = 14;
+    ctx.shadowColor = n.color;
+    ctx.fillStyle = n.color;
+    ctx.globalAlpha = hoverNode && hoverNode !== n && !isNeighbor(n, hoverNode) ? 0.25 : 0.9;
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, n.radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // label
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = hoverNode && hoverNode !== n && !isNeighbor(n, hoverNode) ? 0.3 : 0.85;
+    ctx.font = '500 11px -apple-system,system-ui,sans-serif';
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillStyle = "#d4d4d8";
+    ctx.fillText(n.label, n.x, n.y + n.radius + 3);
+    ctx.restore();
+  }
+
+  // creative nodes on top
+  for (const n of nodes) {
+    if (n.type !== "creative") continue;
+    const t = tierColor(n.row, metric);
+    ctx.save();
+    // outer glow
+    ctx.shadowBlur = 18;
+    ctx.shadowColor = t.glow;
+    ctx.fillStyle = `rgba(250,250,250,${hoverNode && hoverNode !== n && !isNeighbor(n, hoverNode) ? 0.2 : 0.95})`;
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, n.radius, 0, Math.PI * 2);
+    ctx.fill();
+    // tier ring
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = t.fill;
+    ctx.globalAlpha = t.alpha;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, n.radius + 2.5, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  ctx.restore();
+}
+
+function isNeighbor(a, b) {
+  for (const l of links) {
+    const s = typeof l.source === "object" ? l.source.id : l.source;
+    const t = typeof l.target === "object" ? l.target.id : l.target;
+    if ((s === a.id && t === b.id) || (s === b.id && t === a.id)) return true;
+  }
+  return false;
+}
+
+// --- zoom/pan
+d3.select(canvas).call(d3.zoom()
+  .scaleExtent([0.3, 3])
+  .filter((ev) => !ev.button)
+  .on("zoom", (ev) => { transform = ev.transform; draw(); })
+  .transform, transform);
+
+const zoomBehavior = d3.zoom()
+  .scaleExtent([0.3, 3])
+  .on("zoom", (ev) => { transform = ev.transform; draw(); });
+d3.select(canvas).call(zoomBehavior);
+
+// --- hover tooltip
+const tip = document.getElementById("tip");
+function pickNode(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  const x = (clientX - rect.left - transform.x) / transform.k;
+  const y = (clientY - rect.top - transform.y) / transform.k;
+  let best = null;
+  let bestD = Infinity;
+  for (const n of nodes) {
+    const d = Math.hypot(n.x - x, n.y - y);
+    if (d < n.radius + 4 && d < bestD) { best = n; bestD = d; }
+  }
+  return best;
+}
+
+canvas.addEventListener("mousemove", (e) => {
+  const n = pickNode(e.clientX, e.clientY);
+  if (n !== hoverNode) { hoverNode = n; draw(); }
+  if (n) {
+    const rect = canvas.getBoundingClientRect();
+    tip.style.left = (e.clientX - rect.left) + "px";
+    tip.style.top = (e.clientY - rect.top - 10) + "px";
+    if (n.type === "creative") {
+      const r = n.row;
+      tip.innerHTML = `
+        <div class="tt-title">${escapeHtml(n.label)}</div>
+        <div class="tt-row"><span>Primary year</span><b>${r.primary_year ?? "—"}</b></div>
+        <div class="tt-row"><span>Spend</span><b>$${fmt(r.total_spend, 0)}</b></div>
+        <div class="tt-row"><span>Orders</span><b>${fmt(r.total_orders, 0)}</b></div>
+        <div class="tt-row"><span>ROAS</span><b>${fmt(r.weighted_roas_new, 2)}</b></div>
+        <div class="tt-row"><span>ECR</span><b>${fmt((r.weighted_ecr_new||0)*100, 2)}%</b></div>
+        <div class="tt-pills">
+          ${r.hook_archetype ? '<span class="tt-pill">hook: ' + r.hook_archetype + '</span>' : ''}
+          ${r.claim_type ? '<span class="tt-pill">claim: ' + r.claim_type + '</span>' : ''}
+          ${r.dominant_theme ? '<span class="tt-pill">theme: ' + r.dominant_theme + '</span>' : ''}
+          ${r.ugc_subtype ? '<span class="tt-pill">' + r.ugc_subtype + '</span>' : ''}
+        </div>
+      `;
+    } else {
+      tip.innerHTML = `
+        <div class="tt-title" style="color:${n.color}">${escapeHtml(n.label)}</div>
+        <div class="tt-row"><span>Dimension</span><b>${escapeHtml(n.dim)}</b></div>
+        <div class="tt-row"><span>Linked creatives</span><b>${n.count}</b></div>
+      `;
+    }
+    tip.classList.add("on");
+  } else {
+    tip.classList.remove("on");
+  }
+});
+
+canvas.addEventListener("mouseleave", () => { hoverNode = null; tip.classList.remove("on"); draw(); });
+
+function fmt(n, d) {
+  if (typeof n !== "number" || !isFinite(n)) return "—";
+  return d === 0 ? Math.round(n).toLocaleString("en-US") : n.toFixed(d);
+}
+function escapeHtml(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+// --- metric switcher
+document.getElementById("metric-select").addEventListener("change", (e) => {
+  metric = e.target.value;
+  draw();
+});
+
+// --- attribute dimension toggles
+document.querySelectorAll(".attrtoggle").forEach((el) => {
+  el.addEventListener("click", () => {
+    const k = el.dataset.dim;
+    dimsOn[k] = !dimsOn[k];
+    el.classList.toggle("off", !dimsOn[k]);
+    const g = buildGraph(DATA, dimsOn);
+    nodes = g.nodes; links = g.links;
+    simulation.nodes(nodes);
+    simulation.force("link").links(links);
+    simulation.alpha(0.5).restart();
+    updateCounts();
+  });
+});
+
+// --- persona tabs (cosmetic for now)
+document.querySelectorAll(".persona").forEach((el) => {
+  el.addEventListener("click", () => {
+    document.querySelectorAll(".persona").forEach(p => p.classList.remove("active"));
+    el.classList.add("active");
+  });
+});
+
+// --- chat suggestion clicks (cosmetic)
+document.querySelectorAll(".sugg").forEach((el) => {
+  el.addEventListener("click", () => {
+    const input = document.querySelector(".chat-input input");
+    input.value = el.textContent.replace(/^[⟵⟶]\s*/, "").trim();
+    input.focus();
+  });
+});
+
+// --- idle breathing — subtle ambient motion
+let breath = 0;
+function breathe() {
+  breath += 0.005;
+  simulation.force("x").strength(0.03 + Math.sin(breath) * 0.008);
+  simulation.force("y").strength(0.03 + Math.cos(breath * 0.9) * 0.008);
+  simulation.alpha(Math.max(simulation.alpha(), 0.02));
+  requestAnimationFrame(breathe);
+}
+breathe();
+</script>
+</body>
+</html>
