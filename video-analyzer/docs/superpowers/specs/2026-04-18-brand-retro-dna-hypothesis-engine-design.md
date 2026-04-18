@@ -8,21 +8,21 @@
 
 Build a **multi-tenant, graph-first, chat-driven retrospective analysis platform** that lets three personas — Growth Manager, Editor, Executive — explore the creative DNA of their brand's ad portfolio and validate hypotheses about what drives performance.
 
-The platform extends `video-analyzer v2` (the POC whose canonical creative schema is already in production). It adds:
+The platform extends `video-analyzer` (the POC whose canonical creative schema is already in production — formerly "v2", promoted to canonical in M0; see §14). It adds:
 
 - A tenant-scoped property graph of creatives ↔ attributes ↔ performance ↔ time
 - An LLM-driven chat that operates the graph via a constrained tool catalog
 - A spatial, shader-rendered canvas where insights *bubble up visually* (not as prose)
 - Just-in-time data ingestion via chat ("I'm missing X on these 8 creatives — want to add it?")
 
-**Scope rule:** retrospective analysis only (why did X perform the way it did). Predictive scoring lives inside `video-analyzer v2` as AI-tagged features on the creative node; no platform-level forecasting model.
+**Scope rule:** retrospective analysis only (why did X perform the way it did). Predictive scoring lives inside `video-analyzer` as AI-tagged features on the creative node; no platform-level forecasting model.
 
 ---
 
 ## 2 · Problem framing
 
 ### What we have
-- `video-analyzer v2` produces a **canonical, rich creative analysis** per uploaded UGC video (≈130 features: hook archetype, claim type, script angle, narrative style, cuts/min, eye-contact, sentiment, etc.). Schema is fixed across tenants.
+- `video-analyzer` produces a **canonical, rich creative analysis** per uploaded UGC video (≈130 features: hook archetype, claim type, script angle, narrative style, cuts/min, eye-contact, sentiment, etc.). Schema is fixed across tenants.
 - A Postgres schema with hot fields + jsonb blobs, already RLS-ready.
 
 ### What we lack
@@ -75,7 +75,7 @@ Three architectural layers + three persona-specific surfaces, all sharing one gr
                            ▼
 ┌──────────────────────────────────────────────────────────────────────┐
 │             INGESTION (per-source adapters)                           │
-│  video-analyzer v2 output · Northbeam CSV · Meta Ads API ·          │
+│  video-analyzer output · Northbeam CSV · Meta Ads API ·             │
 │  Shopify sync · generic CSV · LLM-assisted paste                     │
 └──────────────────────────────────────────────────────────────────────┘
 ```
@@ -475,7 +475,7 @@ User can click any chip to inspect the call or edit/rerun it.
 
 ### 11.1 Adapters (shipped with MVP)
 
-- **video-analyzer v2 output** (internal; already canonical)
+- **video-analyzer output** (internal; already canonical)
 - **CSV uploader** with LLM-assisted column mapping
 - **Paste-a-table** (accepts CSV, TSV, Markdown table, pasted spreadsheet range)
 - **Northbeam CSV** (pre-configured mapping)
@@ -529,7 +529,7 @@ All surfaces share the same canvas + chat + params engine. They differ in **defa
 **Default view:** canvas pre-filtered to a single creative the editor selected (e.g., from an upstream list). Camera zoomed to focused node with neighbours (attribute nodes + shared-attribute peers).
 
 **Superpowers:**
-- Side-panel showing the creative's full `video-analyzer v2` decode
+- Side-panel showing the creative's full `video-analyzer` decode
 - Neighbour rail: top-5 peer creatives that share attributes (click → focus them)
 - "Why did this win/lose?" button → auto-calls `similarCreatives` + `cohortDiff` against peers, renders a verdict card
 
@@ -602,7 +602,7 @@ Canvas splits. Same lasso auto-projects to Q2 side. Q2 finds 3 creatives matchin
 
 Canvas focuses on that creative: thumbnail large in centre, attribute-neighbours fanning out, 5 peer creatives sharing attributes visible at second ring.
 
-Side panel shows v2 decode (hook archetype, script angle, claim count, pacing, etc.).
+Side panel shows the full analyzer decode (hook archetype, script angle, claim count, pacing, etc.).
 
 **Turn 1 · User clicks "Why did this underperform?" shortcut.**
 
@@ -625,6 +625,7 @@ cohortDiff(groupA=[focused], groupB=top-5-neighbours, dims=all-attributes)
 
 | Milestone | Scope | Estimate |
 |---|---|---|
+| **M0 v1 retirement** | Promote v2 → canonical; delete v1 routes, workers, prompts, adapters; DB cleanup; docs update | 1 week |
 | **M1 Graph foundation** | AGE on Postgres, canonical schema + RLS, Ryze loaded as reference tenant | 3 weeks |
 | **M2 Primitive library** | 5 core primitives + tool API, tested against Ryze data | 4 weeks |
 | **M3 Rendering prototype** | r3f canvas with ~500 Ryze nodes, basic shaders, static filters via params | 6 weeks |
@@ -636,11 +637,66 @@ cohortDiff(groupA=[focused], groupB=top-5-neighbours, dims=all-attributes)
 
 Total: ~6 months to Growth-Manager-persona alpha with one paying tenant. Editor + Report Builder personas layer on afterward (2 months each).
 
+### 14.1 · M0 v1 retirement — task breakdown
+
+v1 (the original Qwen-era analyzer at `/analyze/*`) has been superseded by v2 (Gemini-era, richer schema, already running the Ryze pipeline). Before any BRAND RETRO DNA work begins, we collapse the v1/v2 split so there's one canonical analyzer.
+
+**Pre-conditions:**
+- Confirm no live tenant/customer depends on a v1-only route (Ryze POC already uses v2 exclusively)
+- Snapshot the database so rollback is possible
+
+**Route & URL migration (risk: low — POC traffic only):**
+- [ ] T-M0-01: Move `app/analyze/v2/api/*` → `app/analyze/api/*`
+- [ ] T-M0-02: Move `app/analyze/v2/dashboard/page.tsx` → `app/analyze/dashboard/page.tsx`
+- [ ] T-M0-03: Move `app/analyze/v2/video/[id]/page.tsx` → `app/analyze/video/[id]/page.tsx`
+- [ ] T-M0-04: Move `app/analyze/v2/layout.tsx` + `page.tsx` → `app/analyze/` (replacing v1)
+- [ ] T-M0-05: Delete the now-empty `app/analyze/v2/` directory
+- [ ] T-M0-06: Add a `/analyze/v2/*` → `/analyze/*` redirect rule in `next.config.ts` for 30 days (link-safety)
+
+**Library move (risk: medium — many imports touched):**
+- [ ] T-M0-07: Move `lib/video/v2/*` → `lib/video/*` (adapters, analyze-worker, analysis schemas, scorers, etc.)
+- [ ] T-M0-08: Rename `analyze-worker-v2.ts` → `analyze-worker.ts` (overwrite the v1 worker)
+- [ ] T-M0-09: Rename `analysis-v2-schema.ts` → `analysis-schema.ts`
+- [ ] T-M0-10: Rename `analysis-v2-base-prompt.ts` → `analysis-base-prompt.ts`; same for `analysis-v2-extended-prompt.ts`
+- [ ] T-M0-11: Update all imports across `lib/`, `app/`, `components/`, `hooks/` (IDE-assisted rename)
+
+**v1-only file deletion:**
+- [ ] T-M0-12: Delete `lib/video/qwen-prompt.ts`, `qwen-schema.ts`, `analysis-extended-prompt.ts`, `analysis-extended-schema.ts` (old Qwen-era prompts/schemas v2 doesn't use)
+- [ ] T-M0-13: Delete old `lib/video/analyze-worker.ts`, `analyze-repair.ts`, `gemini-adapter.ts` if not referenced by the new worker
+- [ ] T-M0-14: Delete old `lib/video/prompts.ts` and any v1-only helpers in `extractors.ts` / `extraction-summary.ts`
+- [ ] T-M0-15: Audit `lib/video/batch/*` and remove v1-only pipeline code (keep v2-batch)
+- [ ] T-M0-16: Audit `components/video/*` (non-v2) — migrate any still-used shared cards into `components/video/` root, delete the rest
+
+**Component namespace cleanup:**
+- [ ] T-M0-17: Move `components/video/v2/*` → `components/video/` (merge with shared components)
+- [ ] T-M0-18: Resolve naming collisions (e.g., if `analyses-table.tsx` exists in both)
+- [ ] T-M0-19: Delete the `components/video/v2/` directory
+
+**Database cleanup:**
+- [ ] T-M0-20: Audit `lib/db/schema.ts` — identify v1-only columns (e.g., fields only the old analyzer writes)
+- [ ] T-M0-21: Write a Drizzle migration dropping v1-only columns (or mark deprecated with a sunset date if live data exists)
+- [ ] T-M0-22: Clear v1-analysis blob-URLs from Vercel Blob where `version < 2`
+
+**Docs + tests + deploy:**
+- [ ] T-M0-23: Update `HANDOFF.md` — remove v1 bug notes, document the single analyzer
+- [ ] T-M0-24: Update any README references, `CLAUDE.md` project notes, spec `#17 References` once paths are stable
+- [ ] T-M0-25: Re-run Vitest + `pnpm exec tsc --noEmit` + `pnpm check` — all green
+- [ ] T-M0-26: Verify Ryze pipeline still runs end-to-end (upload → analyze → dashboard → export)
+- [ ] T-M0-27: Deploy to staging; smoke-test `/analyze/dashboard`, `/analyze/video/[id]`, upload flow, batch flow
+- [ ] T-M0-28: Deploy to production; monitor logs for 24h for v1-route 404s (captured by the redirect rule)
+
+**Exit criteria for M0:**
+- Zero files match `*v1*`, `*v2*`, `qwen-*` in `lib/video/`, `app/analyze/`, `components/video/`
+- Typecheck + lint + tests green
+- Ryze end-to-end flow unchanged from user perspective
+- `git log --oneline` shows a clean `chore: retire v1` final commit
+
 ---
 
 ## 15 · Out of scope (this iteration)
 
-- **Predictive scoring at platform level.** Prediction is inside `video-analyzer v2` only, as features on the `Creative` node.
+- **v2 semantic changes during M0 retirement.** M0 is purely structural (rename, delete, redirect). No schema or behavioural changes to the analyzer itself — see §14.1.
+- **Predictive scoring at platform level.** Prediction is inside `video-analyzer` only, as features on the `Creative` node.
 - **Public benchmark layer.** Build after 5+ tenants.
 - **Cross-tenant research.** After 10+ tenants, with explicit opt-in and k-anonymity.
 - **Mobile-first UX.** Desktop-first; mobile shows read-only "frozen view" of shared reports.
@@ -661,7 +717,7 @@ Total: ~6 months to Growth-Manager-persona alpha with one paying tenant. Editor 
 
 ## 17 · References
 
-- `video-analyzer v2` schema → `lib/video/v2/analysis-v2-schema.ts`, `lib/db/schema.ts`
+- `video-analyzer` canonical schema → `lib/video/analysis-schema.ts`, `lib/db/schema.ts` (post-M0 paths; currently at `lib/video/v2/analysis-v2-schema.ts`)
 - Ryze retrospective outputs → `/home/gustaf/Projects/RyzeWithKrezu/analys/outputs/`
 - Apache AGE → https://age.apache.org/
 - react-three-fiber → https://r3f.docs.pmnd.rs/
